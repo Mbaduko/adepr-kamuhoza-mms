@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  base: "https://mbaduko.github.io/adepr-kamuhoza-mms/",
   plugins: [
     react(),
   ],
