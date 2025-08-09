@@ -11,6 +11,7 @@ import { Landing } from "@/pages/Landing";
 import { Login } from "@/pages/Login";
 import { CertificateProcess } from "@/pages/CertificateProcess";
 import { Dashboard } from "@/pages/Dashboard";
+import { Profile } from "@/pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,7 +37,7 @@ const App = () => (
                 </ProtectedRoute>
               }>
                 <Route index element={<Dashboard />} />
-                <Route path="profile" element={<Dashboard />} />
+                <Route path="profile" element={<Profile />} />
                 <Route path="certificates" element={<Dashboard />} />
                 <Route path="members" element={<Dashboard />} />
                 <Route path="zones" element={<Dashboard />} />
