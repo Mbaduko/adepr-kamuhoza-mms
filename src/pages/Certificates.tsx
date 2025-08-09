@@ -233,7 +233,6 @@ const RequestProgress: React.FC<{ req: CertificateRequest }> = ({ req }) => {
     },
   ]
 
-  // Determine state per step
   const states = steps.map((s, idx) => {
     if (rejectedAt && s.key === rejectedAt) return "rejected" as const
     if (s.done) return "done" as const
@@ -366,7 +365,8 @@ export const Certificates: React.FC = () => {
   const [pendingL2, setPendingL2] = React.useState<CertificateRequest[]>([])
   const [pendingL3, setPendingL3] = React.useState<CertificateRequest[]>([])
 
-  // New request form
+  // New request dialog state and form fields
+  const [openNew, setOpenNew] = React.useState(false)
   const [certType, setCertType] = React.useState<CertType>("baptism")
   const [purpose, setPurpose] = React.useState("")
 
@@ -411,6 +411,7 @@ export const Certificates: React.FC = () => {
     })
     setPurpose("")
     setCertType("baptism")
+    setOpenNew(false)
     toast({ title: "Request submitted", description: "Your certificate request has been created." })
     reload()
   }
@@ -504,7 +505,6 @@ export const Certificates: React.FC = () => {
           </DialogContent>
         </Dialog>
 
-        {/* View details */}
         <DetailsButton req={req} />
       </div>
     )
@@ -520,11 +520,62 @@ export const Certificates: React.FC = () => {
             Request certificates and track approvals. Approvers can review and action pending requests.
           </p>
         </div>
+
+        {canRequest && (
+          <Dialog open={openNew} onOpenChange={setOpenNew}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <PlusCircle className="h-4 w-4" />
+                New Request
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>New Certificate Request</DialogTitle>
+                <DialogDescription>Submit a request for your official church certificate.</DialogDescription>
+              </DialogHeader>
+
+              <form onSubmit={handleCreate} className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label>Certificate Type</Label>
+                  <Select value={certType} onValueChange={(v: CertType) => setCertType(v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="baptism">Baptism</SelectItem>
+                      <SelectItem value="confirmation">Confirmation</SelectItem>
+                      <SelectItem value="marriage">Marriage</SelectItem>
+                      <SelectItem value="membership">Membership</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-3 space-y-2">
+                  <Label>Purpose</Label>
+                  <Textarea
+                    placeholder="Describe the purpose for this certificate..."
+                    value={purpose}
+                    onChange={(e) => setPurpose(e.target.value)}
+                    rows={4}
+                  />
+                </div>
+                <div className="md:col-span-3 flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setOpenNew(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="gap-2">
+                    <Send className="h-4 w-4" />
+                    Submit Request
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* My/Relevant stats */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
@@ -571,52 +622,6 @@ export const Certificates: React.FC = () => {
         </Card>
       </div>
 
-      {/* Request form (Member & Zone Leader) */}
-      {canRequest && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PlusCircle className="h-5 w-5" />
-              New Certificate Request
-            </CardTitle>
-            <CardDescription>Submit a request for your official church certificate.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreate} className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <Label>Certificate Type</Label>
-                <Select value={certType} onValueChange={(v: CertType) => setCertType(v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="baptism">Baptism</SelectItem>
-                    <SelectItem value="confirmation">Confirmation</SelectItem>
-                    <SelectItem value="marriage">Marriage</SelectItem>
-                    <SelectItem value="membership">Membership</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="md:col-span-2 space-y-2">
-                <Label>Purpose</Label>
-                <Textarea
-                  placeholder="Describe the purpose for this certificate..."
-                  value={purpose}
-                  onChange={(e) => setPurpose(e.target.value)}
-                  rows={3}
-                />
-              </div>
-              <div className="md:col-span-3">
-                <Button type="submit" className="gap-2">
-                  <Send className="h-4 w-4" />
-                  Submit Request
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Tabs */}
       <Tabs defaultValue="my">
         <TabsList className="mb-4">
@@ -635,7 +640,7 @@ export const Certificates: React.FC = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle>No requests yet</CardTitle>
-                    <CardDescription>Submit a new certificate request to get started.</CardDescription>
+                    <CardDescription>Use the New Request button to get started.</CardDescription>
                   </CardHeader>
                 </Card>
               ) : (
