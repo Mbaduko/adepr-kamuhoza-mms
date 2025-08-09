@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -30,15 +30,10 @@ import { getUserPermissions } from '@/data/mockData';
 export const AppSidebar: React.FC = () => {
   const { state: sidebarState } = useSidebar();
   const { state } = useAuth();
-  const location = useLocation();
   
   if (!state.user) return null;
 
   const permissions = getUserPermissions(state.user.role);
-  const currentPath = location.pathname;
-
-  const getNavClass = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-accent text-accent-foreground font-medium" : "hover:bg-accent/50";
 
   // Define navigation items based on user role
   const getNavigationItems = () => {
@@ -51,13 +46,13 @@ export const AppSidebar: React.FC = () => {
       },
       { 
         title: 'My Profile', 
-        url: '/profile', 
+        url: '/dashboard/profile', 
         icon: User,
         show: permissions.canViewOwnProfile 
       },
       { 
         title: 'Certificate Requests', 
-        url: '/certificates', 
+        url: '/dashboard/certificates', 
         icon: Award,
         show: permissions.canRequestCertificate 
       },
@@ -66,19 +61,19 @@ export const AppSidebar: React.FC = () => {
     const adminItems = [
       { 
         title: 'Members', 
-        url: '/members', 
+        url: '/dashboard/members', 
         icon: Users,
         show: permissions.canViewZoneMembers || permissions.canViewAllMembers 
       },
       { 
         title: 'Zones', 
-        url: '/zones', 
+        url: '/dashboard/zones', 
         icon: MapPin,
         show: permissions.canManageZones 
       },
       { 
         title: 'Statistics', 
-        url: '/statistics', 
+        url: '/dashboard/statistics', 
         icon: BarChart3,
         show: permissions.canViewStats || permissions.canViewGlobalStats 
       },
@@ -87,7 +82,7 @@ export const AppSidebar: React.FC = () => {
     const superAdminItems = [
       { 
         title: 'Pastors', 
-        url: '/pastors', 
+        url: '/dashboard/pastors', 
         icon: Crown,
         show: permissions.canManagePastors 
       },
@@ -122,8 +117,8 @@ export const AppSidebar: React.FC = () => {
           <SidebarTrigger />
         </div>
         {/* User Info */}
-        <SidebarGroup>
-        <SidebarGroupLabel className="flex items-center gap-2">
+        <SidebarGroup className="pb-4">
+        <SidebarGroupLabel className="flex items-center gap-2 mb-4">
             <RoleIcon className="h-4 w-4" />
             {sidebarState === 'expanded' && (
               <div className="flex flex-col">
@@ -137,18 +132,26 @@ export const AppSidebar: React.FC = () => {
         </SidebarGroup>
 
         {/* Main Navigation */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+        <SidebarGroup className="py-2">
+          <SidebarGroupLabel className="mb-2">Main</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {navigationItems.main.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavClass}>
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {sidebarState === 'expanded' && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
+                  <NavLink 
+                    to={item.url} 
+                    end={item.url === '/dashboard'}
+                  >
+                    {({ isActive }) => (
+                      <SidebarMenuButton 
+                        isActive={isActive}
+                        className={isActive ? "!bg-primary !text-primary-foreground !font-bold py-3 px-4 rounded-lg shadow-lg border border-primary/20 transition-all duration-200" : ""}
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {sidebarState === 'expanded' && <span>{item.title}</span>}
+                      </SidebarMenuButton>
+                    )}
+                  </NavLink>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -157,18 +160,26 @@ export const AppSidebar: React.FC = () => {
 
         {/* Admin Navigation */}
         {navigationItems.admin.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroup className="py-2">
+            <SidebarGroupLabel className="mb-2">Management</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="space-y-1">
                 {navigationItems.admin.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.url} className={getNavClass}>
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {sidebarState === 'expanded' && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
+                    <NavLink 
+                      to={item.url} 
+                      end={item.url === '/dashboard'}
+                    >
+                      {({ isActive }) => (
+                        <SidebarMenuButton 
+                          isActive={isActive}
+                          className={isActive ? "!bg-primary !text-primary-foreground !font-bold py-3 px-4 rounded-lg shadow-lg border border-primary/20 transition-all duration-200" : "hover:bg-primary/80 hover:text-primary-foreground transition-all duration-200"}
+                        >
+                          <item.icon className="mr-2 h-4 w-4" />
+                          {sidebarState === 'expanded' && <span>{item.title}</span>}
+                        </SidebarMenuButton>
+                      )}
+                    </NavLink>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
@@ -178,18 +189,26 @@ export const AppSidebar: React.FC = () => {
 
         {/* Super Admin Navigation */}
         {navigationItems.superAdmin.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+          <SidebarGroup className="py-2">
+            <SidebarGroupLabel className="mb-2">Administration</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="space-y-1">
                 {navigationItems.superAdmin.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.url} className={getNavClass}>
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {sidebarState === 'expanded' && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
+                    <NavLink 
+                      to={item.url} 
+                      end={item.url === '/dashboard'}
+                    >
+                      {({ isActive }) => (
+                        <SidebarMenuButton 
+                          isActive={isActive}
+                          className={isActive ? "!bg-primary !text-primary-foreground !font-bold py-3 px-4 rounded-lg shadow-lg border border-primary/20 transition-all duration-200" : "hover:bg-primary/80 hover:text-primary-foreground transition-all duration-200"}
+                        >
+                          <item.icon className="mr-2 h-4 w-4" />
+                          {sidebarState === 'expanded' && <span>{item.title}</span>}
+                        </SidebarMenuButton>
+                      )}
+                    </NavLink>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>

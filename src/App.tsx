@@ -36,6 +36,12 @@ const App = () => (
                 </ProtectedRoute>
               }>
                 <Route index element={<Dashboard />} />
+                <Route path="profile" element={<Dashboard />} />
+                <Route path="certificates" element={<Dashboard />} />
+                <Route path="members" element={<Dashboard />} />
+                <Route path="zones" element={<Dashboard />} />
+                <Route path="statistics" element={<Dashboard />} />
+                <Route path="pastors" element={<Dashboard />} />
                 {/* Add more protected routes here */}
               </Route>
               
