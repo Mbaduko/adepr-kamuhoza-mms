@@ -19,7 +19,7 @@ import {
   Mail,
   MapPin
 } from 'lucide-react';
-import heroImage from '@/assets/hero-image.jpg';
+import heroImage from '@/assets/hero-image.png';
 
 export const Landing: React.FC = () => {
   const navigate = useNavigate();
