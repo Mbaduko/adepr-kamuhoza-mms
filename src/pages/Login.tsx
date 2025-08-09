@@ -124,7 +124,7 @@ export const Login: React.FC = () => {
         </Card>
 
         {/* Demo Login Options */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="text-center">Demo Accounts</CardTitle>
             <CardDescription className="text-center">
@@ -148,7 +148,7 @@ export const Login: React.FC = () => {
               );
             })}
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Back to Home */}
         <div className="text-center">
