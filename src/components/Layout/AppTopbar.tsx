@@ -52,15 +52,14 @@ export const AppTopbar: React.FC = () => {
       </div>
 
       {/* Right side - User menu */}
-      <div className="flex items-center gap-4">
-        <div className="hidden sm:block text-right">
-          <p className="text-sm font-medium text-foreground">{state.user.name}</p>
-          <p className="text-xs text-muted-foreground">{getRoleDisplay(state.user.role)}</p>
-        </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <div className="flex items-center gap-4 cursor-pointer">
+            <div className="hidden sm:block text-right">
+              <p className="text-sm font-medium text-foreground">{state.user.name}</p>
+              <p className="text-xs text-muted-foreground">{getRoleDisplay(state.user.role)}</p>
+            </div>
+            <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={state.user.profileImage || "/placeholder.svg"} alt={state.user.name} />
                 <AvatarFallback className="bg-primary text-primary-foreground">
@@ -68,31 +67,33 @@ export const AppTopbar: React.FC = () => {
                 </AvatarFallback>
               </Avatar>
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <div className="flex items-center justify-start gap-2 p-2">
-              <div className="flex flex-col space-y-1 leading-none">
-                <p className="font-medium text-sm">{state.user.name}</p>
-                <p className="w-[200px] truncate text-xs text-muted-foreground">{state.user.email}</p>
-              </div>
+          </div>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="end" className="w-56">
+          <div className="flex items-center justify-start gap-2 p-2">
+            <div className="flex flex-col space-y-1 leading-none">
+              <p className="font-medium text-sm">{state.user.name}</p>
+              <p className="w-[200px] truncate text-xs text-muted-foreground">{state.user.email}</p>
             </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer">
-              <User className="mr-2 h-4 w-4" />
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer">
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer">
+            <User className="mr-2 h-4 w-4" />
+            Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer">
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
     </header>
   )
 }
