@@ -25,8 +25,8 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               {/* Public Routes */}
-              <Route path="/" element={<Login />} />
-              <Route path="/login" element={<Landing />} />
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
               <Route path="/certificate-process" element={<CertificateProcess />} />
               
               {/* Protected Routes */}
