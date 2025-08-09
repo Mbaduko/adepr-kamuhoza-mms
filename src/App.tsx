@@ -1,20 +1,21 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/context/AuthContext";
-import { NotificationProvider } from "@/context/NotificationContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { AppLayout } from "@/components/Layout/AppLayout";
-import { Landing } from "@/pages/Landing";
-import { Login } from "@/pages/Login";
-import { CertificateProcess } from "@/pages/CertificateProcess";
-import { Dashboard } from "@/pages/Dashboard";
-import { Profile } from "@/pages/Profile";
-import NotFound from "./pages/NotFound";
+import { Toaster } from "@/components/ui/toaster"
+import { Toaster as Sonner } from "@/components/ui/sonner"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { AuthProvider } from "@/context/AuthContext"
+import { NotificationProvider } from "@/context/NotificationContext"
+import { ProtectedRoute } from "@/components/ProtectedRoute"
+import { AppLayout } from "@/components/Layout/AppLayout"
+import { Landing } from "@/pages/Landing"
+import { Login } from "@/pages/Login"
+import { CertificateProcess } from "@/pages/CertificateProcess"
+import { Dashboard } from "@/pages/Dashboard"
+import { Profile } from "@/pages/Profile"
+import { Certificates } from "@/pages/Certificates"
+import NotFound from "./pages/NotFound"
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient()
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -29,26 +30,29 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/certificate-process" element={<CertificateProcess />} />
-              
+
               {/* Protected Routes */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }>
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
                 <Route index element={<Dashboard />} />
                 <Route path="profile" element={<Profile />} />
-                <Route path="certificates" element={<Dashboard />} />
+                <Route path="certificates" element={<Certificates />} />
                 <Route path="members" element={<Dashboard />} />
                 <Route path="zones" element={<Dashboard />} />
                 <Route path="statistics" element={<Dashboard />} />
                 <Route path="pastors" element={<Dashboard />} />
                 {/* Add more protected routes here */}
               </Route>
-              
+
               {/* Redirect from old index to dashboard for authenticated users */}
               <Route path="/index" element={<Navigate to="/dashboard" replace />} />
-              
+
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
@@ -57,6 +61,6 @@ const App = () => (
       </NotificationProvider>
     </AuthProvider>
   </QueryClientProvider>
-);
+)
 
-export default App;
+export default App
