@@ -70,8 +70,8 @@ export const Profile: React.FC = () => {
     switch (state.user.role) {
       case 'member': return 'secondary' as const;
       case 'zone-leader': return 'default' as const;
-      case 'pastor': return 'destructive' as const;
-      case 'parish-pastor': return 'destructive' as const;
+      case 'pastor': return 'default' as const;
+      case 'parish-pastor': return 'default' as const;
       default: return 'secondary' as const;
     }
   };
