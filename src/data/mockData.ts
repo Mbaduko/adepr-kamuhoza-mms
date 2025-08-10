@@ -156,7 +156,7 @@ export const mockCertificateRequests: CertificateRequest[] = [
     approvals: {
       level1: { approvedBy: 'Sarah Johnson', date: '2024-01-16', comments: 'Documents verified' },
       level2: { approvedBy: 'Rev. Michael Brown', date: '2024-01-17', comments: 'Approved for processing' },
-      level3: { approvedBy: 'Rev. Dr. David Wilson', date: '2024-01-18', comments: 'Final approval granted' }
+      level3: { approvedBy: 'Rev. Dr. David Wilson', date: '2024-01-18', comments: 'Parish Pastor approval granted' }
     }
   },
   {

@@ -5,8 +5,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { useAuth } from "@/context/AuthContext"
 import { getUserPermissions, mockMembers, mockZones, type CertificateRequest } from "@/data/mockData"
+import { useToast } from "@/hooks/use-toast"
 import {
   listAll,
   listByMemberId,
@@ -15,10 +27,10 @@ import {
   rejectRequest,
   getMemberZoneId,
 } from "@/data/certificates-store"
-import { Users, FileText, MapPin, Award, TrendingUp, CheckCircle, Clock, AlertCircle, ChevronRight, FileCheck, UserCheck, Shield, CheckSquare, User } from "lucide-react"
+import { Users, FileText, MapPin, Award, TrendingUp, CheckCircle, Clock, AlertCircle, ChevronRight, FileCheck, UserCheck, Shield, CheckSquare, User, XCircle, Eye } from "lucide-react"
 
 type ProgressStep = 0 | 1 | 2 | 3
-// 0 = Submitted, 1 = Level 1 approved, 2 = Level 2 approved, 3 = Final approved
+// 0 = Submitted, 1 = Level 1 approved, 2 = Level 2 approved, 3 = Parish Pastor approved
 
 function computeProgressStep(req: CertificateRequest): ProgressStep {
   if (req.status === "rejected") return 0
@@ -50,7 +62,7 @@ function ProgressBar({ step }: { step: ProgressStep }) {
     { name: "Submitted", icon: FileCheck },
     { name: "Zone Leader", icon: UserCheck },
     { name: "Pastor", icon: Shield },
-    { name: "Final", icon: CheckSquare }
+    { name: "Parish Pastor", icon: CheckSquare }
   ]
   
   return (
@@ -109,24 +121,33 @@ function RequestMeta({ req }: { req: CertificateRequest }) {
 
 export const Dashboard: React.FC = () => {
   const { state } = useAuth()
+  const { toast } = useToast()
   const user = state.user
   const userRole = user?.role
 
   const [requests, setRequests] = React.useState<CertificateRequest[]>([])
-  const [pendingL1, setPendingL1] = React.useState<CertificateRequest[]>([])
   const [busyId, setBusyId] = React.useState<string | null>(null)
+
+  // Get recent requests for different user types
+  const myRecentRequests = React.useMemo(() => {
+    if (userRole === "member") {
+      return requests.filter(req => req.memberId === user?.id).slice(0, 3)
+    }
+    return []
+  }, [requests, user?.id, userRole])
+
+  const zoneRecentRequests = React.useMemo(() => {
+    if (userRole === "zone-leader" && user?.zoneId) {
+      return requests.filter(req => req.memberId !== user?.id).slice(0, 5)
+    }
+    return []
+  }, [requests, user?.id, user?.zoneId, userRole])
 
   const permissions = React.useMemo(() => (user ? getUserPermissions(user.role) : ({} as any)), [user])
 
   const refresh = React.useCallback(() => {
     const all = listAll()
     setRequests(all)
-
-    if (user?.role === "zone-leader" && user.zoneId) {
-      setPendingL1(listPendingLevel1ForZone(user.zoneId))
-    } else {
-      setPendingL1([])
-    }
   }, [user])
 
   React.useEffect(() => {
@@ -160,7 +181,6 @@ export const Dashboard: React.FC = () => {
       return {
         type: "zone-leader" as const,
         zoneMembers: zoneMembers.length,
-        pendingApprovals: user.zoneId ? listPendingLevel1ForZone(user.zoneId).length : 0,
         ...baseStats,
       }
     }
@@ -263,15 +283,7 @@ export const Dashboard: React.FC = () => {
     }
   }
 
-  // Data sets for the new sections
-  const myRecentRequests = userRole === "member" ? listByMemberId(user.id).slice(0, 5) : []
 
-  const zoneRecentRequests =
-    userRole === "zone-leader" && user.zoneId
-      ? listAll()
-          .filter((r) => getMemberZoneId(r.memberId) === user.zoneId)
-          .slice(0, 5)
-      : []
 
   const canApproveLevel1 = userRole === "zone-leader" && !!user.zoneId
 
@@ -294,9 +306,106 @@ export const Dashboard: React.FC = () => {
       setBusyId(id)
       rejectRequest({ id, level: 1, approvedBy: user.name, reason: reason || "No reason provided" })
       refresh()
+      toast({ title: "Request Rejected", description: "The certificate request has been rejected." })
+    } catch (error) {
+      console.error("Failed to reject request:", error)
+      toast({ title: "Error", description: "Failed to reject request. Please try again.", variant: "destructive" })
     } finally {
       setBusyId(null)
     }
+  }
+
+  // Approval action components
+  const ApproveRejectActions: React.FC<{ req: CertificateRequest }> = ({ req }) => {
+    const [openApprove, setOpenApprove] = React.useState(false)
+    const [openReject, setOpenReject] = React.useState(false)
+    const [comment, setComment] = React.useState("")
+
+    const approve = () => {
+      approveRequest({ id: req.id, level: 1, approvedBy: user.name, comments: comment })
+      setComment("")
+      setOpenApprove(false)
+      refresh()
+      toast({ title: "Request Approved", description: `Certificate request approved successfully.` })
+    }
+
+    const reject = () => {
+      if (!comment.trim()) {
+        toast({ title: "Reason required", description: "Please provide a reason to reject.", variant: "destructive" })
+        return
+      }
+      rejectRequest({ id: req.id, level: 1, approvedBy: user.name, reason: comment.trim() })
+      setComment("")
+      setOpenReject(false)
+      refresh()
+      toast({ title: "Request Rejected", description: `Certificate request rejected.` })
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <Dialog open={openApprove} onOpenChange={setOpenApprove}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="gap-1">
+              <CheckCircle className="h-4 w-4" />
+              Approve
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Approve Request</DialogTitle>
+              <DialogDescription>Optionally add a comment for the approval.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor={`approve-comment-${req.id}`}>Comment</Label>
+              <Textarea
+                id={`approve-comment-${req.id}`}
+                placeholder="Optional comment"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpenApprove(false)}>
+                Cancel
+              </Button>
+              <Button onClick={approve}>Approve</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={openReject} onOpenChange={setOpenReject}>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="destructive" className="gap-1">
+              <XCircle className="h-4 w-4" />
+              Reject
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reject Request</DialogTitle>
+              <DialogDescription>Please provide a reason for rejection.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor={`reject-reason-${req.id}`}>Reason</Label>
+              <Textarea
+                id={`reject-reason-${req.id}`}
+                placeholder="Enter reason to reject"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpenReject(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={reject}>
+                Reject
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    )
   }
 
   return (
@@ -502,8 +611,7 @@ export const Dashboard: React.FC = () => {
       )}
 
       {userRole === "zone-leader" && (
-        <div className="grid gap-8 lg:grid-cols-2">
-          <Card className="border-2 border-primary/10 shadow-lg">
+        <Card className="border-2 border-primary/10 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -547,109 +655,20 @@ export const Dashboard: React.FC = () => {
                       <div className="mt-4">
                         <ProgressBar step={step} />
                       </div>
+                      {req.status === "pending" && canApproveLevel1 && (
+                        <div className="mt-4 pt-4 border-t border-border/50">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">Action Required</span>
+                            <ApproveRejectActions req={req} />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )
                 })
               )}
             </CardContent>
           </Card>
-
-          {canApproveLevel1 && (
-            <Card className="border-2 border-primary/10 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <CheckCircle className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl">Pending Approvals</CardTitle>
-                    <CardDescription className="text-base">Level 1 approvals awaiting your action</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                {pendingL1.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                      <CheckCircle className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <p className="text-muted-foreground font-medium">No certificates need approval right now</p>
-                    <p className="text-sm text-muted-foreground mt-1">All pending requests have been processed</p>
-                  </div>
-                ) : (
-                  <div className="rounded-xl border-2 border-border/50 overflow-hidden">
-                    <Table>
-                      <TableCaption className="py-3 bg-muted/50">Level 1 approvals in your zone</TableCaption>
-                      <TableHeader>
-                        <TableRow className="bg-muted/30">
-                          <TableHead className="font-semibold">Member</TableHead>
-                          <TableHead className="font-semibold">Type</TableHead>
-                          <TableHead className="font-semibold">Requested</TableHead>
-                          <TableHead className="font-semibold">Status</TableHead>
-                          <TableHead className="text-right font-semibold">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {pendingL1.map((req) => (
-                          <TableRow key={req.id} className="hover:bg-muted/20 transition-colors">
-                            <TableCell className="font-medium">
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <User className="h-3 w-3 text-primary" />
-                                </div>
-                                {req.memberName}
-                              </div>
-                            </TableCell>
-                            <TableCell className="capitalize">
-                              <div className="flex items-center gap-2">
-                                <FileText className="h-3 w-3 text-muted-foreground" />
-                                {req.certificateType}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-3 w-3 text-muted-foreground" />
-                                {new Date(req.requestDate).toLocaleDateString()}
-                              </div>
-                            </TableCell>
-                            <TableCell>{statusBadge(req.status)}</TableCell>
-                            <TableCell className="text-right space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={busyId === req.id}
-                                onClick={() => handleReject(req.id)}
-                                className="hover:bg-destructive hover:text-destructive-foreground"
-                              >
-                                {busyId === req.id ? (
-                                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                ) : (
-                                  "Reject"
-                                )}
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                disabled={busyId === req.id} 
-                                onClick={() => handleApprove(req.id)}
-                                className="bg-success hover:bg-success/90"
-                              >
-                                {busyId === req.id ? (
-                                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                ) : (
-                                  "Approve"
-                                )}
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
       )}
     </div>
   )

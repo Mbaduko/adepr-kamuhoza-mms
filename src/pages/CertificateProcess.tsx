@@ -49,8 +49,8 @@ export const CertificateProcess: React.FC = () => {
     },
     {
       step: 4,
-      title: "Final Approval",
-      description: "Parish Pastor provides final approval and authorizes certificate generation",
+          title: "Parish Pastor Approval",
+    description: "Parish Pastor provides approval and authorizes certificate generation",
       icon: Award,
       status: "pending",
       color: "bg-muted text-muted-foreground"

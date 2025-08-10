@@ -91,11 +91,12 @@ function StatusBadge({ status }: { status: CertificateRequest["status"] }) {
 
 // Enhanced progress bar component - in sync with app colors
 function ProgressBar({ step }: { step: number }) {
-  const pct = step === 0 ? 33 : step === 1 ? 66 : 100;
+  const pct = step === 0 ? 25 : step === 1 ? 50 : step === 2 ? 75 : 100;
   const steps = [
     { name: "Submitted", icon: FileCheck },
     { name: "Zone Leader", icon: UserCheck },
-    { name: "Pastor", icon: Shield }
+    { name: "Pastor", icon: Shield },
+    { name: "Parish Pastor", icon: CheckSquare }
   ];
   
   return (
@@ -144,8 +145,9 @@ function ProgressBar({ step }: { step: number }) {
 
 function computeProgressStep(req: CertificateRequest): number {
   if (req.status === "rejected") return 0;
-  if (req.status === "approved") return 2;
+  if (req.status === "approved") return 3;
   // in-review or pending:
+  if (req.approvals.level3) return 3;
   if (req.approvals.level2) return 2;
   if (req.approvals.level1) return 1;
   return 0;
@@ -230,7 +232,7 @@ function RequestDetails({ req }: { req: CertificateRequest }) {
               <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
                 <Shield className="h-3 w-3 text-primary" />
               </div>
-              <div className="font-semibold text-foreground">Level 3 - Parish Pastor (Final)</div>
+              <div className="font-semibold text-foreground">Level 3 - Parish Pastor</div>
             </div>
             {req.approvals.level3 ? (
               <div className="text-sm text-muted-foreground ml-8">
@@ -802,8 +804,8 @@ export const Certificates: React.FC = () => {
               {canApproveL3 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Level 3 Approvals (Parish Pastor - Final)</CardTitle>
-                    <CardDescription>Requests awaiting final approval.</CardDescription>
+                                      <CardTitle>Level 3 Approvals (Parish Pastor)</CardTitle>
+                  <CardDescription>Requests awaiting parish pastor approval.</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="mb-4 text-sm text-muted-foreground">Pending: {l3Summary.total}</div>

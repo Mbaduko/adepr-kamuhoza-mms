@@ -70,7 +70,7 @@ export function approveRequest(opts: { id: string; level: Level; approvedBy: str
     row.status = "in-review"
   } else if (opts.level === 2) {
     row.approvals.level2 = { approvedBy: opts.approvedBy, date: now, comments: opts.comments }
-    // still in-review awaiting final
+    // still in-review awaiting parish pastor
     row.status = "in-review"
   } else if (opts.level === 3) {
     row.approvals.level3 = { approvedBy: opts.approvedBy, date: now, comments: opts.comments }
