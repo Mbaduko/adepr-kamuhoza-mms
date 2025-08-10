@@ -14,8 +14,35 @@ import { Dashboard } from "@/pages/Dashboard"
 import { Profile } from "@/pages/Profile"
 import { Certificates } from "@/pages/Certificates"
 import NotFound from "./pages/NotFound"
+import { useAuth } from "@/context/AuthContext"
+import { Loader2 } from "lucide-react"
 
 const queryClient = new QueryClient()
+
+// Component to handle home page routing
+const HomePage = () => {
+  const { state } = useAuth();
+  
+  // Show loading while auto-login is happening
+  if (state.loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">Logging you in...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // If user is authenticated, redirect to dashboard
+  if (state.isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  // If not authenticated, show landing page
+  return <Landing />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -26,12 +53,14 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Home page - shows landing or redirects to dashboard */}
+              <Route path="/" element={<HomePage />} />
+              
               {/* Public Routes */}
-              <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/certificate-process" element={<CertificateProcess />} />
 
-              {/* Protected Routes */}
+              {/* Dashboard as main protected route */}
               <Route
                 path="/dashboard"
                 element={
@@ -50,8 +79,9 @@ const App = () => (
                 {/* Add more protected routes here */}
               </Route>
 
-              {/* Redirect from old index to dashboard for authenticated users */}
+              {/* Redirect old routes to dashboard */}
               <Route path="/index" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/landing" element={<Navigate to="/" replace />} />
 
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
