@@ -37,7 +37,7 @@ const HomePage = () => {
   
   // If user is authenticated, redirect to dashboard
   if (state.isAuthenticated) {
-    return <Navigate to="/dashboard/profile" replace />;
+    return <Navigate to="/dashboard/certificates" replace />;
   }
   
   // If not authenticated, show landing page
