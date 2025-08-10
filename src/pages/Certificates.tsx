@@ -730,7 +730,7 @@ export const Certificates: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="my">
+      <Tabs defaultValue={(canApproveL1 || canApproveL2 || canApproveL3) ? "approvals" : "my"}>
         <TabsList className="mb-6 bg-gray-100">
           <TabsTrigger value="my" className="data-[state=active]:bg-white data-[state=active]:text-gray-900">My Requests</TabsTrigger>
           {(canApproveL1 || canApproveL2 || canApproveL3) && (
