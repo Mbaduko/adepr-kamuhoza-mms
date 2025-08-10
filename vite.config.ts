@@ -8,7 +8,6 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
-  base: mode!== 'development'? "/adepr-kamuhoza-mms/" : "/",
   plugins: [
     react(),
   ],
