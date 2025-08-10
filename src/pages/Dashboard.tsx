@@ -15,7 +15,7 @@ import {
   rejectRequest,
   getMemberZoneId,
 } from "@/data/certificates-store"
-import { Users, FileText, MapPin, Award, TrendingUp, CheckCircle, Clock, AlertCircle, ChevronRight } from "lucide-react"
+import { Users, FileText, MapPin, Award, TrendingUp, CheckCircle, Clock, AlertCircle, ChevronRight, FileCheck, UserCheck, Shield, CheckSquare, User } from "lucide-react"
 
 type ProgressStep = 0 | 1 | 2 | 3
 // 0 = Submitted, 1 = Level 1 approved, 2 = Level 2 approved, 3 = Final approved
@@ -46,16 +46,52 @@ function statusBadge(status: CertificateRequest["status"]) {
 
 function ProgressBar({ step }: { step: ProgressStep }) {
   const pct = step === 0 ? 25 : step === 1 ? 50 : step === 2 ? 75 : 100
+  const steps = [
+    { name: "Submitted", icon: FileCheck },
+    { name: "Zone Leader", icon: UserCheck },
+    { name: "Pastor", icon: Shield },
+    { name: "Final", icon: CheckSquare }
+  ]
+  
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-        <span>Submitted</span>
-        <span>Zone Leader</span>
-        <span>Pastor</span>
-        <span>Final</span>
+    <div className="w-full space-y-3">
+      {/* Progress Steps */}
+      <div className="flex items-center justify-between">
+        {steps.map((stepItem, index) => {
+          const Icon = stepItem.icon;
+          return (
+            <div key={index} className="flex flex-col items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300 ${
+                index <= step 
+                  ? 'bg-primary text-primary-foreground shadow-lg' 
+                  : 'bg-muted text-muted-foreground border border-border'
+              }`}>
+                <Icon className="h-4 w-4" />
+              </div>
+              <span className={`text-xs mt-1 text-center transition-colors duration-300 ${
+                index <= step ? 'text-primary font-medium' : 'text-muted-foreground'
+              }`}>
+                {stepItem.name}
+              </span>
+            </div>
+          );
+        })}
       </div>
-      <div className="h-2 w-full rounded-full bg-muted">
-        <div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+      
+      {/* Progress Bar */}
+      <div className="relative">
+        <div className="h-3 w-full rounded-full bg-muted overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-500 ease-out shadow-sm" 
+            style={{ width: `${pct}%` }} 
+          />
+        </div>
+        {/* Progress percentage */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-xs font-medium text-primary-foreground bg-primary px-2 py-1 rounded-full shadow-sm">
+            {pct}%
+          </span>
+        </div>
       </div>
     </div>
   )
@@ -412,25 +448,49 @@ export const Dashboard: React.FC = () => {
 
       {/* Recent Certificate Progress + Approval Queue */}
       {userRole === "member" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>My Certificate Progress</CardTitle>
-            <CardDescription>Track the status of your recent requests</CardDescription>
+        <Card className="border-2 border-primary/10 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Award className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-xl">My Certificate Progress</CardTitle>
+                <CardDescription className="text-base">Track the status of your recent requests</CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6 p-6">
             {myRecentRequests.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No requests yet.</p>
+              <div className="text-center py-8">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-muted-foreground font-medium">No certificate requests yet</p>
+                <p className="text-sm text-muted-foreground mt-1">Start by requesting your first certificate</p>
+                <Button className="mt-4" asChild>
+                  <a href="/dashboard/certificates">Request Certificate</a>
+                </Button>
+              </div>
             ) : (
               myRecentRequests.map((req) => {
                 const step = computeProgressStep(req)
                 return (
-                  <div key={req.id} className="rounded-lg border p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium text-sm">{req.certificateType} Certificate</div>
+                  <div key={req.id} className="rounded-xl border-2 border-border/50 p-6 hover:border-primary/30 transition-all duration-300 hover:shadow-md">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <FileText className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-foreground">{req.certificateType} Certificate</div>
+                          <div className="text-sm text-muted-foreground">Request #{req.id.slice(0, 8)}</div>
+                        </div>
+                      </div>
                       <div>{statusBadge(req.status)}</div>
                     </div>
                     <RequestMeta req={req} />
-                    <div className="mt-3">
+                    <div className="mt-4">
                       <ProgressBar step={step} />
                     </div>
                   </div>
@@ -442,29 +502,49 @@ export const Dashboard: React.FC = () => {
       )}
 
       {userRole === "zone-leader" && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Zone Requests</CardTitle>
-              <CardDescription>Latest certificate requests from your zone</CardDescription>
+        <div className="grid gap-8 lg:grid-cols-2">
+          <Card className="border-2 border-primary/10 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Recent Zone Requests</CardTitle>
+                  <CardDescription className="text-base">Latest certificate requests from your zone</CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6 p-6">
               {zoneRecentRequests.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No recent requests in your zone.</p>
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <Users className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <p className="text-muted-foreground font-medium">No recent requests in your zone</p>
+                  <p className="text-sm text-muted-foreground mt-1">Zone members will appear here when they submit requests</p>
+                </div>
               ) : (
                 zoneRecentRequests.map((req) => {
                   const step = computeProgressStep(req)
                   return (
-                    <div key={req.id} className="rounded-lg border p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-sm">
-                          <span className="font-medium">{req.memberName}</span>{" "}
-                          <span className="text-muted-foreground">requested {req.certificateType} certificate</span>
+                    <div key={req.id} className="rounded-xl border-2 border-border/50 p-6 hover:border-primary/30 transition-all duration-300 hover:shadow-md">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <User className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-foreground">{req.memberName}</div>
+                            <div className="text-sm text-muted-foreground">
+                              requested {req.certificateType} certificate
+                            </div>
+                          </div>
                         </div>
                         <div>{statusBadge(req.status)}</div>
                       </div>
                       <RequestMeta req={req} />
-                      <div className="mt-3">
+                      <div className="mt-4">
                         <ProgressBar step={step} />
                       </div>
                     </div>
@@ -475,33 +555,63 @@ export const Dashboard: React.FC = () => {
           </Card>
 
           {canApproveLevel1 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Pending Approvals</CardTitle>
-                <CardDescription>Level 1 approvals awaiting your action</CardDescription>
+            <Card className="border-2 border-primary/10 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl">Pending Approvals</CardTitle>
+                    <CardDescription className="text-base">Level 1 approvals awaiting your action</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="p-6">
                 {pendingL1.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No certificates need approval right now.</p>
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <p className="text-muted-foreground font-medium">No certificates need approval right now</p>
+                    <p className="text-sm text-muted-foreground mt-1">All pending requests have been processed</p>
+                  </div>
                 ) : (
-                  <div className="rounded-md border">
+                  <div className="rounded-xl border-2 border-border/50 overflow-hidden">
                     <Table>
-                      <TableCaption>Level 1 approvals in your zone</TableCaption>
+                      <TableCaption className="py-3 bg-muted/50">Level 1 approvals in your zone</TableCaption>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead>Member</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Requested</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
+                        <TableRow className="bg-muted/30">
+                          <TableHead className="font-semibold">Member</TableHead>
+                          <TableHead className="font-semibold">Type</TableHead>
+                          <TableHead className="font-semibold">Requested</TableHead>
+                          <TableHead className="font-semibold">Status</TableHead>
+                          <TableHead className="text-right font-semibold">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {pendingL1.map((req) => (
-                          <TableRow key={req.id}>
-                            <TableCell className="font-medium">{req.memberName}</TableCell>
-                            <TableCell className="capitalize">{req.certificateType}</TableCell>
-                            <TableCell>{new Date(req.requestDate).toLocaleDateString()}</TableCell>
+                          <TableRow key={req.id} className="hover:bg-muted/20 transition-colors">
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <User className="h-3 w-3 text-primary" />
+                                </div>
+                                {req.memberName}
+                              </div>
+                            </TableCell>
+                            <TableCell className="capitalize">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-3 w-3 text-muted-foreground" />
+                                {req.certificateType}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-3 w-3 text-muted-foreground" />
+                                {new Date(req.requestDate).toLocaleDateString()}
+                              </div>
+                            </TableCell>
                             <TableCell>{statusBadge(req.status)}</TableCell>
                             <TableCell className="text-right space-x-2">
                               <Button
@@ -509,11 +619,25 @@ export const Dashboard: React.FC = () => {
                                 variant="outline"
                                 disabled={busyId === req.id}
                                 onClick={() => handleReject(req.id)}
+                                className="hover:bg-destructive hover:text-destructive-foreground"
                               >
-                                {busyId === req.id ? "..." : "Reject"}
+                                {busyId === req.id ? (
+                                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  "Reject"
+                                )}
                               </Button>
-                              <Button size="sm" disabled={busyId === req.id} onClick={() => handleApprove(req.id)}>
-                                {busyId === req.id ? "..." : "Approve"}
+                              <Button 
+                                size="sm" 
+                                disabled={busyId === req.id} 
+                                onClick={() => handleApprove(req.id)}
+                                className="bg-success hover:bg-success/90"
+                              >
+                                {busyId === req.id ? (
+                                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  "Approve"
+                                )}
                               </Button>
                             </TableCell>
                           </TableRow>

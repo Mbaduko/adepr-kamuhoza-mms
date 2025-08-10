@@ -115,3 +115,73 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  /* Professional sidebar styling with right border */
+  [data-sidebar="sidebar"] {
+    margin-top: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-right: 1px solid hsl(var(--border)) !important;
+  }
+  
+  /* Target the sidebar container for clean positioning */
+  div[class*="fixed"][class*="inset-y-0"][class*="z-10"] {
+    top: 4rem !important;
+    height: calc(100vh - 4rem) !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-right: 1px solid hsl(var(--border)) !important;
+  }
+  
+  /* Improve sidebar content positioning */
+  [data-sidebar="sidebar"] > * {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    border: none !important;
+  }
+  
+  /* Better spacing for sidebar elements */
+  [data-sidebar="sidebar"] .p-0 {
+    padding: 0.5rem !important;
+  }
+  
+  [data-sidebar="sidebar"] .pb-4 {
+    padding-bottom: 1rem !important;
+  }
+  
+  [data-sidebar="sidebar"] .py-2 {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+  
+  [data-sidebar="sidebar"] .mb-4 {
+    margin-bottom: 1rem !important;
+  }
+  
+  [data-sidebar="sidebar"] .mb-2 {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  /* Ensure top bar stays sticky and doesn't bounce */
+  header[class*="sticky"] {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
+    background: hsl(var(--card)) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+  
+  /* Ensure main content scrolls independently */
+  main[class*="overflow-y-auto"] {
+    height: 100% !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Prevent body scroll when main content is scrollable */
+  body {
+    overflow: hidden !important;
+  }
+}

@@ -7,11 +7,14 @@ import { AppTopbar } from './AppTopbar';
 export const AppLayout: React.FC = () => {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar />
-        <div className="flex-1 flex flex-col">
-          <AppTopbar />
-          <main className="flex-1 p-6 bg-background">
+      <div className="min-h-screen w-full">
+        {/* Top bar spans full width - sticky */}
+        <AppTopbar />
+        
+        {/* Main content area with sidebar and content */}
+        <div className="flex h-[calc(100vh-4rem)]">
+          <AppSidebar />
+          <main className="flex-1 p-6 pt-8 bg-background overflow-y-auto">
             <Outlet />
           </main>
         </div>

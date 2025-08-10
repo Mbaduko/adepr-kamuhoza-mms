@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -21,17 +21,49 @@ import {
   Award,
   Shield,
   UserCheck,
-  Crown
+  Crown,
+  LogOut,
+  Settings
 } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
 import { getUserPermissions } from '@/data/mockData';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export const AppSidebar: React.FC = () => {
   const { state: sidebarState } = useSidebar();
-  const { state } = useAuth();
+  const { state, logout } = useAuth();
+  const navigate = useNavigate();
   
   if (!state.user) return null;
+
+  const handleLogout = () => {
+    logout()
+    navigate("/")
+  }
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+  }
+
+  const getRoleDisplay = (role: string) => {
+    return role
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
+  }
 
   const permissions = getUserPermissions(state.user.role);
 
@@ -97,43 +129,17 @@ export const AppSidebar: React.FC = () => {
 
   const navigationItems = getNavigationItems();
 
-  const getRoleIcon = () => {
-    switch (state.user.role) {
-      case 'member': return User;
-      case 'zone-leader': return UserCheck;
-      case 'pastor': return Crown;
-      case 'parish-pastor': return Shield;
-      default: return User;
-    }
-  };
-
-  const RoleIcon = getRoleIcon();
-
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
         {/* Sidebar Toggle */}
-        <div className="p-2">
+        <div className="p-3">
           <SidebarTrigger />
         </div>
-        {/* User Info */}
-        <SidebarGroup className="pb-4">
-        <SidebarGroupLabel className="flex items-center gap-2 mb-4">
-            <RoleIcon className="h-4 w-4" />
-            {sidebarState === 'expanded' && (
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">{state.user.name}</span>
-                <span className="text-xs text-muted-foreground capitalize">
-                  {state.user.role.replace('-', ' ')}
-                </span>
-              </div>
-            )}
-          </SidebarGroupLabel>
-        </SidebarGroup>
 
         {/* Main Navigation */}
-        <SidebarGroup className="py-2">
-          <SidebarGroupLabel className="mb-2">Main</SidebarGroupLabel>
+        <SidebarGroup className="py-3">
+          <SidebarGroupLabel className="mb-3 px-3">Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {navigationItems.main.map((item) => (
@@ -160,8 +166,8 @@ export const AppSidebar: React.FC = () => {
 
         {/* Admin Navigation */}
         {navigationItems.admin.length > 0 && (
-          <SidebarGroup className="py-2">
-            <SidebarGroupLabel className="mb-2">Management</SidebarGroupLabel>
+          <SidebarGroup className="py-3">
+            <SidebarGroupLabel className="mb-3 px-3">Management</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="space-y-1">
                 {navigationItems.admin.map((item) => (
@@ -189,8 +195,8 @@ export const AppSidebar: React.FC = () => {
 
         {/* Super Admin Navigation */}
         {navigationItems.superAdmin.length > 0 && (
-          <SidebarGroup className="py-2">
-            <SidebarGroupLabel className="mb-2">Administration</SidebarGroupLabel>
+          <SidebarGroup className="py-3">
+            <SidebarGroupLabel className="mb-3 px-3">Administration</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="space-y-1">
                 {navigationItems.superAdmin.map((item) => (
@@ -215,6 +221,89 @@ export const AppSidebar: React.FC = () => {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        {/* User Info - Improved to match top bar */}
+        <SidebarGroup className="mt-auto pt-6">
+          <div className="px-3 pb-3">
+            {sidebarState === 'expanded' ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <div className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-sidebar-accent transition-colors">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={state.user.profileImage || "/placeholder.svg"} alt={state.user.name} />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                        {getInitials(state.user.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-sidebar-foreground">{state.user.name}</span>
+                      <span className="text-xs text-sidebar-muted-foreground">{getRoleDisplay(state.user.role)}</span>
+                    </div>
+                  </div>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium text-sm">{state.user.name}</p>
+                      <p className="w-[200px] truncate text-xs text-muted-foreground">{state.user.email}</p>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/dashboard/profile")} className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 mx-auto">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={state.user.profileImage || "/placeholder.svg"} alt={state.user.name} />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                        {getInitials(state.user.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium text-sm">{state.user.name}</p>
+                      <p className="w-[200px] truncate text-xs text-muted-foreground">{state.user.email}</p>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/dashboard/profile")} className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );
