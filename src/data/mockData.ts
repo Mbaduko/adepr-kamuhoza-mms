@@ -200,6 +200,7 @@ export const getUserPermissions = (role: UserRole) => {
         canViewOwnRequests: true,
         canViewZoneMembers: true,
         canEditZoneMembers: true,
+        canDeleteZoneMembers: true,
         canApproveLevel1: true,
         canRequestOnBehalf: true,
       };
@@ -211,6 +212,7 @@ export const getUserPermissions = (role: UserRole) => {
         canViewOwnRequests: true,
         canViewAllMembers: true,
         canEditAllMembers: true,
+        canDeleteAllMembers: true,
         canManageZones: true,
         canAssignZoneLeaders: true,
         canApproveLevel2: true,
@@ -224,6 +226,7 @@ export const getUserPermissions = (role: UserRole) => {
         canViewOwnRequests: true,
         canViewAllMembers: true,
         canEditAllMembers: true,
+        canDeleteAllMembers: true,
         canManageZones: true,
         canAssignZoneLeaders: true,
         canManagePastors: true,

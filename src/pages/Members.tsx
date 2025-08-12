@@ -469,7 +469,7 @@ export const Members: React.FC = () => {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {permissions?.canEditMembers && (
+                          {(permissions?.canEditZoneMembers || permissions?.canEditAllMembers) && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -478,7 +478,7 @@ export const Members: React.FC = () => {
                               <Edit className="h-4 w-4" />
                             </Button>
                           )}
-                          {permissions?.canDeleteMembers && (
+                          {(permissions?.canDeleteZoneMembers || permissions?.canDeleteAllMembers) && (
                             <Button
                               size="sm"
                               variant="outline"
