@@ -180,8 +180,8 @@
     overflow-y: auto !important;
   }
   
-  /* Prevent body scroll when main content is scrollable */
-  body {
+  /* Prevent body scroll when main content is scrollable - only for dashboard */
+  body.dashboard-layout {
     overflow: hidden !important;
   }
 }

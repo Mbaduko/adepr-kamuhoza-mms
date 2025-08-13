@@ -18,7 +18,6 @@ import { Zones } from "@/pages/Zones"
 import { Pastors } from "@/pages/Pastors"
 import NotFound from "./pages/NotFound"
 import { useAuth } from "@/context/AuthContext"
-import { Loader2 } from "lucide-react"
 
 const queryClient = new QueryClient()
 
@@ -26,21 +25,9 @@ const queryClient = new QueryClient()
 const HomePage = () => {
   const { state } = useAuth();
   
-  // Show loading while auto-login is happening
-  if (state.loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">Logging you in...</p>
-        </div>
-      </div>
-    );
-  }
-  
   // If user is authenticated, redirect to dashboard
   if (state.isAuthenticated) {
-    return <Navigate to="/dashboard/pastors" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   
   // If not authenticated, show landing page

@@ -11,8 +11,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
 
   if (!state.isAuthenticated) {
-    // Redirect to home page instead of login to allow auto-login to work
-    return <Navigate to="/" state={{ from: location }} replace />;
+    // Redirect to login page since auto-login is disabled
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

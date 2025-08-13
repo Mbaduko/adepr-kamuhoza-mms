@@ -126,14 +126,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     dispatch({ type: 'LOGOUT' });
   };
 
-  // Auto-login effect - immediately log in as parish-pastor
-  useEffect(() => {
-    if (!state.isAuthenticated && !state.loading) {
-      console.log('Auto-logging in as parish-pastor user...');
-      login('parish-pastor');
-    }
-  }, []); // Only run once on mount
-
   return (
     <AuthContext.Provider value={{ 
       state, 

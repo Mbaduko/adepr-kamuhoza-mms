@@ -5,6 +5,16 @@ import { AppSidebar } from './AppSidebar';
 import { AppTopbar } from './AppTopbar';
 
 export const AppLayout: React.FC = () => {
+  React.useEffect(() => {
+    // Add dashboard-layout class to body when in dashboard
+    document.body.classList.add('dashboard-layout');
+    
+    // Cleanup function to remove the class when component unmounts
+    return () => {
+      document.body.classList.remove('dashboard-layout');
+    };
+  }, []);
+
   return (
     <SidebarProvider>
       <div className="min-h-screen w-full">
