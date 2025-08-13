@@ -350,8 +350,6 @@ export const getUserPermissions = (role: UserRole) => {
       return {
         canViewOwnProfile: true,
         canEditOwnProfile: true,
-        canRequestCertificate: true,
-        canViewOwnRequests: true,
         canViewAllMembers: true,
         canEditAllMembers: true,
         canDeleteAllMembers: true,

@@ -20,6 +20,7 @@ import { useAuth } from "@/context/AuthContext"
 import { getUserPermissions, mockMembers, mockZones, type CertificateRequest } from "@/data/mockData"
 import { useToast } from "@/hooks/use-toast"
 import { CertificateRequestView } from "@/components/CertificateRequestView"
+import { useNavigate } from "react-router-dom"
 import {
   listAll,
   listByMemberId,
@@ -28,7 +29,7 @@ import {
   rejectRequest,
   getMemberZoneId,
 } from "@/data/certificates-store"
-import { Users, FileText, MapPin, Award, TrendingUp, CheckCircle, Clock, AlertCircle, ChevronRight, FileCheck, UserCheck, Shield, CheckSquare, User, XCircle, Eye } from "lucide-react"
+import { Users, FileText, MapPin, Award, TrendingUp, CheckCircle, Clock, AlertCircle, ChevronRight, FileCheck, UserCheck, Shield, CheckSquare, User, XCircle, Eye, RefreshCw } from "lucide-react"
 
 type ProgressStep = 0 | 1 | 2 | 3
 // 0 = Submitted, 1 = Level 1 approved, 2 = Level 2 approved, 3 = Parish Pastor approved
@@ -123,6 +124,7 @@ function RequestMeta({ req }: { req: CertificateRequest }) {
 export const Dashboard: React.FC = () => {
   const { state } = useAuth()
   const { toast } = useToast()
+  const navigate = useNavigate()
   const user = state.user
   const userRole = user?.role
 
@@ -177,10 +179,8 @@ export const Dashboard: React.FC = () => {
 
   const parishPastorRelevantRequests = React.useMemo(() => {
     if (userRole === "parish-pastor") {
-      // Parish pastors see: requests needing their approval (level3) + requests they've approved + their own requests
+      // Parish pastors see: requests needing their approval (level3) + requests they've approved
       const relevantRequests = requests.filter(req => {
-        // Include their own requests
-        if (req.memberId === user?.id) return true
         // Include requests needing their approval (have level2 but no level3)
         if (req.status === "in-review" && req.approvals.level2 && !req.approvals.level3) return true
         // Include requests they've approved (level3)
@@ -278,12 +278,12 @@ export const Dashboard: React.FC = () => {
       variant: "default" | "outline"
     }[] = []
 
-    if (permissions?.canRequestCertificate) {
+    if (permissions?.canRequestCertificate && userRole !== "parish-pastor") {
       actions.push({
         title: "Request Certificate",
         description: "Submit a new certificate request",
         icon: Award,
-        href: "/certificates/new",
+        href: "/dashboard/certificates",
         variant: "default",
       })
     }
@@ -293,7 +293,7 @@ export const Dashboard: React.FC = () => {
         title: "Manage Members",
         description: "View and manage zone members",
         icon: Users,
-        href: "/members",
+        href: "/dashboard/members",
         variant: "outline",
       })
     }
@@ -303,7 +303,7 @@ export const Dashboard: React.FC = () => {
         title: "Manage Zones",
         description: "Create and assign zones",
         icon: MapPin,
-        href: "/zones",
+        href: "/dashboard/zones",
         variant: "outline",
       })
     }
@@ -313,10 +313,30 @@ export const Dashboard: React.FC = () => {
         title: "View Statistics",
         description: "Church analytics and reports",
         icon: TrendingUp,
-        href: "/statistics",
+        href: "/dashboard/statistics",
         variant: "outline",
       })
     }
+
+    // Add certificate management for approvers
+    if (permissions?.canApproveLevel1 || permissions?.canApproveLevel2 || permissions?.canApproveLevel3) {
+      actions.push({
+        title: "Certificate Approvals",
+        description: "Review and approve certificate requests",
+        icon: FileText,
+        href: "/dashboard/certificates",
+        variant: "outline",
+      })
+    }
+
+    // Add profile management
+    actions.push({
+      title: "My Profile",
+      description: "View and update your profile information",
+      icon: User,
+      href: "/dashboard/profile",
+      variant: "outline",
+    })
 
     return actions
   }
@@ -487,9 +507,20 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Welcome back, {user.name}</h1>
-        <p className="text-muted-foreground mt-2">{"Here's what's happening in your church community today."}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Welcome back, {user.name}</h1>
+          <p className="text-muted-foreground mt-2">{"Here's what's happening in your church community today."}</p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={refresh}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Refresh
+        </Button>
       </div>
 
       {/* Stats Grid */}
@@ -597,14 +628,69 @@ export const Dashboard: React.FC = () => {
                     <p className="text-sm text-muted-foreground">{action.description}</p>
                   </div>
                 </div>
-                <Button variant={action.variant} size="sm" asChild>
-                  <a href={action.href} className="inline-flex items-center">
-                    Go
-                    <ChevronRight className="ml-1 h-4 w-4" />
-                  </a>
+                <Button 
+                  variant={action.variant} 
+                  size="sm" 
+                  onClick={() => navigate(action.href)}
+                  className="inline-flex items-center"
+                >
+                  Go
+                  <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
               </div>
             ))}
+            
+            {/* Immediate Actions */}
+            {userRole === "member" && (
+              <div className="pt-4 border-t">
+                <h4 className="font-medium mb-3 text-sm text-muted-foreground">Immediate Actions</h4>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => navigate("/dashboard/certificates")}
+                    className="flex-1"
+                  >
+                    <Award className="h-4 w-4 mr-2" />
+                    New Certificate Request
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {(userRole === "zone-leader" || userRole === "pastor") && (
+              <div className="pt-4 border-t">
+                <h4 className="font-medium mb-3 text-sm text-muted-foreground">Immediate Actions</h4>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => navigate("/dashboard/certificates")}
+                    className="flex-1"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Review Requests
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {userRole === "parish-pastor" && (
+              <div className="pt-4 border-t">
+                <h4 className="font-medium mb-3 text-sm text-muted-foreground">Immediate Actions</h4>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => navigate("/dashboard/certificates")}
+                    className="flex-1"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Final Approvals
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -653,8 +739,8 @@ export const Dashboard: React.FC = () => {
                 </div>
                 <p className="text-muted-foreground font-medium">No certificate requests yet</p>
                 <p className="text-sm text-muted-foreground mt-1">Start by requesting your first certificate</p>
-                <Button className="mt-4" asChild>
-                  <a href="/dashboard/certificates">Request Certificate</a>
+                <Button className="mt-4" onClick={() => navigate("/dashboard/certificates")}>
+                  Request Certificate
                 </Button>
               </div>
             ) : (
@@ -859,7 +945,7 @@ export const Dashboard: React.FC = () => {
                 <FileText className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-xl">My Certificate Requests</CardTitle>
+                <CardTitle className="text-xl">Certificate Approvals</CardTitle>
                 <CardDescription className="text-base">Requests needing your final approval and ones you've reviewed</CardDescription>
               </div>
             </div>

@@ -83,10 +83,10 @@ export const AppSidebar: React.FC = () => {
         show: permissions.canViewOwnProfile 
       },
       { 
-        title: 'Certificate Requests', 
+        title: state.user.role === 'parish-pastor' ? 'Certificate Approvals' : 'Certificate Requests', 
         url: '/dashboard/certificates', 
         icon: Award,
-        show: permissions.canRequestCertificate 
+        show: permissions.canRequestCertificate || permissions.canApproveLevel1 || permissions.canApproveLevel2 || permissions.canApproveLevel3
       },
     ];
 

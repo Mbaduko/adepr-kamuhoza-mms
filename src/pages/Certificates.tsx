@@ -495,7 +495,7 @@ export const Certificates: React.FC = () => {
   const [selectedRequest, setSelectedRequest] = React.useState<CertificateRequest | null>(null)
   const [openRequestView, setOpenRequestView] = React.useState(false)
 
-  const canRequest = user.role === "member" || user.role === "zone-leader"
+  const canRequest = (user.role === "member" || user.role === "zone-leader") && user.role !== "parish-pastor"
   const canApproveL1 = user.role === "zone-leader" && !!user.zoneId
   const canApproveL2 = user.role === "pastor"
   const canApproveL3 = user.role === "parish-pastor"
@@ -785,7 +785,9 @@ export const Certificates: React.FC = () => {
       {/* Tabs */}
       <Tabs defaultValue={(canApproveL1 || canApproveL2 || canApproveL3) ? "approvals" : "my"}>
         <TabsList className="mb-6 bg-gray-100">
-          <TabsTrigger value="my" className="data-[state=active]:bg-white data-[state=active]:text-gray-900">My Requests</TabsTrigger>
+          {user.role !== "parish-pastor" && (
+            <TabsTrigger value="my" className="data-[state=active]:bg-white data-[state=active]:text-gray-900">My Requests</TabsTrigger>
+          )}
           {(canApproveL1 || canApproveL2 || canApproveL3) && (
             <TabsTrigger value="approvals" className="data-[state=active]:bg-white data-[state=active]:text-gray-900">Pending Approvals</TabsTrigger>
           )}
@@ -793,32 +795,34 @@ export const Certificates: React.FC = () => {
         </TabsList>
 
         {/* My Requests */}
-        <TabsContent value="my">
-          {user.role === "member" || user.role === "zone-leader" ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {my.length === 0 ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>No requests yet</CardTitle>
-                    <CardDescription>Use the New Request button to get started.</CardDescription>
-                  </CardHeader>
-                </Card>
-              ) : (
-                my.map((req) => <RequestCard key={req.id} req={req} />)
-              )}
-            </div>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>My Requests</CardTitle>
-                <CardDescription>Track progress of your submissions.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RequestsTable rows={my} renderActions={(req) => <DetailsButton req={req} />} />
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+        {user.role !== "parish-pastor" && (
+          <TabsContent value="my">
+            {user.role === "member" || user.role === "zone-leader" ? (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {my.length === 0 ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>No requests yet</CardTitle>
+                      <CardDescription>Use the New Request button to get started.</CardDescription>
+                    </CardHeader>
+                  </Card>
+                ) : (
+                  my.map((req) => <RequestCard key={req.id} req={req} />)
+                )}
+              </div>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>My Requests</CardTitle>
+                  <CardDescription>Track progress of your submissions.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RequestsTable rows={my} renderActions={(req) => <DetailsButton req={req} />} />
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        )}
 
         {/* Approvals */}
         {(canApproveL1 || canApproveL2 || canApproveL3) && (
