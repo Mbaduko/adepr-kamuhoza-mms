@@ -14,6 +14,7 @@ import { Dashboard } from "@/pages/Dashboard"
 import { Profile } from "@/pages/Profile"
 import { Certificates } from "@/pages/Certificates"
 import { Members } from "@/pages/Members"
+import { Zones } from "@/pages/Zones"
 import NotFound from "./pages/NotFound"
 import { useAuth } from "@/context/AuthContext"
 import { Loader2 } from "lucide-react"
@@ -38,7 +39,7 @@ const HomePage = () => {
   
   // If user is authenticated, redirect to dashboard
   if (state.isAuthenticated) {
-    return <Navigate to="/dashboard/members" replace />;
+    return <Navigate to="/dashboard/zones" replace />;
   }
   
   // If not authenticated, show landing page
@@ -74,7 +75,7 @@ const App = () => (
                 <Route path="profile" element={<Profile />} />
                 <Route path="certificates" element={<Certificates />} />
                 <Route path="members" element={<Members />} />
-                <Route path="zones" element={<Dashboard />} />
+                <Route path="zones" element={<Zones />} />
                 <Route path="statistics" element={<Dashboard />} />
                 <Route path="pastors" element={<Dashboard />} />
                 {/* Add more protected routes here */}

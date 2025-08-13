@@ -112,6 +112,74 @@ export const mockMembers: Member[] = [
     sacraments: {
       baptism: { date: '1988-12-01', place: 'Our Lady Church' }
     }
+  },
+  {
+    id: '5',
+    name: 'David Wilson',
+    email: 'david.wilson@email.com',
+    phone: '+1234567894',
+    dateOfBirth: '1982-07-12',
+    gender: 'male',
+    maritalStatus: 'married',
+    address: '654 Faith Avenue, City',
+    zoneId: 'zone-1',
+    isChoirMember: true,
+    accountStatus: 'active',
+    sacraments: {
+      baptism: { date: '1982-08-01', place: 'St. Mary Church' },
+      confirmation: { date: '1997-06-15', place: 'St. Mary Church' },
+      marriage: { date: '2015-09-10', spouse: 'Maria Wilson', place: 'St. Mary Church' }
+    }
+  },
+  {
+    id: '6',
+    name: 'Lisa Anderson',
+    email: 'lisa.anderson@email.com',
+    phone: '+1234567895',
+    dateOfBirth: '1995-03-20',
+    gender: 'female',
+    maritalStatus: 'single',
+    address: '987 Hope Street, City',
+    zoneId: 'zone-3',
+    isChoirMember: false,
+    accountStatus: 'active',
+    sacraments: {
+      baptism: { date: '1995-04-15', place: 'Holy Spirit Church' },
+      confirmation: { date: '2010-05-20', place: 'Holy Spirit Church' }
+    }
+  },
+  {
+    id: '7',
+    name: 'Robert Taylor',
+    email: 'robert.taylor@email.com',
+    phone: '+1234567896',
+    dateOfBirth: '1980-12-08',
+    gender: 'male',
+    maritalStatus: 'married',
+    address: '456 Faith Lane, City',
+    zoneId: 'zone-1',
+    isChoirMember: false,
+    accountStatus: 'active',
+    sacraments: {
+      baptism: { date: '1981-01-15', place: 'St. Mary Church' }
+    }
+  },
+  {
+    id: '8',
+    name: 'Jennifer White',
+    email: 'jennifer.white@email.com',
+    phone: '+1234567897',
+    dateOfBirth: '1978-06-14',
+    gender: 'female',
+    maritalStatus: 'married',
+    address: '789 Grace Avenue, City',
+    zoneId: 'zone-2',
+    isChoirMember: true,
+    accountStatus: 'active',
+    sacraments: {
+      baptism: { date: '1978-07-01', place: 'Holy Spirit Church' },
+      confirmation: { date: '1993-05-10', place: 'Holy Spirit Church' }
+    }
   }
 ];
 
@@ -179,6 +247,66 @@ export const mockCertificateRequests: CertificateRequest[] = [
     status: 'in-review',
     approvals: {
       level1: { approvedBy: 'Sarah Johnson', date: '2024-01-26', comments: 'Initial review complete' }
+    }
+  },
+  {
+    id: 'cert-4',
+    memberId: '4',
+    memberName: 'Emily Davis',
+    certificateType: 'baptism',
+    purpose: 'School registration',
+    requestDate: '2024-01-28',
+    status: 'in-review',
+    approvals: {
+      level1: { approvedBy: 'Sarah Johnson', date: '2024-01-29', comments: 'Documents verified' },
+      level2: { approvedBy: 'Rev. Michael Brown', date: '2024-01-30', comments: 'Approved for final review' }
+    }
+  },
+  {
+    id: 'cert-5',
+    memberId: '5',
+    memberName: 'David Wilson',
+    certificateType: 'marriage',
+    purpose: 'Legal documentation',
+    requestDate: '2024-01-30',
+    status: 'in-review',
+    approvals: {
+      level1: { approvedBy: 'Sarah Johnson', date: '2024-01-31', comments: 'Initial review complete' }
+    }
+  },
+  {
+    id: 'cert-6',
+    memberId: '6',
+    memberName: 'Lisa Anderson',
+    certificateType: 'confirmation',
+    purpose: 'Employment verification',
+    requestDate: '2024-02-01',
+    status: 'pending',
+    approvals: {}
+  },
+  {
+    id: 'cert-7',
+    memberId: '7',
+    memberName: 'Robert Taylor',
+    certificateType: 'baptism',
+    purpose: 'School enrollment',
+    requestDate: '2024-02-02',
+    status: 'in-review',
+    approvals: {
+      level1: { approvedBy: 'Sarah Johnson', date: '2024-02-03', comments: 'Documents verified' }
+    }
+  },
+  {
+    id: 'cert-8',
+    memberId: '8',
+    memberName: 'Jennifer White',
+    certificateType: 'membership',
+    purpose: 'Transfer to another parish',
+    requestDate: '2024-02-03',
+    status: 'in-review',
+    approvals: {
+      level1: { approvedBy: 'Sarah Johnson', date: '2024-02-04', comments: 'Initial review complete' },
+      level2: { approvedBy: 'Rev. Michael Brown', date: '2024-02-05', comments: 'Approved for final review' }
     }
   }
 ];

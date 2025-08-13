@@ -138,10 +138,56 @@ export const Dashboard: React.FC = () => {
 
   const zoneRecentRequests = React.useMemo(() => {
     if (userRole === "zone-leader" && user?.zoneId) {
-      return requests.filter(req => req.memberId !== user?.id).slice(0, 5)
+      // Zone leaders see: pending requests from their zone + requests they've approved + their own requests
+      const zoneMembers = mockMembers.filter(m => m.zoneId === user.zoneId).map(m => m.id)
+      const relevantRequests = requests.filter(req => {
+        // Include their own requests
+        if (req.memberId === user.id) return true
+        // Include pending requests from their zone
+        if (zoneMembers.includes(req.memberId) && req.status === "pending") return true
+        // Include requests they've approved (level1)
+        if (req.approvals.level1?.approvedBy === user.name) return true
+        return false
+      })
+      return relevantRequests.slice(0, 5)
     }
     return []
   }, [requests, user?.id, user?.zoneId, userRole])
+
+  // Filter requests for pastors and parish-pastors based on approval level
+  const pastorRelevantRequests = React.useMemo(() => {
+    if (userRole === "pastor") {
+      // Pastors see: requests needing their approval (level2) + requests they've approved + their own requests
+      const relevantRequests = requests.filter(req => {
+        // Include their own requests
+        if (req.memberId === user?.id) return true
+        // Include requests needing their approval (have level1 but no level2)
+        if (req.status === "in-review" && req.approvals.level1 && !req.approvals.level2) return true
+        // Include requests they've approved (level2)
+        if (req.approvals.level2?.approvedBy === user?.name) return true
+        return false
+      })
+      return relevantRequests.slice(0, 5)
+    }
+    return []
+  }, [requests, user?.id, userRole])
+
+  const parishPastorRelevantRequests = React.useMemo(() => {
+    if (userRole === "parish-pastor") {
+      // Parish pastors see: requests needing their approval (level3) + requests they've approved + their own requests
+      const relevantRequests = requests.filter(req => {
+        // Include their own requests
+        if (req.memberId === user?.id) return true
+        // Include requests needing their approval (have level2 but no level3)
+        if (req.status === "in-review" && req.approvals.level2 && !req.approvals.level3) return true
+        // Include requests they've approved (level3)
+        if (req.approvals.level3?.approvedBy === user?.name) return true
+        return false
+      })
+      return relevantRequests.slice(0, 5)
+    }
+    return []
+  }, [requests, user?.id, userRole])
 
   const permissions = React.useMemo(() => (user ? getUserPermissions(user.role) : ({} as any)), [user])
 
@@ -618,8 +664,8 @@ export const Dashboard: React.FC = () => {
                   <Users className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl">Recent Zone Requests</CardTitle>
-                  <CardDescription className="text-base">Latest certificate requests from your zone</CardDescription>
+                  <CardTitle className="text-xl">My Certificate Requests</CardTitle>
+                  <CardDescription className="text-base">Requests from your zone and ones you've reviewed</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -629,12 +675,16 @@ export const Dashboard: React.FC = () => {
                   <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
                     <Users className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <p className="text-muted-foreground font-medium">No recent requests in your zone</p>
-                  <p className="text-sm text-muted-foreground mt-1">Zone members will appear here when they submit requests</p>
+                  <p className="text-muted-foreground font-medium">No relevant certificate requests</p>
+                  <p className="text-sm text-muted-foreground mt-1">Requests will appear here when zone members submit them or after you review them</p>
                 </div>
               ) : (
                 zoneRecentRequests.map((req) => {
                   const step = computeProgressStep(req)
+                  const isMyRequest = req.memberId === user?.id
+                  const iApprovedThis = req.approvals.level1?.approvedBy === user?.name
+                  const needsMyApproval = req.status === "pending" && canApproveLevel1
+                  
                   return (
                     <div key={req.id} className="rounded-xl border-2 border-border/50 p-6 hover:border-primary/30 transition-all duration-300 hover:shadow-md">
                       <div className="flex items-center justify-between mb-4">
@@ -643,22 +693,37 @@ export const Dashboard: React.FC = () => {
                             <User className="h-4 w-4 text-primary" />
                           </div>
                           <div>
-                            <div className="font-semibold text-foreground">{req.memberName}</div>
+                            <div className="font-semibold text-foreground">
+                              {req.memberName}
+                              {isMyRequest && <Badge className="ml-2 bg-blue-100 text-blue-800 border-blue-200">My Request</Badge>}
+                            </div>
                             <div className="text-sm text-muted-foreground">
                               requested {req.certificateType} certificate
                             </div>
                           </div>
                         </div>
-                        <div>{statusBadge(req.status)}</div>
+                        <div className="flex items-center gap-2">
+                          {statusBadge(req.status)}
+                          {needsMyApproval && (
+                            <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+                              Needs Approval
+                            </Badge>
+                          )}
+                          {iApprovedThis && (
+                            <Badge className="bg-green-100 text-green-800 border-green-200">
+                              You Approved
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       <RequestMeta req={req} />
                       <div className="mt-4">
                         <ProgressBar step={step} />
                       </div>
-                      {req.status === "pending" && canApproveLevel1 && (
+                      {needsMyApproval && (
                         <div className="mt-4 pt-4 border-t border-border/50">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Action Required</span>
+                            <span className="text-sm text-muted-foreground">Zone Leader Approval Required</span>
                             <ApproveRejectActions req={req} />
                           </div>
                         </div>
@@ -669,6 +734,192 @@ export const Dashboard: React.FC = () => {
               )}
             </CardContent>
           </Card>
+      )}
+
+      {userRole === "pastor" && (
+        <Card className="border-2 border-primary/10 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-xl">My Certificate Requests</CardTitle>
+                <CardDescription className="text-base">Requests needing your approval and ones you've reviewed</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6 p-6">
+            {pastorRelevantRequests.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-muted-foreground font-medium">No relevant certificate requests</p>
+                <p className="text-sm text-muted-foreground mt-1">Requests will appear here when they need your approval or after you review them</p>
+              </div>
+            ) : (
+              pastorRelevantRequests.map((req) => {
+                const step = computeProgressStep(req)
+                const needsPastorApproval = req.status === "in-review" && req.approvals.level1 && !req.approvals.level2
+                const isMyRequest = req.memberId === user?.id
+                const iApprovedThis = req.approvals.level2?.approvedBy === user?.name
+                
+                return (
+                  <div key={req.id} className="rounded-xl border-2 border-border/50 p-6 hover:border-primary/30 transition-all duration-300 hover:shadow-md">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-foreground">
+                            {req.memberName}
+                            {isMyRequest && <Badge className="ml-2 bg-blue-100 text-blue-800 border-blue-200">My Request</Badge>}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            requested {req.certificateType} certificate
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {statusBadge(req.status)}
+                        {needsPastorApproval && (
+                          <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+                            Needs Approval
+                          </Badge>
+                        )}
+                        {iApprovedThis && (
+                          <Badge className="bg-green-100 text-green-800 border-green-200">
+                            You Approved
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <RequestMeta req={req} />
+                    <div className="mt-4">
+                      <ProgressBar step={step} />
+                    </div>
+                    {needsPastorApproval && (
+                      <div className="mt-4 pt-4 border-t border-border/50">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Pastor Approval Required</span>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline" onClick={() => window.open(`/dashboard/certificates/${req.id}`, '_blank')}>
+                              <Eye className="h-4 w-4 mr-1" />
+                              View Details
+                            </Button>
+                            <Button size="sm" className="gap-1">
+                              <CheckCircle className="h-4 w-4" />
+                              Approve
+                            </Button>
+                            <Button size="sm" variant="destructive" className="gap-1">
+                              <XCircle className="h-4 w-4" />
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {userRole === "parish-pastor" && (
+        <Card className="border-2 border-primary/10 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-xl">My Certificate Requests</CardTitle>
+                <CardDescription className="text-base">Requests needing your final approval and ones you've reviewed</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6 p-6">
+            {parishPastorRelevantRequests.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-muted-foreground font-medium">No relevant certificate requests</p>
+                <p className="text-sm text-muted-foreground mt-1">Requests will appear here when they need your final approval or after you review them</p>
+              </div>
+            ) : (
+              parishPastorRelevantRequests.map((req) => {
+                const step = computeProgressStep(req)
+                const needsParishPastorApproval = req.status === "in-review" && req.approvals.level2 && !req.approvals.level3
+                const isMyRequest = req.memberId === user?.id
+                const iApprovedThis = req.approvals.level3?.approvedBy === user?.name
+                
+                return (
+                  <div key={req.id} className="rounded-xl border-2 border-border/50 p-6 hover:border-primary/30 transition-all duration-300 hover:shadow-md">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-foreground">
+                            {req.memberName}
+                            {isMyRequest && <Badge className="ml-2 bg-blue-100 text-blue-800 border-blue-200">My Request</Badge>}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            requested {req.certificateType} certificate
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {statusBadge(req.status)}
+                        {needsParishPastorApproval && (
+                          <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+                            Final Approval
+                          </Badge>
+                        )}
+                        {iApprovedThis && (
+                          <Badge className="bg-green-100 text-green-800 border-green-200">
+                            You Approved
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <RequestMeta req={req} />
+                    <div className="mt-4">
+                      <ProgressBar step={step} />
+                    </div>
+                    {needsParishPastorApproval && (
+                      <div className="mt-4 pt-4 border-t border-border/50">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Parish Pastor Approval Required</span>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline" onClick={() => window.open(`/dashboard/certificates/${req.id}`, '_blank')}>
+                              <Eye className="h-4 w-4 mr-1" />
+                              View Details
+                            </Button>
+                            <Button size="sm" className="gap-1">
+                              <CheckCircle className="h-4 w-4" />
+                              Approve
+                            </Button>
+                            <Button size="sm" variant="destructive" className="gap-1">
+                              <XCircle className="h-4 w-4" />
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   )
