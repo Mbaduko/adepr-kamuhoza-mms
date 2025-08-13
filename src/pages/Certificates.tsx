@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useAuth } from "@/context/AuthContext"
 import { getUserPermissions, type CertificateRequest } from "@/data/mockData"
+import { CertificateRequestView } from "@/components/CertificateRequestView"
 import {
   listAll,
   listByMemberId,
@@ -264,23 +265,46 @@ function RequestDetails({ req }: { req: CertificateRequest }) {
 }
 
 const DetailsButton: React.FC<{ req: CertificateRequest }> = ({ req }) => {
+  const { state } = useAuth()
+  const user = state.user!
   const [open, setOpen] = React.useState(false)
+  
+  const handleApproveRequest = (requestId: string, level: number, comments?: string) => {
+    try {
+      approveRequest({ id: requestId, level: level as 1 | 2 | 3, approvedBy: user.name, comments })
+      toast({ title: "Request Approved", description: `Certificate request approved successfully.` })
+    } catch (error) {
+      console.error("Failed to approve request:", error)
+      toast({ title: "Error", description: "Failed to approve request. Please try again.", variant: "destructive" })
+    }
+  }
+
+  const handleRejectRequest = (requestId: string, level: number, reason: string) => {
+    try {
+      rejectRequest({ id: requestId, level: level as 1 | 2 | 3, approvedBy: user.name, reason })
+      toast({ title: "Request Rejected", description: `Certificate request rejected.` })
+    } catch (error) {
+      console.error("Failed to reject request:", error)
+      toast({ title: "Error", description: "Failed to reject request. Please try again.", variant: "destructive" })
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="gap-1">
-          <Eye className="h-4 w-4" />
-          View
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl">Request Details</DialogTitle>
-          <DialogDescription>ID: {req.id}</DialogDescription>
-        </DialogHeader>
-        <RequestDetails req={req} />
-      </DialogContent>
-    </Dialog>
+    <>
+      <Button size="sm" variant="outline" className="gap-1" onClick={() => setOpen(true)}>
+        <Eye className="h-4 w-4" />
+        View
+      </Button>
+      
+      <CertificateRequestView
+        request={req}
+        open={open}
+        onOpenChange={setOpen}
+        onApprove={handleApproveRequest}
+        onReject={handleRejectRequest}
+        showActions={true}
+      />
+    </>
   )
 }
 
@@ -468,6 +492,8 @@ export const Certificates: React.FC = () => {
   const [openNew, setOpenNew] = React.useState(false)
   const [certType, setCertType] = React.useState<CertType>("baptism")
   const [purpose, setPurpose] = React.useState("")
+  const [selectedRequest, setSelectedRequest] = React.useState<CertificateRequest | null>(null)
+  const [openRequestView, setOpenRequestView] = React.useState(false)
 
   const canRequest = user.role === "member" || user.role === "zone-leader"
   const canApproveL1 = user.role === "zone-leader" && !!user.zoneId
@@ -485,6 +511,33 @@ export const Certificates: React.FC = () => {
     setPendingL2(listPendingLevel2())
     setPendingL3(listPendingLevel3())
   }, [user.id, user.zoneId])
+
+  const handleViewRequest = (request: CertificateRequest) => {
+    setSelectedRequest(request)
+    setOpenRequestView(true)
+  }
+
+  const handleApproveRequest = (requestId: string, level: number, comments?: string) => {
+    try {
+      approveRequest({ id: requestId, level: level as 1 | 2 | 3, approvedBy: user.name, comments })
+      reload()
+      toast({ title: "Request Approved", description: `Certificate request approved successfully.` })
+    } catch (error) {
+      console.error("Failed to approve request:", error)
+      toast({ title: "Error", description: "Failed to approve request. Please try again.", variant: "destructive" })
+    }
+  }
+
+  const handleRejectRequest = (requestId: string, level: number, reason: string) => {
+    try {
+      rejectRequest({ id: requestId, level: level as 1 | 2 | 3, approvedBy: user.name, reason })
+      reload()
+      toast({ title: "Request Rejected", description: `Certificate request rejected.` })
+    } catch (error) {
+      console.error("Failed to reject request:", error)
+      toast({ title: "Error", description: "Failed to reject request. Please try again.", variant: "destructive" })
+    }
+  }
 
   React.useEffect(() => {
     reload()
@@ -835,6 +888,18 @@ export const Certificates: React.FC = () => {
           </TabsContent>
         )}
       </Tabs>
+
+      {/* Certificate Request View Dialog */}
+      {selectedRequest && (
+        <CertificateRequestView
+          request={selectedRequest}
+          open={openRequestView}
+          onOpenChange={setOpenRequestView}
+          onApprove={handleApproveRequest}
+          onReject={handleRejectRequest}
+          showActions={true}
+        />
+      )}
     </div>
   )
 }

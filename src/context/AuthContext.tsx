@@ -126,11 +126,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     dispatch({ type: 'LOGOUT' });
   };
 
-  // Auto-login effect - immediately log in as pastor
+  // Auto-login effect - immediately log in as parish-pastor
   useEffect(() => {
     if (!state.isAuthenticated && !state.loading) {
-      console.log('Auto-logging in as pastor user...');
-      login('pastor');
+      console.log('Auto-logging in as parish-pastor user...');
+      login('parish-pastor');
     }
   }, []); // Only run once on mount
 

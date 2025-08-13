@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/context/AuthContext"
 import { getUserPermissions, mockMembers, mockZones, type CertificateRequest } from "@/data/mockData"
 import { useToast } from "@/hooks/use-toast"
+import { CertificateRequestView } from "@/components/CertificateRequestView"
 import {
   listAll,
   listByMemberId,
@@ -127,6 +128,8 @@ export const Dashboard: React.FC = () => {
 
   const [requests, setRequests] = React.useState<CertificateRequest[]>([])
   const [busyId, setBusyId] = React.useState<string | null>(null)
+  const [selectedRequest, setSelectedRequest] = React.useState<CertificateRequest | null>(null)
+  const [openRequestView, setOpenRequestView] = React.useState(false)
 
   // Get recent requests for different user types
   const myRecentRequests = React.useMemo(() => {
@@ -195,6 +198,33 @@ export const Dashboard: React.FC = () => {
     const all = listAll()
     setRequests(all)
   }, [user])
+
+  const handleViewRequest = (request: CertificateRequest) => {
+    setSelectedRequest(request)
+    setOpenRequestView(true)
+  }
+
+  const handleApproveRequest = (requestId: string, level: number, comments?: string) => {
+    try {
+      approveRequest({ id: requestId, level, approvedBy: user.name, comments })
+      refresh()
+      toast({ title: "Request Approved", description: `Certificate request approved successfully.` })
+    } catch (error) {
+      console.error("Failed to approve request:", error)
+      toast({ title: "Error", description: "Failed to approve request. Please try again.", variant: "destructive" })
+    }
+  }
+
+  const handleRejectRequest = (requestId: string, level: number, reason: string) => {
+    try {
+      rejectRequest({ id: requestId, level, approvedBy: user.name, reason })
+      refresh()
+      toast({ title: "Request Rejected", description: `Certificate request rejected.` })
+    } catch (error) {
+      console.error("Failed to reject request:", error)
+      toast({ title: "Error", description: "Failed to reject request. Please try again.", variant: "destructive" })
+    }
+  }
 
   React.useEffect(() => {
     refresh()
@@ -804,20 +834,12 @@ export const Dashboard: React.FC = () => {
                       <div className="mt-4 pt-4 border-t border-border/50">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground">Pastor Approval Required</span>
-                          <div className="flex items-center gap-2">
-                            <Button size="sm" variant="outline" onClick={() => window.open(`/dashboard/certificates/${req.id}`, '_blank')}>
-                              <Eye className="h-4 w-4 mr-1" />
-                              View Details
-                            </Button>
-                            <Button size="sm" className="gap-1">
-                              <CheckCircle className="h-4 w-4" />
-                              Approve
-                            </Button>
-                            <Button size="sm" variant="destructive" className="gap-1">
-                              <XCircle className="h-4 w-4" />
-                              Reject
-                            </Button>
-                          </div>
+                                                     <div className="flex items-center gap-2">
+                             <Button size="sm" variant="outline" onClick={() => handleViewRequest(req)}>
+                               <Eye className="h-4 w-4 mr-1" />
+                               View Details
+                             </Button>
+                           </div>
                         </div>
                       </div>
                     )}
@@ -897,20 +919,12 @@ export const Dashboard: React.FC = () => {
                       <div className="mt-4 pt-4 border-t border-border/50">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground">Parish Pastor Approval Required</span>
-                          <div className="flex items-center gap-2">
-                            <Button size="sm" variant="outline" onClick={() => window.open(`/dashboard/certificates/${req.id}`, '_blank')}>
-                              <Eye className="h-4 w-4 mr-1" />
-                              View Details
-                            </Button>
-                            <Button size="sm" className="gap-1">
-                              <CheckCircle className="h-4 w-4" />
-                              Approve
-                            </Button>
-                            <Button size="sm" variant="destructive" className="gap-1">
-                              <XCircle className="h-4 w-4" />
-                              Reject
-                            </Button>
-                          </div>
+                                                     <div className="flex items-center gap-2">
+                             <Button size="sm" variant="outline" onClick={() => handleViewRequest(req)}>
+                               <Eye className="h-4 w-4 mr-1" />
+                               View Details
+                             </Button>
+                           </div>
                         </div>
                       </div>
                     )}
@@ -920,6 +934,18 @@ export const Dashboard: React.FC = () => {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Certificate Request View Dialog */}
+      {selectedRequest && (
+        <CertificateRequestView
+          request={selectedRequest}
+          open={openRequestView}
+          onOpenChange={setOpenRequestView}
+          onApprove={handleApproveRequest}
+          onReject={handleRejectRequest}
+          showActions={true}
+        />
       )}
     </div>
   )
