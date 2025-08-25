@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/context/AuthContext';
-import { Mail, Lock } from 'lucide-react';
+import { useAuth, UserRole } from '@/context/AuthContext';
+import { Mail, Lock, User, Users, Crown, Shield } from 'lucide-react';
 import logoImage from '@/assets/logo.png';
 
 export const Login: React.FC = () => {
@@ -34,6 +34,36 @@ export const Login: React.FC = () => {
     if (!result.success) {
       setError(result.error || 'Login failed');
     }
+  };
+
+  const handleDemoLogin = async (role: UserRole) => {
+    // For demo login, we'll use the mock user credentials
+    const mockCredentials = {
+      'member': { email: 'john.smith@email.com', password: 'password123' },
+      'zone-leader': { email: 'sarah.johnson@email.com', password: 'password123' },
+      'pastor': { email: 'michael.brown@email.com', password: 'password123' },
+      'parish-pastor': { email: 'david.wilson@email.com', password: 'password123' }
+    };
+    
+    const credentials = mockCredentials[role];
+    const result = await login(credentials.email, credentials.password);
+    if (!result.success) {
+      setError(result.error || 'Demo login failed');
+    }
+  };
+
+  const roleIcons = {
+    member: User,
+    'zone-leader': Users,
+    pastor: Crown,
+    'parish-pastor': Shield,
+  };
+
+  const roleLabels = {
+    member: 'Member',
+    'zone-leader': 'Zone Leader',
+    pastor: 'Pastor',
+    'parish-pastor': 'Parish Pastor',
   };
 
 
@@ -119,7 +149,32 @@ export const Login: React.FC = () => {
           </CardContent>
         </Card>
 
-
+        {/* Demo Login Options */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center">Demo Accounts</CardTitle>
+            <CardDescription className="text-center">
+              Try the system with different user roles
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {Object.entries(roleLabels).map(([role, label]) => {
+              const Icon = roleIcons[role as UserRole];
+              return (
+                <Button
+                  key={role}
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => handleDemoLogin(role as UserRole)}
+                  disabled={state.loading}
+                >
+                  <Icon className="mr-2 h-4 w-4" />
+                  Login as {label}
+                </Button>
+              );
+            })}
+          </CardContent>
+        </Card>
 
         {/* Back to Home */}
         <div className="text-center">

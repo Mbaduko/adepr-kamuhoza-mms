@@ -247,7 +247,7 @@ export const Dashboard: React.FC = () => {
         type: "member" as const,
         myRequests: userRequests.length,
         approvedRequests: userRequests.filter((req) => req.status === "approved").length,
-        pendingRequests: userRequests.filter((req) => req.status === "pending").length,
+        rejectedRequests: userRequests.filter((req) => req.status === "rejected").length,
         inReviewRequests: userRequests.filter((req) => req.status === "in-review").length,
       }
     }
@@ -547,11 +547,11 @@ export const Dashboard: React.FC = () => {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending</CardTitle>
-                <Clock className="h-4 w-4 text-amber-500" />
+                <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+                <XCircle className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.pendingRequests}</div>
+                <div className="text-2xl font-bold">{stats.rejectedRequests}</div>
               </CardContent>
             </Card>
             <Card>
