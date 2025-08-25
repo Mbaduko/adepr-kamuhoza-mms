@@ -4,18 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth, UserRole } from '@/context/AuthContext';
-import { User, Users, Crown, Shield, Mail, Lock } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { Mail, Lock } from 'lucide-react';
 import logoImage from '@/assets/logo.png';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { login, state } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  const initialRole = searchParams.get('role') as UserRole;
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (state.isAuthenticated) {
@@ -25,27 +23,20 @@ export const Login: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you'd validate email/password
-    await login(initialRole || 'member');
+    setError('');
+    
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
+    
+    const result = await login(email, password);
+    if (!result.success) {
+      setError(result.error || 'Login failed');
+    }
   };
 
-  const handleDemoLogin = async (role: UserRole) => {
-    await login(role);
-  };
 
-  const roleIcons = {
-    member: User,
-    'zone-leader': Users,
-    pastor: Crown,
-    'parish-pastor': Shield,
-  };
-
-  const roleLabels = {
-    member: 'Member',
-    'zone-leader': 'Zone Leader',
-    pastor: 'Pastor',
-    'parish-pastor': 'Parish Pastor',
-  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -69,6 +60,11 @@ export const Login: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={handleLogin} className="space-y-4">
+              {error && (
+                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                  {error}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
@@ -123,32 +119,7 @@ export const Login: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Demo Login Options */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-center">Demo Accounts</CardTitle>
-            <CardDescription className="text-center">
-              Try the system with different user roles
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {Object.entries(roleLabels).map(([role, label]) => {
-              const Icon = roleIcons[role as UserRole];
-              return (
-                <Button
-                  key={role}
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => handleDemoLogin(role as UserRole)}
-                  disabled={state.loading}
-                >
-                  <Icon className="mr-2 h-4 w-4" />
-                  Login as {label}
-                </Button>
-              );
-            })}
-          </CardContent>
-        </Card>
+
 
         {/* Back to Home */}
         <div className="text-center">
