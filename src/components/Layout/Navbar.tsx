@@ -45,7 +45,7 @@ export const Navbar: React.FC = () => {
               alt="Church Logo" 
               className="h-8 w-auto"
             />
-            <span className="text-xl font-bold text-foreground">ADEPR Kamuhoza</span>
+            <span className="text-xl font-bold text-foreground">ADEPR Muhoza</span>
           </a>
 
           {/* Menu and Login Button */}

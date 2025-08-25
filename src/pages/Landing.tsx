@@ -44,7 +44,7 @@ export const Landing: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-primary mb-4">
                   <Church className="h-6 w-6" />
-                  <span className="text-sm font-semibold uppercase tracking-wider">ADEPR Kamuhoza</span>
+                  <span className="text-sm font-semibold uppercase tracking-wider">ADEPR Muhoza</span>
                 </div>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
                   Digital Church
@@ -92,7 +92,7 @@ export const Landing: React.FC = () => {
               <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                 <img
                   src={heroImage}
-                  alt="ADEPR Kamuhoza Church Community"
+                  alt="ADEPR Muhoza Church Community"
                   className="w-full h-auto"
                 />
                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent"></div>
@@ -283,7 +283,7 @@ export const Landing: React.FC = () => {
                 <Mail className="h-6 w-6 text-primary" />
               </div>
               <h3 className="font-semibold mb-2">Email Us</h3>
-              <p className="text-muted-foreground">info@adeprkamuhoza.rw</p>
+              <p className="text-muted-foreground">info@adeprmuhoza.rw</p>
             </div>
 
             <div>
@@ -291,7 +291,7 @@ export const Landing: React.FC = () => {
                 <MapPin className="h-6 w-6 text-primary" />
               </div>
               <h3 className="font-semibold mb-2">Visit Us</h3>
-              <p className="text-muted-foreground">Kamuhoza, Rwanda</p>
+              <p className="text-muted-foreground">Muhoza, Rwanda</p>
             </div>
           </div>
         </div>
@@ -329,7 +329,7 @@ export const Landing: React.FC = () => {
       <footer className="bg-card border-t border-border py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-muted-foreground">
-            © 2024 ADEPR Kamuhoza. All rights reserved. Built with love for our church community.
+            © 2024 ADEPR Muhoza. All rights reserved. Built with love for our church community.
           </p>
         </div>
       </footer>

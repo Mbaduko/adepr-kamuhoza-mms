@@ -314,7 +314,7 @@ const downloadCertificate = (req: CertificateRequest) => {
   
   // Create certificate content
   const certificateContent = `
-ADEPR KAMUHOZA CHURCH
+ADEPR MUHOZA CHURCH
 OFFICIAL CERTIFICATE
 
 Certificate Type: ${req.certificateType.toUpperCase()}

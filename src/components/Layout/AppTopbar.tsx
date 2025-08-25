@@ -47,7 +47,7 @@ export const AppTopbar: React.FC = () => {
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-3">
           <img src={logoImage || "/placeholder.svg"} alt="Church Logo" className="h-8 w-auto" />
-          <h1 className="text-lg font-semibold text-foreground">ADEPR Kamuhoza</h1>
+          <h1 className="text-lg font-semibold text-foreground">ADEPR Muhoza</h1>
         </div>
       </div>
 

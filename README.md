@@ -35,10 +35,10 @@ The Church Members Management System is designed to streamline church operations
 
 ```bash
 # Step 1: Clone the repository
-git clone git@github.com:Mbaduko/adepr-kamuhoza-mms.git
+git clone git@github.com:Mbaduko/adepr-muhoza-mms.git
 
 # Step 2: Navigate to the project directory
-cd adepr-kamuhoza-mms
+cd adepr-muhoza-mms
 
 # Step 3: Install dependencies
 npm install
@@ -190,4 +190,4 @@ For questions, issues, or feature requests, please refer to the project document
 
 ---
 
-**Built for ADEPR Kamuhoza**
+**Built for ADEPR Muhoza**

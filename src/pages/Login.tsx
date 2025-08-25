@@ -52,7 +52,7 @@ export const Login: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <CardTitle className="text-2xl">Welcome to ADEPR Kamuhoza</CardTitle>
+              <CardTitle className="text-2xl">Welcome to ADEPR Muhoza</CardTitle>
               <CardDescription>
                 Sign in to access your member account and church services
               </CardDescription>
