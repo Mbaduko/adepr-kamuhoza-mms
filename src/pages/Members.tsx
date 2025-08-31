@@ -13,12 +13,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import { 
   Users, 
   Search, 
   Filter, 
   MapPin, 
-  Mail,
+  Mail, 
   Phone, 
   Calendar,
   RefreshCw,
@@ -28,6 +38,10 @@ import {
   Eye,
   Edit,
   Trash2,
+  User,
+  Crown,
+  Shield,
+  UserCheck,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -35,6 +49,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { MemberService, CreateUserData } from '@/services/memberService';
 
 export const Members: React.FC = () => {
   const { state } = useAuth()
@@ -63,6 +78,143 @@ export const Members: React.FC = () => {
   const [searchTerm, setSearchTerm] = React.useState("")
   const [zoneFilter, setZoneFilter] = React.useState<string>("all")
   const [statusFilter, setStatusFilter] = React.useState<string>("all")
+  
+  // Add New User Dialog State
+  const [openNewUser, setOpenNewUser] = React.useState(false);
+
+  // Get default role based on current user's role
+  const getDefaultRole = () => {
+    const currentUserRole = user?.role;
+    
+    switch (currentUserRole) {
+      case 'parish-pastor':
+        return 'PASTOR'; // Parish pastors can create pastors by default
+      case 'pastor':
+      case 'zone-leader':
+      default:
+        return 'MEMBER'; // Everyone else creates members by default
+    }
+  };
+
+  // Get available roles based on current user's role
+  const getAvailableRoles = () => {
+    const currentUserRole = user?.role;
+    
+    switch (currentUserRole) {
+      case 'parish-pastor':
+        return [
+          { value: 'MEMBER', label: 'Member' },
+          { value: 'PASTOR', label: 'Pastor' }
+        ];
+      case 'pastor':
+        return [
+          { value: 'MEMBER', label: 'Member' }
+        ];
+      case 'zone-leader':
+        return [
+          { value: 'MEMBER', label: 'Member' }
+        ];
+      default:
+        return [
+          { value: 'MEMBER', label: 'Member' }
+        ];
+    }
+  };
+
+  // Initialize form with default role
+  const [formData, setFormData] = React.useState<CreateUserData>({
+    first_name: "",
+    last_name: "",
+    phone_number: "",
+    gender: "MALE",
+    date_of_birth: "",
+    profile_photo_url: "",
+    address: "",
+    highest_degree: "",
+    marital_status: "SINGLE",
+    baptism_date: "",
+    is_married_in_church: false,
+    marriage_date: "",
+    choir: "",
+    email: "",
+    password: "",
+    role: getDefaultRole() as "MEMBER" | "PASTOR",
+    account_status: "ACTIVE",
+  });
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+
+  // Form handlers
+  const handleInputChange = (field: keyof CreateUserData, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      first_name: "",
+      last_name: "",
+      phone_number: "",
+      gender: "MALE",
+      date_of_birth: "",
+      profile_photo_url: "",
+      address: "",
+      highest_degree: "",
+      marital_status: "SINGLE",
+      baptism_date: "",
+      is_married_in_church: false,
+      marriage_date: "",
+      choir: "",
+      email: "",
+      password: "",
+      role: getDefaultRole() as "MEMBER" | "PASTOR",
+      account_status: "ACTIVE",
+    });
+    setOpenNewUser(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // Validate required fields
+      if (!formData.first_name || !formData.last_name || !formData.email || !formData.password) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields (First Name, Last Name, Email, Password)",
+          variant: "error",
+        });
+        return;
+      }
+
+      const response = await MemberService.createUser(formData);
+
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: "New member created successfully!",
+          variant: "success",
+        });
+        
+        handleCancel();
+        // Refresh members list
+        await fetchAllMembers();
+      } else {
+        toast({
+          title: "Error",
+          description: response.error?.message || "Failed to create member. Please try again.",
+          variant: "error",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create member. Please try again.",
+        variant: "error",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Load data on component mount
   React.useEffect(() => {
@@ -109,7 +261,7 @@ export const Members: React.FC = () => {
       
       const matchesZone = zoneFilter === "all" || member.zoneId === zoneFilter
       
-      const matchesStatus = statusFilter === "all" || member.status === statusFilter
+      const matchesStatus = statusFilter === "all" || member.accountStatus === statusFilter
       
       return matchesSearch && matchesZone && matchesStatus
     })
@@ -119,8 +271,8 @@ export const Members: React.FC = () => {
   const stats = React.useMemo(() => {
     return {
       total: members.length,
-      active: members.filter(m => m.status === "active").length,
-      inactive: members.filter(m => m.status === "inactive").length,
+      active: members.filter(m => m.accountStatus === "active").length,
+      inactive: members.filter(m => m.accountStatus === "inactive").length,
       byZone: zones.length,
     }
   }, [members, zones])
@@ -175,7 +327,7 @@ export const Members: React.FC = () => {
             Refresh
           </Button>
 
-          <Button>
+          <Button onClick={() => setOpenNewUser(true)}>
             <UserPlus className="h-4 w-4 mr-2" />
             Add Member
           </Button>
@@ -348,11 +500,11 @@ export const Members: React.FC = () => {
                         <div className="flex items-center gap-3">
                           <Avatar>
                             <AvatarImage src={member.profileImage} />
-                            <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                          <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
                           </Avatar>
                                                      <div>
-                            <p className="font-medium">{member.name}</p>
-                            <p className="text-sm text-muted-foreground">{member.role}</p>
+                          <p className="font-medium">{member.name}</p>
+                          <p className="text-sm text-muted-foreground">Member</p>
                            </div>
                         </div>
                       </TableCell>
@@ -375,12 +527,12 @@ export const Members: React.FC = () => {
                         </div>
                       </TableCell>
                                              <TableCell>
-                        {getStatusBadge(member.status)}
+                         {getStatusBadge(member.accountStatus)}
                        </TableCell>
                                              <TableCell>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          {member.joinDate ? new Date(member.joinDate).toLocaleDateString() : "N/A"}
+                          {member.dateOfBirth ? new Date(member.dateOfBirth).toLocaleDateString() : "N/A"}
                          </div>
                        </TableCell>
                       <TableCell className="text-right">
@@ -388,7 +540,7 @@ export const Members: React.FC = () => {
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm">
                               <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                          </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem>
@@ -422,7 +574,7 @@ export const Members: React.FC = () => {
             <div className="flex items-center justify-center py-8">
               <RefreshCw className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2 text-muted-foreground">Loading members data...</span>
-            </div>
+                   </div>
           </CardContent>
         </Card>
       )}
@@ -436,10 +588,270 @@ export const Members: React.FC = () => {
               <span className="text-sm font-medium">
                 Member service is connected but no members are available yet. This is normal when the system is first set up.
               </span>
-            </div>
+                  </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Add New User Dialog */}
+      <Dialog open={openNewUser} onOpenChange={setOpenNewUser}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-primary" />
+              Add New Member
+            </DialogTitle>
+            <DialogDescription>
+              Fill in the details to add a new member to the church. Required fields are marked with an asterisk (*).
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Personal Information Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground border-b pb-2">Personal Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="first_name" className="text-sm font-medium">
+                    First Name *
+                  </Label>
+               <Input
+                    id="first_name"
+                    value={formData.first_name}
+                    onChange={(e) => handleInputChange("first_name", e.target.value)}
+                    placeholder="Enter first name"
+                    required
+               />
+             </div>
+                <div className="space-y-2">
+                  <Label htmlFor="last_name" className="text-sm font-medium">
+                    Last Name *
+                  </Label>
+                  <Input
+                    id="last_name"
+                    value={formData.last_name}
+                    onChange={(e) => handleInputChange("last_name", e.target.value)}
+                    placeholder="Enter last name"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium">
+                    Email Address *
+                  </Label>
+               <Input
+                 id="email"
+                 type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    placeholder="Enter email address"
+                    required
+               />
+             </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium">
+                    Password *
+                  </Label>
+               <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    placeholder="Enter password"
+                    required
+               />
+             </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone_number" className="text-sm font-medium">
+                    Phone Number
+                  </Label>
+               <Input
+                    id="phone_number"
+                    value={formData.phone_number}
+                    onChange={(e) => handleInputChange("phone_number", e.target.value)}
+                    placeholder="Enter phone number"
+               />
+             </div>
+                <div className="space-y-2">
+                  <Label htmlFor="gender" className="text-sm font-medium">
+                    Gender
+                  </Label>
+                  <Select value={formData.gender} onValueChange={value => handleInputChange("gender", value as "MALE" | "FEMALE")}>
+                   <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                   </SelectTrigger>
+                   <SelectContent>
+                      <SelectItem value="MALE">Male</SelectItem>
+                      <SelectItem value="FEMALE">Female</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
+                <div className="space-y-2">
+                  <Label htmlFor="date_of_birth" className="text-sm font-medium">
+                    Date of Birth
+                  </Label>
+                  <Input
+                    id="date_of_birth"
+                    type="date"
+                    value={formData.date_of_birth}
+                    onChange={(e) => handleInputChange("date_of_birth", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="marital_status" className="text-sm font-medium">
+                    Marital Status
+                  </Label>
+                  <Select value={formData.marital_status} onValueChange={value => handleInputChange("marital_status", value as "SINGLE" | "MARRIED" | "DIVORCED" | "WIDOWED")}>
+                   <SelectTrigger>
+                      <SelectValue placeholder="Select marital status" />
+                   </SelectTrigger>
+                   <SelectContent>
+                      <SelectItem value="SINGLE">Single</SelectItem>
+                      <SelectItem value="MARRIED">Married</SelectItem>
+                      <SelectItem value="DIVORCED">Divorced</SelectItem>
+                      <SelectItem value="WIDOWED">Widowed</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
+             </div>
+             </div>
+
+            {/* Address and Education Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground border-b pb-2">Address & Education</h3>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="address" className="text-sm font-medium">
+                    Address
+                  </Label>
+               <Textarea
+                 id="address"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange("address", e.target.value)}
+                    placeholder="Enter full address"
+                    rows={3}
+               />
+             </div>
+                <div className="space-y-2">
+                  <Label htmlFor="highest_degree" className="text-sm font-medium">
+                    Highest Degree
+                  </Label>
+                  <Input
+                    id="highest_degree"
+                    value={formData.highest_degree}
+                    onChange={(e) => handleInputChange("highest_degree", e.target.value)}
+                    placeholder="e.g., Bachelor's Degree, Master's Degree"
+                  />
+             </div>
+           </div>
+            </div>
+
+            {/* Church Information Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground border-b pb-2">Church Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="baptism_date" className="text-sm font-medium">
+                    Baptism Date
+                  </Label>
+              <Input
+                    id="baptism_date"
+                    type="date"
+                    value={formData.baptism_date}
+                    onChange={(e) => handleInputChange("baptism_date", e.target.value)}
+              />
+            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="choir" className="text-sm font-medium">
+                    Choir
+                  </Label>
+              <Input
+                    id="choir"
+                    value={formData.choir}
+                    onChange={(e) => handleInputChange("choir", e.target.value)}
+                    placeholder="e.g., Youth Choir, Adult Choir"
+              />
+            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="is_married_in_church" className="text-sm font-medium">
+                    Married in Church
+                  </Label>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="is_married_in_church"
+                      checked={formData.is_married_in_church}
+                      onCheckedChange={(checked) => handleInputChange("is_married_in_church", checked)}
+                    />
+                    <Label htmlFor="is_married_in_church" className="text-sm">
+                      Yes, married in church
+                    </Label>
+            </div>
+                </div>
+                {formData.is_married_in_church && (
+                  <div className="space-y-2">
+                    <Label htmlFor="marriage_date" className="text-sm font-medium">
+                      Marriage Date
+                    </Label>
+              <Input
+                      id="marriage_date"
+                type="date"
+                      value={formData.marriage_date}
+                      onChange={(e) => handleInputChange("marriage_date", e.target.value)}
+              />
+            </div>
+                )}
+              </div>
+              </div>
+
+            {/* Role Assignment Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground border-b pb-2">Role Assignment</h3>
+              <div className="space-y-2">
+                <Label htmlFor="role" className="text-sm font-medium">
+                  Church Role
+                </Label>
+                <Select value={formData.role} onValueChange={value => handleInputChange("role", value as "MEMBER" | "PASTOR")}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                    {getAvailableRoles().map(role => (
+                      <SelectItem key={role.value} value={role.value}>
+                        <div className="flex items-center gap-2">
+                          {role.value === "MEMBER" && <User className="h-4 w-4" />}
+                          {role.value === "PASTOR" && <Crown className="h-4 w-4" />}
+                          {role.label}
+                        </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+                <p className="text-xs text-muted-foreground">
+                  Available roles are based on your current permissions. Parish Pastors can create Pastors, while others can only create Members. Zone Leaders are assigned when someone is made a zone leader, not created directly.
+                </p>
+            </div>
+            </div>
+
+            <DialogFooter className="flex gap-2">
+              <Button type="button" variant="outline" onClick={handleCancel}>
+              Cancel
+            </Button>
+              <Button type="submit" disabled={isSubmitting} className="min-w-[120px]">
+                {isSubmitting ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Create Member
+                  </>
+                )}
+            </Button>
+          </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

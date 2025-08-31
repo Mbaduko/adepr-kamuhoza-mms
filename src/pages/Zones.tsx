@@ -4,10 +4,14 @@ import * as React from "react"
 import { useAuth } from "@/context/AuthContext"
 import { useZonesStore } from "@/data/zones-store"
 import { useMembersStore } from "@/data/members-store"
+import { ZoneService, CreateZoneData, Zone, UpdateZoneData } from "@/services/zoneService"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -18,19 +22,11 @@ import {
   Users,
   Plus,
   Edit,
-  Trash2,
   Eye,
-  MoreHorizontal,
   RefreshCw,
   Info,
-  UserPlus,
+  Crown,
 } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
 export const Zones: React.FC = () => {
   const { state } = useAuth()
@@ -43,7 +39,8 @@ export const Zones: React.FC = () => {
     loading: zonesLoading, 
     error: zonesError,
     isInitialized: zonesInitialized,
-    fetchAllZones
+    fetchAllZones,
+    updateZone
   } = useZonesStore()
   
   const { 
@@ -56,6 +53,20 @@ export const Zones: React.FC = () => {
 
   // State
   const [searchTerm, setSearchTerm] = React.useState("")
+  const [openNewZone, setOpenNewZone] = React.useState(false)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [formData, setFormData] = React.useState<CreateZoneData>({
+    name: "",
+    description: "",
+    zone_leader_id: "",
+  })
+
+  // Action states
+  const [selectedZone, setSelectedZone] = React.useState<Zone | null>(null)
+  const [openViewZone, setOpenViewZone] = React.useState(false)
+  const [openEditZone, setOpenEditZone] = React.useState(false)
+  const [openAssignLeader, setOpenAssignLeader] = React.useState(false)
+  const [assignLeaderData, setAssignLeaderData] = React.useState({ zone_leader_id: "" })
 
   // Load data on component mount
   React.useEffect(() => {
@@ -94,6 +105,130 @@ export const Zones: React.FC = () => {
     }
   }
 
+  // Form handlers
+  const handleInputChange = (field: keyof CreateZoneData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleCancel = () => {
+    setFormData({
+      name: "",
+      description: "",
+      zone_leader_id: "",
+    })
+    setOpenNewZone(false)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+
+    try {
+      // Validate required fields
+      if (!formData.name || !formData.description) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields (Name, Description)",
+          variant: "error"
+        })
+        return
+      }
+
+      // Prepare data for API - remove empty zone_leader_id if not selected
+      const apiData = {
+        ...formData,
+        zone_leader_id: formData.zone_leader_id || undefined
+      }
+
+      if (openEditZone && selectedZone) {
+        // Update existing zone
+        const response = await ZoneService.updateZone(selectedZone.id, apiData as UpdateZoneData)
+
+        if (response.success) {
+          toast({
+            title: "Success",
+            description: "Zone updated successfully!",
+            variant: "success"
+          })
+          
+          handleCloseDialogs()
+          // Refresh zones list
+          await fetchAllZones()
+        } else {
+          toast({
+            title: "Error",
+            description: response.error?.message || "Failed to update zone. Please try again.",
+            variant: "error"
+          })
+        }
+      } else {
+        // Create new zone
+        const response = await ZoneService.createZone(apiData)
+
+        if (response.success) {
+          toast({
+            title: "Success",
+            description: "New zone created successfully!",
+            variant: "success"
+          })
+          
+          handleCancel()
+          // Refresh zones list
+          await fetchAllZones()
+        } else {
+          toast({
+            title: "Error",
+            description: response.error?.message || "Failed to create zone. Please try again.",
+            variant: "error"
+          })
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save zone. Please try again.",
+        variant: "error"
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Action handlers
+  const handleViewZone = (zone: Zone) => {
+    setSelectedZone(zone)
+    setOpenViewZone(true)
+  }
+
+  const handleEditZone = (zone: Zone) => {
+    setSelectedZone(zone)
+    setFormData({
+      name: zone.name,
+      description: zone.description,
+      zone_leader_id: zone.leaderId || "",
+    })
+    setOpenEditZone(true)
+  }
+
+  const handleAssignLeader = (zone: Zone) => {
+    setSelectedZone(zone)
+    setAssignLeaderData({ zone_leader_id: "" })
+    setOpenAssignLeader(true)
+  }
+
+  const handleCloseDialogs = () => {
+    setOpenViewZone(false)
+    setOpenEditZone(false)
+    setOpenAssignLeader(false)
+    setSelectedZone(null)
+    setAssignLeaderData({ zone_leader_id: "" })
+  }
+
+  // Helper function to check if zone has a leader
+  const hasLeader = (zone: Zone): boolean => {
+    return !!(zone.leaderId && zone.leaderId.trim() !== '');
+  };
+
   // Filter zones based on search
   const filteredZones = React.useMemo(() => {
     return zones.filter(zone => 
@@ -123,8 +258,10 @@ export const Zones: React.FC = () => {
   }
 
   const getZoneLeader = (zoneId: string) => {
+    // Since Member interface doesn't have role, we'll use a placeholder for now
+    // In a real implementation, you'd need to add role to the Member interface
     return members.find(member => 
-      member.zoneId === zoneId && member.role === "zone-leader"
+      member.zoneId === zoneId
     )
   }
 
@@ -152,7 +289,7 @@ export const Zones: React.FC = () => {
             Refresh
           </Button>
 
-          <Button>
+          <Button onClick={() => setOpenNewZone(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add Zone
           </Button>
@@ -255,7 +392,7 @@ export const Zones: React.FC = () => {
         <CardHeader>
           <CardTitle>Zones</CardTitle>
           <CardDescription>
-            Showing {filteredZones.length} of {zones.length} zones
+            {filteredZones.length} zones found
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -267,14 +404,13 @@ export const Zones: React.FC = () => {
                   <TableHead>Leader</TableHead>
                   <TableHead>Members</TableHead>
                   <TableHead>Description</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredZones.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
+                    <TableCell colSpan={5} className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <MapPin className="h-8 w-8 text-muted-foreground" />
                         <p className="text-muted-foreground">
@@ -292,31 +428,32 @@ export const Zones: React.FC = () => {
                       <TableRow key={zone.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarImage src={zone.image} />
-                              <AvatarFallback>
-                                {zone.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                              </AvatarFallback>
-                            </Avatar>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                              <MapPin className="h-5 w-5 text-muted-foreground" />
+                            </div>
                             <div>
                               <p className="font-medium">{zone.name}</p>
-                              <p className="text-sm text-muted-foreground">Zone {zone.id}</p>
+                              <p className="text-sm text-muted-foreground">Zone ID: {zone.id}</p>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           {leader ? (
                             <div className="flex items-center gap-2">
-                              <Avatar className="h-6 w-6">
-                                <AvatarImage src={leader.profileImage} />
-                                <AvatarFallback>
-                                  {leader.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-sm">{leader.name}</span>
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-100">
+                                <Crown className="h-4 w-4 text-yellow-600" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">{leader.name}</p>
+                                <p className="text-xs text-muted-foreground">{leader.email}</p>
+                              </div>
                             </div>
                           ) : (
-                            <span className="text-sm text-muted-foreground">No leader assigned</span>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                                No Leader
+                              </Badge>
+                            </div>
                           )}
                         </TableCell>
                         <TableCell>
@@ -327,41 +464,39 @@ export const Zones: React.FC = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <p className="text-sm text-muted-foreground max-w-[200px] truncate">
+                          <p className="text-sm text-muted-foreground max-w-[200px]">
                             {zone.description || "No description"}
                           </p>
                         </TableCell>
-                        <TableCell>
-                          <Badge className={memberCount > 0 ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
-                            {memberCount > 0 ? "Active" : "Empty"}
-                          </Badge>
-                        </TableCell>
                         <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
+                          <div className="flex items-center justify-end gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleViewZone(zone)}
+                            >
+                              <Eye className="h-4 w-4" />
                             </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit Zone
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <UserPlus className="h-4 w-4 mr-2" />
-                                Assign Members
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-red-600">
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete Zone
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleEditZone(zone)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className={`h-8 w-8 p-0 ${hasLeader(zone) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              onClick={() => handleAssignLeader(zone)}
+                              disabled={hasLeader(zone)}
+                              title={hasLeader(zone) ? "Zone already has a leader" : "Assign zone leader"}
+                            >
+                              <Crown className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )
@@ -398,6 +533,321 @@ export const Zones: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Add Zone Dialog */}
+      <Dialog open={openNewZone} onOpenChange={setOpenNewZone}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-primary" />
+              Create New Zone
+            </DialogTitle>
+            <DialogDescription>
+              Add a new zone to organize church members by geographical areas.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Zone Name *
+                </Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  placeholder="Enter zone name"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-sm font-medium">
+                  Description *
+                </Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange("description", e.target.value)}
+                  placeholder="Describe the zone area"
+                  rows={3}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="zone_leader_id" className="text-sm font-medium">
+                  Zone Leader
+                </Label>
+                <Select onValueChange={(value) => handleInputChange("zone_leader_id", value)} value={formData.zone_leader_id}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a zone leader (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {members.map(member => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <DialogFooter className="flex gap-2">
+              <Button type="button" variant="outline" onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Creating..." : "Create Zone"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Zone Dialog */}
+      <Dialog open={openViewZone} onOpenChange={setOpenViewZone}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-primary" />
+              Zone Details
+            </DialogTitle>
+            <DialogDescription>
+              View detailed information about this zone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedZone && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Zone Name</Label>
+                  <p className="text-sm font-medium">{selectedZone.name}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Zone ID</Label>
+                  <p className="text-sm">{selectedZone.id}</p>
+                </div>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Description</Label>
+                <p className="text-sm">{selectedZone.description || "No description"}</p>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Zone Leader</Label>
+                {selectedZone.leaderId ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100">
+                      <Crown className="h-3 w-3 text-yellow-600" />
+                    </div>
+                    <span className="text-sm">{getZoneLeader(selectedZone.id)?.name || "Unknown Leader"}</span>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No leader assigned</p>
+                )}
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Member Count</Label>
+                <p className="text-sm">{getMemberCount(selectedZone.id)} members</p>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button onClick={handleCloseDialogs}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Zone Dialog */}
+      <Dialog open={openEditZone} onOpenChange={setOpenEditZone}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="h-5 w-5 text-primary" />
+              Edit Zone
+            </DialogTitle>
+            <DialogDescription>
+              Update zone information and settings.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name" className="text-sm font-medium">
+                  Zone Name *
+                </Label>
+                <Input
+                  id="edit-name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  placeholder="Enter zone name"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-description" className="text-sm font-medium">
+                  Description *
+                </Label>
+                <Textarea
+                  id="edit-description"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange("description", e.target.value)}
+                  placeholder="Describe the zone area"
+                  rows={3}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-zone_leader_id" className="text-sm font-medium">
+                  Zone Leader
+                </Label>
+                <Select onValueChange={(value) => handleInputChange("zone_leader_id", value)} value={formData.zone_leader_id}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a zone leader (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {members.map(member => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <DialogFooter className="flex gap-2">
+              <Button type="button" variant="outline" onClick={handleCloseDialogs}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Updating..." : "Update Zone"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Leader Dialog */}
+      <Dialog open={openAssignLeader} onOpenChange={setOpenAssignLeader}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-primary" />
+              Assign Zone Leader
+            </DialogTitle>
+            <DialogDescription>
+              {selectedZone && `Select a leader for ${selectedZone.name} from zone members`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="assign-leader" className="text-sm font-medium">
+                Select Leader
+              </Label>
+              <Select onValueChange={(value) => setAssignLeaderData({ zone_leader_id: value })} value={assignLeaderData.zone_leader_id}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a zone leader" />
+                </SelectTrigger>
+                <SelectContent>
+                  {members.filter(member => member.zoneId === selectedZone?.id).length > 0 ? (
+                    members.filter(member => member.zoneId === selectedZone?.id).map(member => (
+                      <SelectItem key={member.id} value={member.id}>
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100">
+                            <Crown className="h-3 w-3 text-yellow-600" />
+                          </div>
+                          {member.name}
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-members" disabled>
+                      No members in this zone
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {selectedZone && (
+              <div className="rounded-lg bg-muted p-3">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Zone:</strong> {selectedZone.name}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  <strong>Available Members:</strong> {members.filter(member => member.zoneId === selectedZone.id).length}
+                </p>
+                {selectedZone.leaderId && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    <strong>Current Leader:</strong> {getZoneLeader(selectedZone.id)?.name || "Unknown"}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter className="flex gap-2">
+            <Button type="button" variant="outline" onClick={handleCloseDialogs}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={async () => {
+                if (!selectedZone) return;
+                
+                setIsSubmitting(true);
+                try {
+                  const updateData: UpdateZoneData = {
+                    name: selectedZone.name,
+                    description: selectedZone.description,
+                    zone_leader_id: assignLeaderData.zone_leader_id || undefined
+                  };
+
+                  const response = await ZoneService.updateZone(selectedZone.id, updateData);
+
+                  if (response.success) {
+                    toast({
+                      title: "Success",
+                      description: "Zone leader assigned successfully!",
+                      variant: "success"
+                    });
+                    handleCloseDialogs();
+                    await fetchAllZones();
+                  } else {
+                    toast({
+                      title: "Error",
+                      description: response.error?.message || "Failed to assign zone leader. Please try again.",
+                      variant: "error"
+                    });
+                  }
+                } catch (error) {
+                  toast({
+                    title: "Error",
+                    description: "Failed to assign zone leader. Please try again.",
+                    variant: "error"
+                  });
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              disabled={isSubmitting || !assignLeaderData.zone_leader_id}
+            >
+              {isSubmitting ? "Assigning..." : "Assign Leader"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

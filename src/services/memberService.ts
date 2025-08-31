@@ -21,6 +21,45 @@ export interface Member {
   };
 }
 
+export interface CreateUserData {
+  first_name: string;
+  last_name: string;
+  phone_number: string;
+  gender: "MALE" | "FEMALE";
+  date_of_birth: string;
+  profile_photo_url: string;
+  address: string;
+  highest_degree: string;
+  marital_status: "SINGLE" | "MARRIED" | "DIVORCED" | "WIDOWED";
+  baptism_date: string;
+  is_married_in_church: boolean;
+  marriage_date: string;
+  choir: string;
+  email: string;
+  password: string;
+  role: "MEMBER" | "PASTOR";
+  account_status: "ACTIVE";
+}
+
+export interface CreateUserResponse {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone_number: string;
+  gender: string;
+  date_of_birth: string;
+  profile_photo_url: string;
+  address: string;
+  highest_degree: string;
+  marital_status: string;
+  baptism_date: string;
+  is_married_in_church: boolean;
+  marriage_date: string;
+  choir: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export class MemberService {
   /**
    * Get all members
@@ -71,6 +110,24 @@ export class MemberService {
         error: {
           message: 'Unable to fetch member details. Please check your internet connection and try again.',
           status: 0,
+        },
+      };
+    }
+  }
+
+  /**
+   * Create a new user
+   */
+  static async createUser(userData: CreateUserData): Promise<ApiResponse<CreateUserResponse>> {
+    try {
+      const response = await apiClient.post<CreateUserResponse>('/users/', userData);
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          message: error.response?.data?.message || 'Unable to create user. Please try again.',
+          status: error.response?.status || 0,
         },
       };
     }

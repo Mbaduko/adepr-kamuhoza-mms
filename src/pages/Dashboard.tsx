@@ -236,7 +236,7 @@ export const Dashboard: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-foreground">Welcome back, {user.name}</h1>
+          <h1 className="text-3xl font-bold text-foreground">Welcome back, {user.name}</h1>
             <Badge variant="outline" className="text-sm">
               {user.role.replace('-', ' ').toUpperCase()}
             </Badge>

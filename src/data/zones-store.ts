@@ -1,5 +1,16 @@
 import { create } from 'zustand';
-import { ZoneService, Zone } from '@/services/zoneService';
+import { ZoneService, Zone, ZoneApiResponse } from '@/services/zoneService';
+
+// Helper function to convert API response to internal Zone interface
+const convertApiZoneToZone = (apiZone: ZoneApiResponse): Zone => {
+  return {
+    id: apiZone.id,
+    name: apiZone.name,
+    leaderId: apiZone.zone_leader_id,
+    description: apiZone.description,
+    memberCount: 0, // This will be calculated separately based on members data
+  };
+};
 
 interface ZonesState {
   zones: Zone[];
@@ -18,6 +29,7 @@ interface ZonesActions {
   // Actions
   fetchAllZones: () => Promise<void>;
   fetchZoneById: (id: string) => Promise<void>;
+  updateZone: (id: string, zoneData: any) => Promise<void>;
   
   // Reset
   reset: () => void;
@@ -45,7 +57,9 @@ export const useZonesStore = create<ZonesState & ZonesActions>((set, get) => ({
       const response = await ZoneService.getAllZones();
       
       if (response.success && response.data) {
-        set({ zones: response.data, loading: false, isInitialized: true });
+        // Convert API response to internal Zone interface
+        const zones = response.data.map(convertApiZoneToZone);
+        set({ zones, loading: false, isInitialized: true });
       } else {
         // Handle endpoint not ready gracefully
         if (response.error?.status === 404 || response.error?.message?.includes('not found')) {
@@ -81,7 +95,9 @@ export const useZonesStore = create<ZonesState & ZonesActions>((set, get) => ({
       const response = await ZoneService.getZoneById(id);
       
       if (response.success && response.data) {
-        set({ selectedZone: response.data, loading: false, isInitialized: true });
+        // Convert API response to internal Zone interface
+        const zone = convertApiZoneToZone(response.data);
+        set({ selectedZone: zone, loading: false, isInitialized: true });
       } else {
         // Handle endpoint not ready gracefully
         if (response.error?.status === 404 || response.error?.message?.includes('not found')) {
@@ -103,6 +119,35 @@ export const useZonesStore = create<ZonesState & ZonesActions>((set, get) => ({
       set({ 
         selectedZone: null,
         error: null,
+        loading: false,
+        isInitialized: true
+      });
+    }
+  },
+
+  updateZone: async (id: string, zoneData: any) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await ZoneService.updateZone(id, zoneData);
+      if (response.success && response.data) {
+        // Re-fetch the zone to update the store
+        const updatedZone = convertApiZoneToZone(response.data);
+        set(prev => ({
+          zones: prev.zones.map(zone => zone.id === id ? updatedZone : zone),
+          selectedZone: updatedZone,
+          loading: false,
+          isInitialized: true
+        }));
+      } else {
+        set({
+          error: response.error?.message || 'Failed to update zone',
+          loading: false,
+          isInitialized: true
+        });
+      }
+    } catch (error) {
+      set({
+        error: null, // Don't show network errors as they might be expected
         loading: false,
         isInitialized: true
       });
