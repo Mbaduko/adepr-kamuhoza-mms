@@ -178,7 +178,7 @@ export const Dashboard: React.FC = () => {
       title: "My Profile",
       description: "View and update your profile information",
       icon: User,
-      href: "/profile",
+      href: "/dashboard/profile",
       variant: "outline",
     })
 

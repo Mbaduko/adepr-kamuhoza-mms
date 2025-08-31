@@ -51,6 +51,12 @@ export const AppSidebar: React.FC = () => {
   }
 
   const getInitials = (name: string) => {
+    // Use first and last name if available, otherwise fallback to name splitting
+    if (state.user.firstName && state.user.lastName) {
+      return `${state.user.firstName[0]}${state.user.lastName[0]}`.toUpperCase();
+    }
+    
+    // Fallback to original logic
     return name
       .split(" ")
       .map((n) => n[0])
@@ -230,7 +236,7 @@ export const AppSidebar: React.FC = () => {
                 <DropdownMenuTrigger asChild>
                   <div className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-sidebar-accent transition-colors">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={state.user.profileImage || "/placeholder.svg"} alt={state.user.name} />
+                      <AvatarImage src={state.user.profileImage} alt={state.user.name} />
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                         {getInitials(state.user.name)}
                       </AvatarFallback>
@@ -270,7 +276,7 @@ export const AppSidebar: React.FC = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 mx-auto">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={state.user.profileImage || "/placeholder.svg"} alt={state.user.name} />
+                      <AvatarImage src={state.user.profileImage} alt={state.user.name} />
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                         {getInitials(state.user.name)}
                       </AvatarFallback>

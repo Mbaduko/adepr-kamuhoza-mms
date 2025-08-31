@@ -27,6 +27,12 @@ export const AppTopbar: React.FC = () => {
   }
 
   const getInitials = (name: string) => {
+    // Use first and last name if available, otherwise fallback to name splitting
+    if (state.user.firstName && state.user.lastName) {
+      return `${state.user.firstName[0]}${state.user.lastName[0]}`.toUpperCase();
+    }
+    
+    // Fallback to original logic
     return name
       .split(" ")
       .map((n) => n[0])
@@ -61,7 +67,7 @@ export const AppTopbar: React.FC = () => {
             </div>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={state.user.profileImage || "/placeholder.svg"} alt={state.user.name} />
+                <AvatarImage src={state.user.profileImage} alt={state.user.name} />
                 <AvatarFallback className="bg-primary text-primary-foreground">
                   {getInitials(state.user.name)}
                 </AvatarFallback>
@@ -78,7 +84,7 @@ export const AppTopbar: React.FC = () => {
             </div>
           </div>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer">
+          <DropdownMenuItem onClick={() => navigate("/dashboard/profile")} className="cursor-pointer">
             <User className="mr-2 h-4 w-4" />
             Profile
           </DropdownMenuItem>
