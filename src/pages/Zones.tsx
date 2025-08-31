@@ -82,13 +82,14 @@ export const Zones: React.FC = () => {
       ])
       toast({
         title: "Success",
-        description: "Zones data refreshed successfully."
+        description: "Zones data refreshed successfully.",
+        variant: "success"
       })
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to refresh data. Please try again.",
-        variant: "destructive"
+        variant: "error"
       })
     }
   }

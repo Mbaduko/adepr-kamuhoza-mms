@@ -1,13 +1,13 @@
-import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { AuthService } from '@/services/authService';
-import { convertApiUserToLegacy, LegacyUser, LegacyUserRole } from '@/types/auth';
-
-export type UserRole = LegacyUserRole;
+import { convertApiUserToLegacy, LegacyUser } from '@/types/auth';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthState {
   user: LegacyUser | null;
   isAuthenticated: boolean;
   loading: boolean;
+  initialized: boolean;
 }
 
 type AuthAction =
@@ -21,6 +21,7 @@ const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
   loading: false,
+  initialized: false,
 };
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
@@ -33,17 +34,31 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         user: action.payload,
         isAuthenticated: true,
         loading: false,
+        initialized: true,
       };
     case 'LOGIN_FAILURE':
-      return { ...state, user: null, isAuthenticated: false, loading: false };
+      return {
+        ...state,
+        user: null,
+        isAuthenticated: false,
+        loading: false,
+        initialized: true,
+      };
     case 'LOGOUT':
-      return { ...state, user: null, isAuthenticated: false, loading: false };
+      return {
+        ...state,
+        user: null,
+        isAuthenticated: false,
+        loading: false,
+        initialized: true,
+      };
     case 'INITIALIZE_AUTH':
       return {
         ...state,
         user: action.payload,
         isAuthenticated: !!action.payload,
         loading: false,
+        initialized: true,
       };
     default:
       return state;
@@ -58,10 +73,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const { toast } = useToast();
 
-  // Initialize auth state on app load
   useEffect(() => {
     const initializeAuth = async () => {
       const token = AuthService.getToken();
@@ -107,17 +122,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (userResponse.success && userResponse.data) {
             const legacyUser = convertApiUserToLegacy(userResponse.data.user);
             dispatch({ type: 'LOGIN_SUCCESS', payload: legacyUser });
+            toast({
+              title: "Login Successful",
+              description: `Welcome back, ${legacyUser.name}!`,
+              variant: "success",
+            });
             return { success: true };
           } else {
             // Fallback to login response user data if /auth/me fails
             const legacyUser = convertApiUserToLegacy(response.data.user);
             dispatch({ type: 'LOGIN_SUCCESS', payload: legacyUser });
+            toast({
+              title: "Login Successful",
+              description: `Welcome back, ${legacyUser.name}!`,
+              variant: "success",
+            });
             return { success: true };
           }
         } catch (userError) {
           // Fallback to login response user data if /auth/me fails
           const legacyUser = convertApiUserToLegacy(response.data.user);
           dispatch({ type: 'LOGIN_SUCCESS', payload: legacyUser });
+          toast({
+            title: "Login Successful",
+            description: `Welcome back, ${legacyUser.name}!`,
+            variant: "success",
+          });
           return { success: true };
         }
       } else {
@@ -143,6 +173,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
         }
         
+        toast({
+          title: "Login Failed",
+          description: errorMessage,
+          variant: "error",
+        });
+        
         return { 
           success: false, 
           error: errorMessage
@@ -150,9 +186,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE' });
+      
+      const errorMessage = 'Network error. Please check your internet connection and try again.';
+      toast({
+        title: "Login Failed",
+        description: errorMessage,
+        variant: "error",
+      });
+      
       return { 
         success: false, 
-        error: 'Network error. Please check your internet connection and try again.' 
+        error: errorMessage
       };
     }
   };
@@ -160,6 +204,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     AuthService.logout();
     dispatch({ type: 'LOGOUT' });
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+      variant: "info",
+    });
   };
 
   return (

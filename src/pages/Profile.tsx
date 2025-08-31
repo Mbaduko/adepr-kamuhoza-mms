@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { 
   User, 
   Mail, 
@@ -23,6 +24,7 @@ import {
 
 export const Profile: React.FC = () => {
   const { state } = useAuth();
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = React.useState(false);
   const [formData, setFormData] = React.useState({
     name: state.user?.name || '',
@@ -42,6 +44,11 @@ export const Profile: React.FC = () => {
     // Here you would typically call an API to update user profile
     console.log('Saving profile data:', formData);
     setIsEditing(false);
+    toast({
+      title: "Profile Updated",
+      description: "Your profile information has been saved successfully.",
+      variant: "success",
+    });
   };
 
   const handleCancel = () => {
@@ -54,6 +61,11 @@ export const Profile: React.FC = () => {
       bio: state.user?.bio || ''
     });
     setIsEditing(false);
+    toast({
+      title: "Changes Cancelled",
+      description: "Your changes have been discarded.",
+      variant: "info",
+    });
   };
 
   const getRoleIcon = () => {

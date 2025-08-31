@@ -234,13 +234,14 @@ export const Certificates: React.FC = () => {
       }
       toast({
         title: "Success",
-        description: "Certificate requests refreshed successfully."
+        description: "Certificate requests refreshed successfully.",
+        variant: "success"
       })
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to refresh data. Please try again.",
-        variant: "destructive"
+        variant: "error"
       })
     }
   }
@@ -251,7 +252,7 @@ export const Certificates: React.FC = () => {
       toast({ 
         title: "Purpose required", 
         description: "Please describe the purpose for this certificate.",
-        variant: "destructive"
+        variant: "error"
       })
       return
     }
@@ -269,7 +270,8 @@ export const Certificates: React.FC = () => {
     setOpenNew(false)
       toast({ 
         title: "Request submitted", 
-        description: "Your certificate request has been created." 
+        description: "Your certificate request has been created.",
+        variant: "success"
       })
     }
   }
@@ -284,7 +286,8 @@ export const Certificates: React.FC = () => {
     if (success) {
       toast({ 
         title: "Request Approved", 
-        description: `Certificate request approved successfully.` 
+        description: `Certificate request approved successfully.`,
+        variant: "success"
       })
     }
   }
@@ -294,7 +297,8 @@ export const Certificates: React.FC = () => {
     if (success) {
       toast({ 
         title: "Request Rejected", 
-        description: `Certificate request rejected.` 
+        description: `Certificate request rejected.`,
+        variant: "error"
       })
     }
   }

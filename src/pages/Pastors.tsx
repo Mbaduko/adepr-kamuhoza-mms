@@ -111,13 +111,14 @@ export const Pastors: React.FC = () => {
       ])
       toast({
         title: "Success",
-        description: "Pastors data refreshed successfully."
+        description: "Pastors data refreshed successfully.",
+        variant: "success"
       })
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to refresh data. Please try again.",
-        variant: "destructive"
+        variant: "error"
       })
     }
   }

@@ -1,21 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/context/AuthContext';
-import { Mail, Lock, Info } from 'lucide-react';
-import logoImage from '@/assets/logo.png';
+"use client"
+
+import * as React from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useAuth } from "@/context/AuthContext"
+import { useToast } from "@/hooks/use-toast"
+import { useNavigate } from "react-router-dom"
+import { Mail, Lock, Info } from "lucide-react"
+import logoImage from "@/assets/logo.png"
 
 export const Login: React.FC = () => {
-  const navigate = useNavigate();
-  const { login, state } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = React.useState('')
+  const [password, setPassword] = React.useState('')
+  const { state, login } = useAuth()
+  const { toast } = useToast()
+  const navigate = useNavigate()
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (state.isAuthenticated) {
       navigate('/dashboard');
     }
@@ -23,16 +26,29 @@ export const Login: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     
     if (!email || !password) {
-      setError('Please enter both email and password');
+      toast({
+        title: "Validation Error",
+        description: "Please enter both email and password",
+        variant: "error",
+      });
       return;
     }
     
     const result = await login(email, password);
     if (!result.success) {
-      setError(result.error || 'Login failed');
+      toast({
+        title: "Login Failed",
+        description: result.error || 'Login failed',
+        variant: "error",
+      });
+    } else {
+      toast({
+        title: "Login Successful",
+        description: "Welcome back! Redirecting to dashboard...",
+        variant: "success",
+      });
     }
   };
 
@@ -58,11 +74,6 @@ export const Login: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={handleLogin} className="space-y-4">
-              {error && (
-                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-                  {error}
-                </div>
-              )}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
@@ -111,7 +122,13 @@ export const Login: React.FC = () => {
               <Button 
                 variant="link" 
                 className="text-sm text-muted-foreground hover:text-primary p-0"
-                onClick={() => console.log('Forgot password clicked')}
+                onClick={() => {
+                  toast({
+                    title: "Feature Coming Soon",
+                    description: "Password reset functionality will be available soon.",
+                    variant: "info",
+                  });
+                }}
               >
                 Forgot your password?
               </Button>
@@ -150,5 +167,5 @@ export const Login: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

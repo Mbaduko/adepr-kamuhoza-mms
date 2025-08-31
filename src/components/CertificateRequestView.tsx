@@ -150,7 +150,7 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
 
   const handleReject = () => {
     if (!comment.trim()) {
-      toast({ title: "Reason required", description: "Please provide a reason for rejection.", variant: "destructive" })
+      toast({ title: "Reason required", description: "Please provide a reason for rejection.", variant: "error" })
       return
     }
     

@@ -89,13 +89,14 @@ export const Members: React.FC = () => {
       ])
       toast({
         title: "Success",
-        description: "Members data refreshed successfully."
+        description: "Members data refreshed successfully.",
+        variant: "success"
       })
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to refresh data. Please try again.",
-        variant: "destructive"
+        variant: "error"
       })
     }
   }
