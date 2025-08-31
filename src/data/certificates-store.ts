@@ -1,147 +1,184 @@
-import { mockCertificateRequests, mockMembers, type CertificateRequest } from "@/data/mockData"
+import { create } from 'zustand';
+import { CertificateService, CertificateRequest, NewRequestInput } from '@/services/certificateService';
 
-const STORAGE_KEY = "certificates:requests:v1"
-
-function readStore(): CertificateRequest[] {
-  const raw = localStorage.getItem(STORAGE_KEY)
-  if (!raw) {
-    // seed on first run
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(mockCertificateRequests))
-    return [...mockCertificateRequests]
-  }
-  try {
-    const parsed = JSON.parse(raw) as CertificateRequest[]
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
+interface CertificatesState {
+  requests: CertificateRequest[];
+  loading: boolean;
+  error: string | null;
+  selectedRequest: CertificateRequest | null;
 }
 
-function writeStore(data: CertificateRequest[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+interface CertificatesActions {
+  // State
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  setSelectedRequest: (request: CertificateRequest | null) => void;
+  
+  // Actions
+  fetchAllRequests: () => Promise<void>;
+  fetchRequestsByMember: (memberId: string) => Promise<void>;
+  createRequest: (input: NewRequestInput) => Promise<boolean>;
+  approveRequest: (id: string, level: 1 | 2 | 3, approvedBy: string, comments?: string) => Promise<boolean>;
+  rejectRequest: (id: string, level: 1 | 2 | 3, approvedBy: string, reason: string) => Promise<boolean>;
+  
+  // Reset
+  reset: () => void;
 }
 
-export function listAll(): CertificateRequest[] {
-  const rows = readStore()
-  return rows.sort((a, b) => new Date(b.requestDate).getTime() - new Date(a.requestDate).getTime())
-}
+const initialState: CertificatesState = {
+  requests: [],
+  loading: false,
+  error: null,
+  selectedRequest: null,
+};
 
-export function listByMemberId(memberId: string): CertificateRequest[] {
-  return listAll().filter((r) => r.memberId === memberId)
-}
+export const useCertificatesStore = create<CertificatesState & CertificatesActions>((set, get) => ({
+  ...initialState,
 
-export type NewRequestInput = {
-  memberId: string
-  memberName: string
-  certificateType: CertificateRequest["certificateType"]
-  purpose: string
-}
+  setLoading: (loading) => set({ loading }),
+  setError: (error) => set({ error }),
+  setSelectedRequest: (request) => set({ selectedRequest: request }),
 
-export function createRequest(input: NewRequestInput): CertificateRequest {
-  const rows = readStore()
-  const id = `cert-${Date.now()}`
-  const newReq: CertificateRequest = {
-    id,
-    memberId: input.memberId,
-    memberName: input.memberName,
-    certificateType: input.certificateType,
-    purpose: input.purpose,
-    requestDate: new Date().toISOString(),
-    status: "pending",
-    approvals: {},
-  }
-  rows.unshift(newReq)
-  writeStore(rows)
-  return newReq
-}
+  fetchAllRequests: async () => {
+    set({ loading: true, error: null });
+    
+    try {
+      const response = await CertificateService.getAllRequests();
+      
+      if (response.success && response.data) {
+        set({ requests: response.data, loading: false });
+      } else {
+        set({ 
+          error: response.error?.message || 'Failed to fetch certificate requests',
+          loading: false 
+        });
+      }
+    } catch (error) {
+      set({ 
+        error: 'Network error occurred while fetching certificate requests',
+        loading: false 
+      });
+    }
+  },
 
-type Level = 1 | 2 | 3
+  fetchRequestsByMember: async (memberId: string) => {
+    set({ loading: true, error: null });
+    
+    try {
+      const response = await CertificateService.getRequestsByMemberId(memberId);
+      
+      if (response.success && response.data) {
+        set({ requests: response.data, loading: false });
+      } else {
+        set({ 
+          error: response.error?.message || 'Failed to fetch member certificate requests',
+          loading: false 
+        });
+      }
+    } catch (error) {
+      set({ 
+        error: 'Network error occurred while fetching member certificate requests',
+        loading: false 
+      });
+    }
+  },
 
-export function approveRequest(opts: { id: string; level: Level; approvedBy: string; comments?: string }) {
-  const rows = readStore()
-  const idx = rows.findIndex((r) => r.id === opts.id)
-  if (idx === -1) return
-  const now = new Date().toISOString()
-  const row = rows[idx]
+  createRequest: async (input: NewRequestInput) => {
+    set({ loading: true, error: null });
+    
+    try {
+      const response = await CertificateService.createRequest(input);
+      
+      if (response.success && response.data) {
+        // Add the new request to the list
+        const currentRequests = get().requests;
+        set({ 
+          requests: [response.data, ...currentRequests],
+          loading: false 
+        });
+        return true;
+      } else {
+        set({ 
+          error: response.error?.message || 'Failed to create certificate request',
+          loading: false 
+        });
+        return false;
+      }
+    } catch (error) {
+      set({ 
+        error: 'Network error occurred while creating certificate request',
+        loading: false 
+      });
+      return false;
+    }
+  },
 
-  if (opts.level === 1) {
-    row.approvals.level1 = { approvedBy: opts.approvedBy, date: now, comments: opts.comments }
-    // move to in-review (pastor review)
-    row.status = "in-review"
-  } else if (opts.level === 2) {
-    row.approvals.level2 = { approvedBy: opts.approvedBy, date: now, comments: opts.comments }
-    // still in-review awaiting parish pastor
-    row.status = "in-review"
-  } else if (opts.level === 3) {
-    row.approvals.level3 = { approvedBy: opts.approvedBy, date: now, comments: opts.comments }
-    row.status = "approved"
-  }
+  approveRequest: async (id: string, level: 1 | 2 | 3, approvedBy: string, comments?: string) => {
+    set({ loading: true, error: null });
+    
+    try {
+      const response = await CertificateService.approveRequest(id, level, approvedBy, comments);
+      
+      if (response.success && response.data) {
+        // Update the request in the list
+        const currentRequests = get().requests;
+        const updatedRequests = currentRequests.map(request => 
+          request.id === id ? response.data! : request
+        );
+        set({ 
+          requests: updatedRequests,
+          loading: false 
+        });
+        return true;
+      } else {
+        set({ 
+          error: response.error?.message || 'Failed to approve certificate request',
+          loading: false 
+        });
+        return false;
+      }
+    } catch (error) {
+      set({ 
+        error: 'Network error occurred while approving certificate request',
+        loading: false 
+      });
+      return false;
+    }
+  },
 
-  rows[idx] = row
-  writeStore(rows)
-}
+  rejectRequest: async (id: string, level: 1 | 2 | 3, approvedBy: string, reason: string) => {
+    set({ loading: true, error: null });
+    
+    try {
+      const response = await CertificateService.rejectRequest(id, level, approvedBy, reason);
+      
+      if (response.success && response.data) {
+        // Update the request in the list
+        const currentRequests = get().requests;
+        const updatedRequests = currentRequests.map(request => 
+          request.id === id ? response.data! : request
+        );
+        set({ 
+          requests: updatedRequests,
+          loading: false 
+        });
+        return true;
+      } else {
+        set({ 
+          error: response.error?.message || 'Failed to reject certificate request',
+          loading: false 
+        });
+        return false;
+      }
+    } catch (error) {
+      set({ 
+        error: 'Network error occurred while rejecting certificate request',
+        loading: false 
+      });
+      return false;
+    }
+  },
 
-export function rejectRequest(opts: { id: string; level: Level; approvedBy: string; reason: string }) {
-  const rows = readStore()
-  const idx = rows.findIndex((r) => r.id === opts.id)
-  if (idx === -1) return
-  const row = rows[idx]
-  row.status = "rejected"
-  row.rejectionReason = opts.reason
-  // keep the approver level noted (optional)
-  const now = new Date().toISOString()
-  if (opts.level === 1) {
-    row.approvals.level1 = { approvedBy: opts.approvedBy, date: now, comments: `Rejected: ${opts.reason}` }
-  } else if (opts.level === 2) {
-    row.approvals.level2 = { approvedBy: opts.approvedBy, date: now, comments: `Rejected: ${opts.reason}` }
-  } else if (opts.level === 3) {
-    row.approvals.level3 = { approvedBy: opts.approvedBy, date: now, comments: `Rejected: ${opts.reason}` }
-  }
-  rows[idx] = row
-  writeStore(rows)
-}
-
-export function getMemberZoneId(memberId: string): string | undefined {
-  const m = mockMembers.find((mm) => mm.id === memberId)
-  return m?.zoneId
-}
-
-// Helpers for approval queues
-export function listPendingLevel1ForZone(zoneId: string): CertificateRequest[] {
-  return listAll().filter((r) => {
-    if (r.status === "rejected" || r.status === "approved") return false
-    const memberZone = getMemberZoneId(r.memberId)
-    return !r.approvals.level1 && memberZone === zoneId
-  })
-}
-
-export function listPendingLevel2(): CertificateRequest[] {
-  return listAll().filter((r) => {
-    if (r.status === "rejected" || r.status === "approved") return false
-    return !!r.approvals.level1 && !r.approvals.level2
-  })
-}
-
-export function listPendingLevel3(): CertificateRequest[] {
-  return listAll().filter((r) => {
-    if (r.status === "rejected" || r.status === "approved") return false
-    return !!r.approvals.level1 && !!r.approvals.level2 && !r.approvals.level3
-  })
-}
-
-export function summarize(requests: CertificateRequest[]) {
-  return {
-    total: requests.length,
-    pending: requests.filter((r) => r.status === "pending").length,
-    inReview: requests.filter((r) => r.status === "in-review").length,
-    approved: requests.filter((r) => r.status === "approved").length,
-    rejected: requests.filter((r) => r.status === "rejected").length,
-    byType: {
-      baptism: requests.filter((r) => r.certificateType === "baptism").length,
-      recommendation: requests.filter((r) => r.certificateType === "recommendation").length,
-      marriage: requests.filter((r) => r.certificateType === "marriage").length,
-      membership: requests.filter((r) => r.certificateType === "membership").length,
-    },
-  }
-}
+  reset: () => set(initialState),
+}));
 
