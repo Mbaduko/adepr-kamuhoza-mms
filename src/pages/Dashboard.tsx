@@ -22,7 +22,8 @@ import {
   ChevronRight, 
   User, 
   RefreshCw,
-  XCircle 
+  XCircle,
+  Info
 } from "lucide-react"
 
 export const Dashboard: React.FC = () => {
@@ -37,6 +38,7 @@ export const Dashboard: React.FC = () => {
     requests, 
     loading: certificatesLoading, 
     error: certificatesError,
+    isInitialized: certificatesInitialized,
     fetchAllRequests 
   } = useCertificatesStore()
   
@@ -44,6 +46,7 @@ export const Dashboard: React.FC = () => {
     members, 
     loading: membersLoading, 
     error: membersError,
+    isInitialized: membersInitialized,
     fetchAllMembers 
   } = useMembersStore()
   
@@ -51,6 +54,7 @@ export const Dashboard: React.FC = () => {
     zones, 
     loading: zonesLoading, 
     error: zonesError,
+    isInitialized: zonesInitialized,
     fetchAllZones 
   } = useZonesStore()
 
@@ -94,16 +98,12 @@ export const Dashboard: React.FC = () => {
         ])
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
-        toast({
-          title: "Error",
-          description: "Failed to load dashboard data. Please refresh the page.",
-          variant: "destructive"
-        })
+        // Don't show error toast as endpoints might not be ready
       }
     }
 
     loadData()
-  }, [fetchAllRequests, fetchAllMembers, fetchAllZones, toast])
+  }, [fetchAllRequests, fetchAllMembers, fetchAllZones])
 
   const handleRefresh = async () => {
     try {
@@ -227,6 +227,7 @@ export const Dashboard: React.FC = () => {
 
   const isLoading = certificatesLoading || membersLoading || zonesLoading
   const hasError = certificatesError || membersError || zonesError
+  const isInitialized = certificatesInitialized && membersInitialized && zonesInitialized
 
   return (
     <div className="space-y-8">
@@ -256,6 +257,20 @@ export const Dashboard: React.FC = () => {
               <AlertCircle className="h-4 w-4" />
               <span className="text-sm font-medium">
                 {certificatesError || membersError || zonesError}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Service Status Info */}
+      {isInitialized && !isLoading && !hasError && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-blue-700">
+              <Info className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                All services are connected and ready
               </span>
             </div>
           </CardContent>
@@ -417,6 +432,20 @@ export const Dashboard: React.FC = () => {
             <div className="flex items-center justify-center py-8">
               <RefreshCw className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2 text-muted-foreground">Loading dashboard data...</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty State - Services Not Ready */}
+      {isInitialized && !isLoading && !hasError && stats.totalMembers === 0 && stats.totalZones === 0 && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-amber-700">
+              <Info className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                Services are connected but no data is available yet. This is normal when the system is first set up.
+              </span>
             </div>
           </CardContent>
         </Card>

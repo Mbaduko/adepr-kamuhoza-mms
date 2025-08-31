@@ -34,6 +34,7 @@ import {
   FileText,
   Download,
   RefreshCw,
+  Info,
 } from "lucide-react"
 import { CertificateRequest } from "@/services/certificateService"
 
@@ -191,6 +192,7 @@ export const Certificates: React.FC = () => {
     requests, 
     loading, 
     error,
+    isInitialized,
     fetchAllRequests,
     fetchRequestsByMember,
     createRequest,
@@ -216,16 +218,12 @@ export const Certificates: React.FC = () => {
         }
       } catch (error) {
         console.error('Failed to load certificate requests:', error)
-        toast({
-          title: "Error",
-          description: "Failed to load certificate requests. Please refresh the page.",
-          variant: "destructive"
-        })
+        // Don't show error toast as endpoints might not be ready
       }
     }
 
     loadData()
-  }, [fetchAllRequests, fetchRequestsByMember, user.id, user.role, toast])
+  }, [fetchAllRequests, fetchRequestsByMember, user.id, user.role])
 
   const handleRefresh = async () => {
     try {
@@ -423,6 +421,20 @@ export const Certificates: React.FC = () => {
         </Card>
       )}
 
+      {/* Service Status Info */}
+      {isInitialized && !loading && !error && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-blue-700">
+              <Info className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                Certificate service is connected and ready
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stats */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
         <Card>
@@ -584,6 +596,20 @@ export const Certificates: React.FC = () => {
             <div className="flex items-center justify-center py-8">
               <RefreshCw className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2 text-muted-foreground">Loading certificate requests...</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty State - Service Not Ready */}
+      {isInitialized && !loading && !error && requests.length === 0 && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-amber-700">
+              <Info className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                Certificate service is connected but no requests are available yet. This is normal when the system is first set up.
+              </span>
             </div>
           </CardContent>
         </Card>
