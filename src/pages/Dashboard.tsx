@@ -272,19 +272,7 @@ export const Dashboard: React.FC = () => {
         </Card>
       )}
 
-      {/* Service Status Info */}
-      {isInitialized && !isLoading && !hasError && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-blue-700">
-              <Info className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                All services are connected and ready
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

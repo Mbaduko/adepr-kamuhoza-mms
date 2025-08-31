@@ -229,6 +229,20 @@ export const Zones: React.FC = () => {
     return !!(zone.leaderId && zone.leaderId.trim() !== '');
   };
 
+  // Helper function to format date
+  const formatDate = (dateString: string): string => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Invalid date';
+    }
+  };
+
   // Filter zones based on search
   const filteredZones = React.useMemo(() => {
     return zones.filter(zone => 
@@ -310,19 +324,7 @@ export const Zones: React.FC = () => {
         </Card>
       )}
 
-      {/* Service Status Info */}
-      {isInitialized && !isLoading && !hasError && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-blue-700">
-              <Info className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                Zone and member services are connected and ready
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* Stats */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -433,7 +435,7 @@ export const Zones: React.FC = () => {
                             </div>
                             <div>
                               <p className="font-medium">{zone.name}</p>
-                              <p className="text-sm text-muted-foreground">Zone ID: {zone.id}</p>
+                              <p className="text-sm text-muted-foreground">Created: {formatDate(zone.created_at)}</p>
                             </div>
                           </div>
                         </TableCell>
@@ -628,8 +630,8 @@ export const Zones: React.FC = () => {
                   <p className="text-sm font-medium">{selectedZone.name}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Zone ID</Label>
-                  <p className="text-sm">{selectedZone.id}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Created Date</Label>
+                  <p className="text-sm">{formatDate(selectedZone.created_at)}</p>
                 </div>
               </div>
               

@@ -425,19 +425,7 @@ export const Certificates: React.FC = () => {
         </Card>
       )}
 
-      {/* Service Status Info */}
-      {isInitialized && !loading && !error && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-blue-700">
-              <Info className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                Certificate service is connected and ready
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* Stats */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">

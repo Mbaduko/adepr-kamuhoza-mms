@@ -50,6 +50,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MemberService, CreateUserData } from '@/services/memberService';
+import { useState } from "react"
 
 export const Members: React.FC = () => {
   const { state } = useAuth()
@@ -59,15 +60,17 @@ export const Members: React.FC = () => {
   // Use stores
   const { 
     members, 
+    zones,
+    totalMembers,
     loading: membersLoading, 
     error: membersError,
     isInitialized: membersInitialized,
-    fetchAllMembers,
-    fetchMembersByZone
+    fetchZoneMembers,
+    fetchAllUsers
   } = useMembersStore()
   
   const { 
-    zones, 
+    zones: allZones, 
     loading: zonesLoading, 
     error: zonesError,
     isInitialized: zonesInitialized,
@@ -90,7 +93,9 @@ export const Members: React.FC = () => {
       case 'parish-pastor':
         return 'PASTOR'; // Parish pastors can create pastors by default
       case 'pastor':
+        return 'MEMBER'; // Pastors create members by default
       case 'zone-leader':
+        return 'MEMBER'; // Zone leaders can only create members
       default:
         return 'MEMBER'; // Everyone else creates members by default
     }
@@ -107,9 +112,6 @@ export const Members: React.FC = () => {
           { value: 'PASTOR', label: 'Pastor' }
         ];
       case 'pastor':
-        return [
-          { value: 'MEMBER', label: 'Member' }
-        ];
       case 'zone-leader':
         return [
           { value: 'MEMBER', label: 'Member' }
@@ -122,7 +124,7 @@ export const Members: React.FC = () => {
   };
 
   // Initialize form with default role
-  const [formData, setFormData] = React.useState<CreateUserData>({
+  const [formData, setFormData] = useState<CreateUserData>({
     first_name: "",
     last_name: "",
     phone_number: "",
@@ -135,13 +137,276 @@ export const Members: React.FC = () => {
     baptism_date: "",
     is_married_in_church: false,
     marriage_date: "",
-    choir: "",
+    choir: "", // Optional - can be empty
+    zone_id: user?.role === 'zone-leader' ? user.zoneId || "" : "",
     email: "",
-    password: "",
-    role: getDefaultRole() as "MEMBER" | "PASTOR",
+    role: getDefaultRole(),
     account_status: "ACTIVE",
   });
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  // Validation state
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Real-time validation
+  const validateField = (field: string, value: any): string => {
+    switch (field) {
+      case 'phone_number':
+        if (!value) return '';
+        if (!validatePhoneNumber(value)) {
+          return 'Phone number must be exactly 10 digits';
+        }
+        break;
+      case 'email':
+        if (!value) return '';
+        if (!validateEmail(value)) {
+          return 'Please enter a valid email address';
+        }
+        break;
+      case 'date_of_birth':
+        if (!value) return '';
+        if (!validateDateOfBirth(value)) {
+          return 'Please enter a valid date of birth (person must be between 1 and 120 years old)';
+        }
+        break;
+      case 'marital_status':
+        // No validation needed since "married in church" is only shown for non-single statuses
+        break;
+      case 'is_married_in_church':
+        if (value && !formData.marriage_date) {
+          return 'Marriage date is required when marked as married in church';
+        }
+        break;
+      case 'marriage_date':
+        if (value && formData.date_of_birth) {
+          const marriageDate = new Date(value);
+          const birthDate = new Date(formData.date_of_birth);
+          if (marriageDate <= birthDate) {
+            return 'Marriage date cannot be before or on the same day as date of birth';
+          }
+        }
+        break;
+      case 'choir':
+        // Choir is now optional - no validation needed
+        break;
+      case 'zone_id':
+        if (formData.role === 'MEMBER' && (!value || value === 'none')) {
+          return 'Zone assignment is required for members';
+        }
+        // For zone leaders, ensure they have a zone assigned
+        if (user?.role === 'zone-leader' && (!value || value === 'none')) {
+          return 'Zone assignment is required for zone leaders';
+        }
+        break;
+    }
+    return '';
+  };
+
+  // Phone number formatting helper
+  const formatPhoneNumber = (value: string): string => {
+    // Remove all non-digits
+    const digitsOnly = value.replace(/\D/g, '');
+    
+    // Format as (XXX) XXX-XXXX
+    if (digitsOnly.length <= 3) {
+      return digitsOnly;
+    } else if (digitsOnly.length <= 6) {
+      return `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3)}`;
+    } else {
+      return `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6, 10)}`;
+    }
+  };
+
+  // Enhanced input change handler with validation
+  const handleInputChangeWithValidation = (field: keyof CreateUserData, value: any) => {
+    // Special handling for marital status to prevent contradictory states
+    if (field === 'marital_status') {
+      // If changing to non-married status, automatically clear married in church data
+      if (value !== 'MARRIED') {
+        setFormData(prev => ({ 
+          ...prev, 
+          [field]: value,
+          is_married_in_church: false,
+          marriage_date: ""
+        }));
+      } else {
+        setFormData(prev => ({ ...prev, [field]: value }));
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
+    
+    // Mark field as touched
+    setTouchedFields(prev => ({ ...prev, [field]: true }));
+    
+    // Validate field
+    const error = validateField(field, value);
+    setValidationErrors(prev => ({ ...prev, [field]: error }));
+    
+    // Cross-field validation for marital status
+    if (field === 'marital_status' || field === 'is_married_in_church' || field === 'marriage_date') {
+      const maritalError = validateMaritalStatusLogic(
+        field === 'marital_status' ? value : formData.marital_status,
+        field === 'is_married_in_church' ? value : formData.is_married_in_church,
+        field === 'marriage_date' ? value : formData.marriage_date
+      );
+      
+      setValidationErrors(prev => ({
+        ...prev,
+        marital_status: maritalError,
+        is_married_in_church: maritalError,
+        marriage_date: maritalError
+      }));
+    }
+
+    // Cross-field validation for role and zone
+    if (field === 'role' || field === 'zone_id') {
+      const zoneError = validateField('zone_id', field === 'zone_id' ? value : formData.zone_id);
+      setValidationErrors(prev => ({
+        ...prev,
+        zone_id: zoneError
+      }));
+    }
+    
+    // Auto-reset "married in church" when marital status changes to any non-married status
+    if (field === 'marital_status' && value !== 'MARRIED') {
+      setFormData(prev => ({ 
+        ...prev, 
+        is_married_in_church: false,
+        marriage_date: ""
+      }));
+      setValidationErrors(prev => ({
+        ...prev,
+        is_married_in_church: '',
+        marriage_date: ''
+      }));
+    }
+  };
+
+  // Validation functions
+  const validatePhoneNumber = (phone: string): boolean => {
+    // Remove all non-digit characters and check if it's exactly 10 digits
+    const digitsOnly = phone.replace(/\D/g, '');
+    return digitsOnly.length === 10;
+  };
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateDateOfBirth = (dateOfBirth: string): boolean => {
+    if (!dateOfBirth) return false;
+    
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    
+    // Check if person is between 1 and 120 years old
+    return age >= 1 && age <= 120 && birthDate <= today;
+  };
+
+  const validateMaritalStatusLogic = (maritalStatus: string, isMarriedInChurch: boolean, marriageDate: string): string => {
+    // If marital status is SINGLE, married in church should be false
+    if (maritalStatus === 'SINGLE' && isMarriedInChurch) {
+      return 'Single people cannot be married in church';
+    }
+    
+    // If marital status is WIDOWED, married in church should be false
+    if (maritalStatus === 'WIDOWED' && isMarriedInChurch) {
+      return 'Widowed people cannot be marked as married in church';
+    }
+    
+    // If marital status is DIVORCED, married in church should be false
+    if (maritalStatus === 'DIVORCED' && isMarriedInChurch) {
+      return 'Divorced people cannot be marked as married in church';
+    }
+    
+    // If married in church is true, marital status should be MARRIED
+    if (isMarriedInChurch && maritalStatus !== 'MARRIED') {
+      return 'Only married people can be marked as married in church';
+    }
+    
+    // If married in church is true, marriage date is required
+    if (isMarriedInChurch && !marriageDate) {
+      return 'Marriage date is required when marked as married in church';
+    }
+    
+    return '';
+  };
+
+  const validateForm = (): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+
+    // Required fields validation
+    if (!formData.first_name?.trim()) {
+      errors.push("First name is required");
+    }
+    if (!formData.last_name?.trim()) {
+      errors.push("Last name is required");
+    }
+    if (!formData.email?.trim()) {
+      errors.push("Email is required");
+    }
+    if (!formData.phone_number?.trim()) {
+      errors.push("Phone number is required");
+    }
+    if (!formData.date_of_birth) {
+      errors.push("Date of birth is required");
+    }
+    // Choir is now optional - no validation needed
+
+    // Phone number validation
+    if (formData.phone_number && !validatePhoneNumber(formData.phone_number)) {
+      errors.push("Phone number must be exactly 10 digits");
+    }
+
+    // Email validation
+    if (formData.email && !validateEmail(formData.email)) {
+      errors.push("Please enter a valid email address");
+    }
+
+    // Date of birth validation
+    if (formData.date_of_birth && !validateDateOfBirth(formData.date_of_birth)) {
+      errors.push("Please enter a valid date of birth (person must be between 1 and 120 years old)");
+    }
+
+    // Marital status logic validation
+    const maritalStatusError = validateMaritalStatusLogic(formData.marital_status, formData.is_married_in_church, formData.marriage_date);
+    if (maritalStatusError) {
+      errors.push(maritalStatusError);
+    }
+
+    // Marriage date validation (if married in church)
+    if (formData.is_married_in_church && !formData.marriage_date) {
+      errors.push("Marriage date is required when marked as married in church");
+    }
+
+    // Marriage date validation (if provided)
+    if (formData.marriage_date && formData.marriage_date.trim() !== '') {
+      const marriageDate = new Date(formData.marriage_date);
+      const birthDate = new Date(formData.date_of_birth);
+      
+      if (marriageDate <= birthDate) {
+        errors.push("Marriage date cannot be before or on the same day as date of birth");
+      }
+    }
+
+    // Zone validation for members
+    if (formData.role === 'MEMBER' && (!formData.zone_id || formData.zone_id === 'none')) {
+      errors.push("Zone assignment is required for members");
+    }
+
+    // Zone validation for zone leaders
+    if (user?.role === 'zone-leader' && (!formData.zone_id || formData.zone_id === 'none')) {
+      errors.push("Zone assignment is required for zone leaders");
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  };
 
   // Form handlers
   const handleInputChange = (field: keyof CreateUserData, value: any) => {
@@ -163,53 +428,80 @@ export const Members: React.FC = () => {
       is_married_in_church: false,
       marriage_date: "",
       choir: "",
+      zone_id: user?.role === 'zone-leader' ? (user.zoneId || "") : "",
       email: "",
-      password: "",
-      role: getDefaultRole() as "MEMBER" | "PASTOR",
+      role: getDefaultRole(),
       account_status: "ACTIVE",
     });
+    setValidationErrors({});
+    setTouchedFields({});
+    setIsSubmitting(false);
     setOpenNewUser(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    
+    // Validate form
+    const validation = validateForm();
+    if (!validation.isValid) {
+      toast({
+        title: "Validation Error",
+        description: validation.errors.join(", "),
+        variant: "destructive",
+      });
+      return;
+    }
 
-    try {
-      // Validate required fields
-      if (!formData.first_name || !formData.last_name || !formData.email || !formData.password) {
-        toast({
-          title: "Validation Error",
-          description: "Please fill in all required fields (First Name, Last Name, Email, Password)",
-          variant: "error",
-        });
-        return;
+    // Pre-submission logical consistency check
+    const submissionData = {
+      ...formData,
+      // Ensure married_in_church is only true for MARRIED status
+      is_married_in_church: formData.marital_status === 'MARRIED' ? formData.is_married_in_church : false,
+      // Clear marriage_date if not married in church or if empty
+      marriage_date: (formData.marital_status === 'MARRIED' && formData.is_married_in_church && formData.marriage_date) ? formData.marriage_date : undefined,
+      // Include zone_id if selected (for now, still exclude until backend is ready)
+      // zone_id: formData.zone_id && formData.zone_id !== 'none' ? formData.zone_id : undefined,
+    };
+    
+    // Remove zone_id from submission data until backend is ready
+    const { zone_id, ...dataToSubmit } = submissionData;
+    
+    // Clean up undefined values to prevent API errors
+    Object.keys(dataToSubmit).forEach(key => {
+      if (dataToSubmit[key] === undefined || dataToSubmit[key] === "") {
+        delete dataToSubmit[key];
       }
+      // Special handling for date fields - don't send empty strings
+      if (key.includes('date') && (dataToSubmit[key] === "" || dataToSubmit[key] === null)) {
+        delete dataToSubmit[key];
+      }
+    });
 
-      const response = await MemberService.createUser(formData);
-
+    setIsSubmitting(true);
+    try {
+      const response = await MemberService.createUser(dataToSubmit);
       if (response.success) {
         toast({
           title: "Success",
-          description: "New member created successfully!",
-          variant: "success",
+          description: "Member created successfully!",
+          variant: "default",
         });
-        
         handleCancel();
         // Refresh members list
-        await fetchAllMembers();
+        await fetchZoneMembers();
       } else {
         toast({
           title: "Error",
-          description: response.error?.message || "Failed to create member. Please try again.",
-          variant: "error",
+          description: response.error?.message || "Failed to create member",
+          variant: "destructive",
         });
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create member. Please try again.",
-        variant: "error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -221,7 +513,7 @@ export const Members: React.FC = () => {
     const loadData = async () => {
       try {
         await Promise.all([
-          fetchAllMembers(),
+          fetchZoneMembers(),
           fetchAllZones()
         ])
       } catch (error) {
@@ -231,12 +523,14 @@ export const Members: React.FC = () => {
     }
 
     loadData()
-  }, [fetchAllMembers, fetchAllZones])
+  }, [fetchZoneMembers, fetchAllZones])
+
+
 
   const handleRefresh = async () => {
     try {
       await Promise.all([
-        fetchAllMembers(),
+        fetchZoneMembers(),
         fetchAllZones()
       ])
       toast({
@@ -247,8 +541,8 @@ export const Members: React.FC = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to refresh data. Please try again.",
-        variant: "error"
+        description: "Failed to refresh members data.",
+        variant: "destructive"
       })
     }
   }
@@ -270,12 +564,12 @@ export const Members: React.FC = () => {
   // Calculate stats
   const stats = React.useMemo(() => {
     return {
-      total: members.length,
+      total: totalMembers || members.length,
       active: members.filter(m => m.accountStatus === "active").length,
       inactive: members.filter(m => m.accountStatus === "inactive").length,
-      byZone: zones.length,
+      byZone: zones.length
     }
-  }, [members, zones])
+  }, [members, zones, totalMembers])
 
   const isLoading = membersLoading || zonesLoading
   const hasError = membersError || zonesError
@@ -312,7 +606,7 @@ export const Members: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold">Members</h1>
           <p className="text-muted-foreground">
-            Manage and view all church members. Search, filter, and track member information.
+            Manage and view church members with zone information.
           </p>
         </div>
 
@@ -348,19 +642,7 @@ export const Members: React.FC = () => {
         </Card>
       )}
 
-      {/* Service Status Info */}
-      {isInitialized && !isLoading && !hasError && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-blue-700">
-              <Info className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                Member and zone services are connected and ready
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* Stats */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -526,7 +808,7 @@ export const Members: React.FC = () => {
                           {getZoneName(member.zoneId || "")}
                         </div>
                       </TableCell>
-                                             <TableCell>
+                      <TableCell>
                          {getStatusBadge(member.accountStatus)}
                        </TableCell>
                                              <TableCell>
@@ -617,7 +899,7 @@ export const Members: React.FC = () => {
                <Input
                     id="first_name"
                     value={formData.first_name}
-                    onChange={(e) => handleInputChange("first_name", e.target.value)}
+                    onChange={(e) => handleInputChangeWithValidation("first_name", e.target.value)}
                     placeholder="Enter first name"
                     required
                />
@@ -629,53 +911,57 @@ export const Members: React.FC = () => {
                   <Input
                     id="last_name"
                     value={formData.last_name}
-                    onChange={(e) => handleInputChange("last_name", e.target.value)}
+                    onChange={(e) => handleInputChangeWithValidation("last_name", e.target.value)}
                     placeholder="Enter last name"
                     required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium">
-                    Email Address *
+                    Email *
                   </Label>
-               <Input
-                 id="email"
-                 type="email"
+                  <Input
+                    id="email"
+                    type="email"
                     value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    onChange={(e) => handleInputChangeWithValidation("email", e.target.value)}
                     placeholder="Enter email address"
                     required
-               />
-             </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium">
-                    Password *
-                  </Label>
-               <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange("password", e.target.value)}
-                    placeholder="Enter password"
-                    required
-               />
-             </div>
+                    autoComplete="off"
+                    className={touchedFields.email && validationErrors.email ? "border-red-500" : ""}
+                  />
+                  {touchedFields.email && validationErrors.email && (
+                    <p className="text-sm text-red-500">{validationErrors.email}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    A password will be generated and sent to this email address
+                  </p>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone_number" className="text-sm font-medium">
-                    Phone Number
+                    Phone Number *
                   </Label>
-               <Input
+                  <Input
                     id="phone_number"
-                    value={formData.phone_number}
-                    onChange={(e) => handleInputChange("phone_number", e.target.value)}
-                    placeholder="Enter phone number"
-               />
-             </div>
+                    value={formatPhoneNumber(formData.phone_number)}
+                    onChange={(e) => {
+                      const digitsOnly = e.target.value.replace(/\D/g, '');
+                      if (digitsOnly.length <= 10) {
+                        handleInputChangeWithValidation("phone_number", digitsOnly);
+                      }
+                    }}
+                    placeholder="Enter phone number (10 digits)"
+                    className={touchedFields.phone_number && validationErrors.phone_number ? "border-red-500" : ""}
+                  />
+                  {touchedFields.phone_number && validationErrors.phone_number && (
+                    <p className="text-sm text-red-500">{validationErrors.phone_number}</p>
+                  )}
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="gender" className="text-sm font-medium">
                     Gender
                   </Label>
-                  <Select value={formData.gender} onValueChange={value => handleInputChange("gender", value as "MALE" | "FEMALE")}>
+                  <Select value={formData.gender} onValueChange={value => handleInputChangeWithValidation("gender", value as "MALE" | "FEMALE")}>
                    <SelectTrigger>
                       <SelectValue placeholder="Select gender" />
                    </SelectTrigger>
@@ -687,31 +973,41 @@ export const Members: React.FC = () => {
                </div>
                 <div className="space-y-2">
                   <Label htmlFor="date_of_birth" className="text-sm font-medium">
-                    Date of Birth
+                    Date of Birth *
                   </Label>
                   <Input
                     id="date_of_birth"
                     type="date"
                     value={formData.date_of_birth}
-                    onChange={(e) => handleInputChange("date_of_birth", e.target.value)}
+                    onChange={(e) => handleInputChangeWithValidation("date_of_birth", e.target.value)}
+                    className={touchedFields.date_of_birth && validationErrors.date_of_birth ? "border-red-500" : ""}
                   />
+                  {touchedFields.date_of_birth && validationErrors.date_of_birth && (
+                    <p className="text-sm text-red-500">{validationErrors.date_of_birth}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="marital_status" className="text-sm font-medium">
                     Marital Status
                   </Label>
-                  <Select value={formData.marital_status} onValueChange={value => handleInputChange("marital_status", value as "SINGLE" | "MARRIED" | "DIVORCED" | "WIDOWED")}>
-                   <SelectTrigger>
+                  <Select value={formData.marital_status} onValueChange={value => handleInputChangeWithValidation("marital_status", value as "SINGLE" | "MARRIED" | "DIVORCED" | "WIDOWED")}>
+                    <SelectTrigger className={touchedFields.marital_status && validationErrors.marital_status ? "border-red-500" : ""}>
                       <SelectValue placeholder="Select marital status" />
-                   </SelectTrigger>
-                   <SelectContent>
+                    </SelectTrigger>
+                    <SelectContent>
                       <SelectItem value="SINGLE">Single</SelectItem>
                       <SelectItem value="MARRIED">Married</SelectItem>
                       <SelectItem value="DIVORCED">Divorced</SelectItem>
                       <SelectItem value="WIDOWED">Widowed</SelectItem>
-                   </SelectContent>
-                 </Select>
-               </div>
+                    </SelectContent>
+                  </Select>
+                  {touchedFields.marital_status && validationErrors.marital_status && (
+                    <p className="text-sm text-red-500">{validationErrors.marital_status}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Note: Only "Married" status allows "Married in Church" option
+                  </p>
+                </div>
              </div>
              </div>
 
@@ -726,7 +1022,7 @@ export const Members: React.FC = () => {
                <Textarea
                  id="address"
                     value={formData.address}
-                    onChange={(e) => handleInputChange("address", e.target.value)}
+                    onChange={(e) => handleInputChangeWithValidation("address", e.target.value)}
                     placeholder="Enter full address"
                     rows={3}
                />
@@ -738,7 +1034,7 @@ export const Members: React.FC = () => {
                   <Input
                     id="highest_degree"
                     value={formData.highest_degree}
-                    onChange={(e) => handleInputChange("highest_degree", e.target.value)}
+                    onChange={(e) => handleInputChangeWithValidation("highest_degree", e.target.value)}
                     placeholder="e.g., Bachelor's Degree, Master's Degree"
                   />
              </div>
@@ -757,47 +1053,116 @@ export const Members: React.FC = () => {
                     id="baptism_date"
                     type="date"
                     value={formData.baptism_date}
-                    onChange={(e) => handleInputChange("baptism_date", e.target.value)}
+                    onChange={(e) => handleInputChangeWithValidation("baptism_date", e.target.value)}
               />
             </div>
                 <div className="space-y-2">
                   <Label htmlFor="choir" className="text-sm font-medium">
-                    Choir
+                    Choir (Optional)
                   </Label>
               <Input
                     id="choir"
                     value={formData.choir}
-                    onChange={(e) => handleInputChange("choir", e.target.value)}
-                    placeholder="e.g., Youth Choir, Adult Choir"
-              />
+                    onChange={(e) => handleInputChangeWithValidation("choir", e.target.value)}
+                    placeholder="e.g., Youth Choir, Adult Choir (optional)"
+                    className={touchedFields.choir && validationErrors.choir ? "border-red-500" : ""}
+                  />
+                  {touchedFields.choir && validationErrors.choir && (
+                    <p className="text-sm text-red-500">{validationErrors.choir}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Enter the choir the member belongs to (optional)
+                  </p>
             </div>
                 <div className="space-y-2">
-                  <Label htmlFor="is_married_in_church" className="text-sm font-medium">
-                    Married in Church
+                  <Label htmlFor="zone_id" className="text-sm font-medium">
+                    Zone Assignment {formData.role === "MEMBER" ? "(Required for Members)" : "(Optional)"}
                   </Label>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="is_married_in_church"
-                      checked={formData.is_married_in_church}
-                      onCheckedChange={(checked) => handleInputChange("is_married_in_church", checked)}
-                    />
-                    <Label htmlFor="is_married_in_church" className="text-sm">
-                      Yes, married in church
-                    </Label>
-            </div>
+                  <Select 
+                    value={formData.zone_id || "none"} 
+                    onValueChange={value => handleInputChangeWithValidation("zone_id", value === "none" ? "" : value)} 
+                    disabled={formData.role !== "MEMBER" || user?.role === 'zone-leader'}
+                  >
+                    <SelectTrigger className={touchedFields.zone_id && validationErrors.zone_id ? "border-red-500" : ""}>
+                      <SelectValue placeholder={
+                        user?.role === 'zone-leader' 
+                          ? "Your zone (auto-assigned)" 
+                          : formData.role === "MEMBER" 
+                            ? "Select a zone (required)" 
+                            : "Select a zone (optional)"
+                      } />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Zone Assignment</SelectItem>
+                      {allZones.length > 0 ? (
+                        allZones.map((zone) => (
+                          <SelectItem key={zone.id} value={zone.id}>
+                            {zone.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-zones" disabled>
+                          No zones available
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {user?.role === 'zone-leader' && formData.zone_id && (
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span>Auto-assigned to your zone</span>
+                    </div>
+                  )}
+                  {touchedFields.zone_id && validationErrors.zone_id && (
+                    <p className="text-sm text-red-500">{validationErrors.zone_id}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {zonesLoading ? "Loading zones..." : 
+                      user?.role === 'zone-leader' 
+                        ? "Zone automatically set to your assigned zone" 
+                        : formData.role === "MEMBER" 
+                          ? `Zone assignment is required for members (${allZones.length} zones available)` 
+                          : "Zone assignment will be available once backend database is updated"
+                    }
+                  </p>
                 </div>
+                {/* Only show "Married in Church" section for MARRIED status */}
+                {formData.marital_status === "MARRIED" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="is_married_in_church" className="text-sm font-medium">
+                      Married in Church
+                    </Label>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="is_married_in_church"
+                        checked={formData.is_married_in_church}
+                        onCheckedChange={(checked) => handleInputChangeWithValidation("is_married_in_church", checked)}
+                      />
+                      <Label htmlFor="is_married_in_church" className="text-sm">
+                        Yes, married in church
+                      </Label>
+                    </div>
+                    {touchedFields.is_married_in_church && validationErrors.is_married_in_church && (
+                      <p className="text-sm text-red-500">{validationErrors.is_married_in_church}</p>
+                    )}
+                  </div>
+                )}
                 {formData.is_married_in_church && (
                   <div className="space-y-2">
                     <Label htmlFor="marriage_date" className="text-sm font-medium">
-                      Marriage Date
+                      Marriage Date *
                     </Label>
-              <Input
+                    <Input
                       id="marriage_date"
-                type="date"
+                      type="date"
                       value={formData.marriage_date}
-                      onChange={(e) => handleInputChange("marriage_date", e.target.value)}
-              />
-            </div>
+                      onChange={(e) => handleInputChangeWithValidation("marriage_date", e.target.value)}
+                      className={touchedFields.marriage_date && validationErrors.marriage_date ? "border-red-500" : ""}
+                    />
+                    {touchedFields.marriage_date && validationErrors.marriage_date && (
+                      <p className="text-sm text-red-500">{validationErrors.marriage_date}</p>
+                    )}
+                  </div>
                 )}
               </div>
               </div>
@@ -809,7 +1174,7 @@ export const Members: React.FC = () => {
                 <Label htmlFor="role" className="text-sm font-medium">
                   Church Role
                 </Label>
-                <Select value={formData.role} onValueChange={value => handleInputChange("role", value as "MEMBER" | "PASTOR")}>
+                <Select value={formData.role} onValueChange={value => handleInputChangeWithValidation("role", value as "MEMBER" | "PASTOR")}>
                 <SelectTrigger>
                     <SelectValue placeholder="Select role" />
                 </SelectTrigger>

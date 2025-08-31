@@ -68,7 +68,7 @@ export const Pastors: React.FC = () => {
     loading: membersLoading, 
     error: membersError,
     isInitialized: membersInitialized,
-    fetchAllMembers
+    fetchZoneMembers
   } = useMembersStore()
   
   const { 
@@ -91,8 +91,8 @@ export const Pastors: React.FC = () => {
     const loadData = async () => {
       try {
         await Promise.all([
-          fetchAllMembers(),
-          fetchAllZones
+          fetchZoneMembers(),
+          fetchAllZones()
         ])
       } catch (error) {
         console.error('Failed to load pastors data:', error)
@@ -101,13 +101,13 @@ export const Pastors: React.FC = () => {
     }
 
     loadData()
-  }, [fetchAllMembers, fetchAllZones])
+  }, [fetchZoneMembers, fetchAllZones])
 
   const handleRefresh = async () => {
     try {
       await Promise.all([
-        fetchAllMembers(),
-        fetchAllZones
+        fetchZoneMembers(),
+        fetchAllZones()
       ])
       toast({
         title: "Success",
@@ -294,19 +294,7 @@ export const Pastors: React.FC = () => {
         </Card>
       )}
 
-      {/* Service Status Info */}
-      {isInitialized && !isLoading && !hasError && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-blue-700">
-              <Info className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                Pastor and zone services are connected and ready
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">

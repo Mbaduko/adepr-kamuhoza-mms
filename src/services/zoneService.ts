@@ -7,6 +7,8 @@ export interface Zone {
   leaderId?: string;
   description: string;
   memberCount: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // API Response structure for GET /zones/

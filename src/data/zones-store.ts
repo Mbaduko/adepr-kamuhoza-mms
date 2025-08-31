@@ -9,6 +9,8 @@ const convertApiZoneToZone = (apiZone: ZoneApiResponse): Zone => {
     leaderId: apiZone.zone_leader_id,
     description: apiZone.description,
     memberCount: 0, // This will be calculated separately based on members data
+    created_at: apiZone.created_at,
+    updated_at: apiZone.updated_at,
   };
 };
 
