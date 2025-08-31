@@ -256,16 +256,16 @@ export const Pastors: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button 
+          <div className="flex items-center gap-2">
+            <Button
             variant="outline" 
-            size="sm" 
+              size="sm"
             onClick={handleRefresh}
             disabled={isLoading}
-          >
+            >
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
-          </Button>
+            </Button>
 
           <Button variant="outline" size="sm" className="gap-2">
             <Download className="h-4 w-4" />
@@ -403,89 +403,89 @@ export const Pastors: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-6">
             <div className="space-y-2">
               <Label htmlFor="search">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
                   id="search"
-                  placeholder="Search pastors..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+                placeholder="Search pastors..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="zone">Zone</Label>
-              <Select value={zoneFilter} onValueChange={setZoneFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by zone" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Zones</SelectItem>
+            <Select value={zoneFilter} onValueChange={setZoneFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by zone" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Zones</SelectItem>
                   {zones.map(zone => (
                     <SelectItem key={zone.id} value={zone.id}>{zone.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                ))}
+              </SelectContent>
+            </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="sort">Sort By</Label>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="joinDate">Join Date</SelectItem>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Name</SelectItem>
+                <SelectItem value="joinDate">Join Date</SelectItem>
                   <SelectItem value="role">Role</SelectItem>
                   <SelectItem value="status">Status</SelectItem>
-                </SelectContent>
-              </Select>
+              </SelectContent>
+            </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="order">Order</Label>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
                 className="gap-2 w-full"
-              >
-                {sortOrder === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
-                {sortOrder === "asc" ? "Asc" : "Desc"}
-              </Button>
+            >
+              {sortOrder === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
+              {sortOrder === "asc" ? "Asc" : "Desc"}
+            </Button>
             </div>
             <div className="space-y-2">
               <Label>&nbsp;</Label>
               <Button 
                 variant="outline" 
                 onClick={() => {
-                  setSearchTerm("")
-                  setStatusFilter("all")
-                  setZoneFilter("all")
-                  setSortBy("name")
-                  setSortOrder("asc")
+              setSearchTerm("")
+              setStatusFilter("all")
+              setZoneFilter("all")
+              setSortBy("name")
+              setSortOrder("asc")
                 }}
                 className="w-full"
               >
-                Clear All
-              </Button>
+              Clear All
+                </Button>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
       {/* Pastors Table */}
       <Card>
@@ -499,19 +499,19 @@ export const Pastors: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="w-full overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
+          <Table>
+            <TableHeader>
+              <TableRow>
                   <TableHead>Pastor</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Zone</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Zone</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
+                <TableHead>Status</TableHead>
                   <TableHead>Join Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
                 {filteredPastors.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8">
@@ -523,61 +523,61 @@ export const Pastors: React.FC = () => {
                             : "No pastors found."}
                         </p>
                       </div>
-                    </TableCell>
+                  </TableCell>
                   </TableRow>
                 ) : (
                   filteredPastors.map((pastor) => (
                     <TableRow key={pastor.id}>
-                      <TableCell>
+                  <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar>
                             <AvatarImage src={pastor.profileImage} />
                             <AvatarFallback>{getInitials(pastor.name)}</AvatarFallback>
                           </Avatar>
-                          <div>
+                    <div>
                             <p className="font-medium">{pastor.name}</p>
                             <p className="text-sm text-muted-foreground">{pastor.email}</p>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Mail className="h-3 w-3" />
-                            {pastor.email}
-                          </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-3 w-3" />
+                        {pastor.email}
+                      </div>
                           {pastor.phone && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Phone className="h-3 w-3" />
-                              {pastor.phone}
-                            </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="h-3 w-3" />
+                        {pastor.phone}
+                      </div>
                           )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
                           {pastor.zoneId ? getZoneName(pastor.zoneId) : "Unassigned"}
-                        </div>
-                      </TableCell>
-                      <TableCell>
+                    </div>
+                  </TableCell>
+                  <TableCell>
                         {getRoleBadge("member")} {/* Using member as default since role field doesn't exist yet */}
-                      </TableCell>
-                      <TableCell>
+                  </TableCell>
+                  <TableCell>
                         {getStatusBadge(pastor.accountStatus)}
-                      </TableCell>
-                      <TableCell>
+                  </TableCell>
+                  <TableCell>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           N/A {/* joinDate not available in current schema */}
-                        </div>
-                      </TableCell>
+                    </div>
+                  </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm">
                               <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                      </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem>
@@ -598,26 +598,26 @@ export const Pastors: React.FC = () => {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
+                  </TableCell>
+                </TableRow>
                   ))
                 )}
-              </TableBody>
-            </Table>
+            </TableBody>
+          </Table>
           </div>
         </CardContent>
       </Card>
 
       {/* Loading State */}
       {isLoading && (
-        <Card>
+                  <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-center py-8">
               <RefreshCw className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2 text-muted-foreground">Loading pastors data...</span>
             </div>
-          </CardContent>
-        </Card>
+                    </CardContent>
+                  </Card>
       )}
 
       {/* Empty State - Service Not Ready */}
@@ -629,9 +629,9 @@ export const Pastors: React.FC = () => {
               <span className="text-sm font-medium">
                 Pastor service is connected but no pastors are available yet. This is normal when the system is first set up.
               </span>
-            </div>
-          </CardContent>
-        </Card>
+                      </div>
+                    </CardContent>
+                  </Card>
       )}
     </div>
   )

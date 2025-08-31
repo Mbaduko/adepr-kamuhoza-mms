@@ -153,6 +153,30 @@ export const Profile: React.FC = () => {
                   <span>{state.user.address}</span>
                 </div>
               )}
+              {state.user.choir && (
+                <div className="flex items-center gap-3 text-sm">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span>Choir: {state.user.choir}</span>
+                </div>
+              )}
+              {state.user.gender && (
+                <div className="flex items-center gap-3 text-sm">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span>Gender: {state.user.gender}</span>
+                </div>
+              )}
+              {state.user.maritalStatus && (
+                <div className="flex items-center gap-3 text-sm">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span>Status: {state.user.maritalStatus}</span>
+                </div>
+              )}
+              {state.user.highestDegree && (
+                <div className="flex items-center gap-3 text-sm">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span>Education: {state.user.highestDegree}</span>
+                </div>
+              )}
               <div className="flex items-center gap-3 text-sm">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span>Member since {new Date(state.user.joinDate || Date.now()).getFullYear()}</span>
@@ -166,6 +190,25 @@ export const Profile: React.FC = () => {
                   </div>
                 </div>
               )}
+              
+              {/* Account Status */}
+              <div className="pt-4">
+                <Separator className="mb-4" />
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">Account Status:</span>
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      {state.user.accountStatus || 'Active'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">Email Verified:</span>
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      {state.user.isVerified ? 'Verified' : 'Not Verified'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -203,9 +246,6 @@ export const Profile: React.FC = () => {
                     className={!isEditing ? "bg-muted" : ""}
                   />
                 </div>
-              </div>
-              
-              <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <Label htmlFor="phone">Phone Number</Label>
                   <Input
@@ -214,7 +254,6 @@ export const Profile: React.FC = () => {
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     disabled={!isEditing}
                     className={!isEditing ? "bg-muted" : ""}
-                    placeholder="Enter your phone number"
                   />
                 </div>
                 <div>
@@ -225,69 +264,91 @@ export const Profile: React.FC = () => {
                     onChange={(e) => handleInputChange('address', e.target.value)}
                     disabled={!isEditing}
                     className={!isEditing ? "bg-muted" : ""}
-                    placeholder="Enter your address"
                   />
                 </div>
               </div>
-
               <div>
-                <Label htmlFor="bio">Bio / About Me</Label>
+                <Label htmlFor="bio">Bio</Label>
                 <Textarea
                   id="bio"
                   value={formData.bio}
                   onChange={(e) => handleInputChange('bio', e.target.value)}
                   disabled={!isEditing}
                   className={!isEditing ? "bg-muted" : ""}
-                  placeholder="Tell us a little about yourself..."
-                  rows={4}
+                  rows={3}
                 />
               </div>
             </CardContent>
           </Card>
 
-          {/* Account Information */}
+          {/* Additional Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Account Information</CardTitle>
+              <CardTitle>Additional Information</CardTitle>
               <CardDescription>
-                View your account details and membership status
+                Church and personal details
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <Label>Member ID</Label>
-                  <div className="text-sm font-mono bg-muted p-2 rounded">
-                    {state.user.id}
-                  </div>
-                </div>
-                <div>
-                  <Label>Role</Label>
-                  <div className="text-sm p-2">
-                    <Badge variant={getRoleBadgeVariant()} className="text-xs">
-                      {state.user.role.replace('-', ' ').toUpperCase()}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <Label>Join Date</Label>
-                  <div className="text-sm p-2">
-                    {new Date(state.user.joinDate || Date.now()).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </div>
-                </div>
-                {state.user.zoneId && (
+                {state.user.firstName && (
                   <div>
-                    <Label>Zone Assignment</Label>
-                    <div className="text-sm p-2">
-                      Zone {state.user.zoneId}
-                    </div>
+                    <Label>First Name</Label>
+                    <Input value={state.user.firstName} disabled className="bg-muted" />
+                  </div>
+                )}
+                {state.user.lastName && (
+                  <div>
+                    <Label>Last Name</Label>
+                    <Input value={state.user.lastName} disabled className="bg-muted" />
+                  </div>
+                )}
+                {state.user.phoneNumber && (
+                  <div>
+                    <Label>Phone Number</Label>
+                    <Input value={state.user.phoneNumber} disabled className="bg-muted" />
+                  </div>
+                )}
+                {state.user.gender && (
+                  <div>
+                    <Label>Gender</Label>
+                    <Input value={state.user.gender} disabled className="bg-muted" />
+                  </div>
+                )}
+                {state.user.dateOfBirth && (
+                  <div>
+                    <Label>Date of Birth</Label>
+                    <Input value={state.user.dateOfBirth} disabled className="bg-muted" />
+                  </div>
+                )}
+                {state.user.choir && (
+                  <div>
+                    <Label>Choir</Label>
+                    <Input value={state.user.choir} disabled className="bg-muted" />
+                  </div>
+                )}
+                {state.user.highestDegree && (
+                  <div>
+                    <Label>Highest Degree</Label>
+                    <Input value={state.user.highestDegree} disabled className="bg-muted" />
+                  </div>
+                )}
+                {state.user.maritalStatus && (
+                  <div>
+                    <Label>Marital Status</Label>
+                    <Input value={state.user.maritalStatus} disabled className="bg-muted" />
+                  </div>
+                )}
+                {state.user.marriageDate && (
+                  <div>
+                    <Label>Marriage Date</Label>
+                    <Input value={state.user.marriageDate} disabled className="bg-muted" />
+                  </div>
+                )}
+                {state.user.baptismDate && (
+                  <div>
+                    <Label>Baptism Date</Label>
+                    <Input value={state.user.baptismDate} disabled className="bg-muted" />
                   </div>
                 )}
               </div>

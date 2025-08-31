@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom"
 import { useCertificatesStore } from "@/data/certificates-store"
 import { useMembersStore } from "@/data/members-store"
 import { useZonesStore } from "@/data/zones-store"
-import { 
+import {
   Users, 
   FileText, 
   MapPin, 
@@ -166,13 +166,13 @@ export const Dashboard: React.FC = () => {
       })
     }
 
-    actions.push({
+      actions.push({
       title: "Certificate Requests",
       description: "View and manage certificate requests",
-      icon: FileText,
+        icon: FileText,
       href: "/certificates",
-      variant: "outline",
-    })
+        variant: "outline",
+      })
 
     actions.push({
       title: "My Profile",
@@ -234,8 +234,16 @@ export const Dashboard: React.FC = () => {
       {/* Welcome Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Welcome back, {user.name}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-foreground">Welcome back, {user.name}</h1>
+            <Badge variant="outline" className="text-sm">
+              {user.role.replace('-', ' ').toUpperCase()}
+            </Badge>
+          </div>
           <p className="text-muted-foreground mt-2">Here's what's happening in your church community today.</p>
+          {user.choir && (
+            <p className="text-sm text-muted-foreground mt-1">Choir: {user.choir}</p>
+          )}
         </div>
         <Button 
           variant="outline" 
@@ -410,14 +418,14 @@ export const Dashboard: React.FC = () => {
                 </div>
               ) : (
                 recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
-                    {getStatusIcon(activity.status)}
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{activity.title}</p>
-                      <p className="text-xs text-muted-foreground">{activity.description}</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">{activity.time}</span>
+                <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
+                  {getStatusIcon(activity.status)}
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{activity.title}</p>
+                    <p className="text-xs text-muted-foreground">{activity.description}</p>
                   </div>
+                  <span className="text-xs text-muted-foreground">{activity.time}</span>
+                </div>
                 ))
               )}
             </div>

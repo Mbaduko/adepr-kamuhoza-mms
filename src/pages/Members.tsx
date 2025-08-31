@@ -13,13 +13,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
-import {
-  Users,
-  Search,
-  Filter,
-  MapPin,
+import { 
+  Users, 
+  Search, 
+  Filter, 
+  MapPin, 
   Mail,
-  Phone,
+  Phone, 
   Calendar,
   RefreshCw,
   Info,
@@ -259,46 +259,46 @@ export const Members: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="search">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
                   id="search"
                   placeholder="Search by name or email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="zone">Zone</Label>
               <Select value={zoneFilter} onValueChange={setZoneFilter}>
-                <SelectTrigger>
+              <SelectTrigger>
                   <SelectValue placeholder="All zones" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Zones</SelectItem>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Zones</SelectItem>
                   {zones.map(zone => (
-                    <SelectItem key={zone.id} value={zone.id}>
-                      {zone.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  <SelectItem key={zone.id} value={zone.id}>
+                    {zone.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+              <SelectTrigger>
                   <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
+              </SelectTrigger>
+              <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
                   <SelectItem value="suspended">Suspended</SelectItem>
-                </SelectContent>
-              </Select>
+              </SelectContent>
+            </Select>
             </div>
           </div>
         </CardContent>
@@ -349,17 +349,17 @@ export const Members: React.FC = () => {
                             <AvatarImage src={member.profileImage} />
                             <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
                           </Avatar>
-                          <div>
+                                                     <div>
                             <p className="font-medium">{member.name}</p>
                             <p className="text-sm text-muted-foreground">{member.role}</p>
-                          </div>
+                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Mail className="h-4 w-4 text-muted-foreground" />
-                          {member.email}
-                        </div>
+                            {member.email}
+                          </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -373,15 +373,15 @@ export const Members: React.FC = () => {
                           {getZoneName(member.zoneId || "")}
                         </div>
                       </TableCell>
-                      <TableCell>
+                                             <TableCell>
                         {getStatusBadge(member.status)}
-                      </TableCell>
-                      <TableCell>
+                       </TableCell>
+                                             <TableCell>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           {member.joinDate ? new Date(member.joinDate).toLocaleDateString() : "N/A"}
-                        </div>
-                      </TableCell>
+                         </div>
+                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

@@ -7,21 +7,16 @@ export class AuthService {
    */
   static async login(credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> {
     try {
-      console.log('AuthService: Attempting login...');
       const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
-      console.log('AuthService: Login response:', response);
       
       if (response.success && response.data) {
-        console.log('AuthService: Login successful, storing token and user data...');
-        // Store the access_token and user data in localStorage
-        apiClient.setToken(response.data.access_token);
+        // Store the token and user data in localStorage
+        apiClient.setToken(response.data.token);
         localStorage.setItem('auth_user', JSON.stringify(response.data.user));
-        console.log('AuthService: Token and user data stored successfully');
       }
       
       return response;
     } catch (error) {
-      console.error('AuthService: Login error:', error);
       return {
         success: false,
         error: {
@@ -83,12 +78,12 @@ export class AuthService {
   /**
    * Refresh authentication token (for future implementation)
    */
-  static async refreshToken(): Promise<ApiResponse<{ access_token: string }>> {
+  static async refreshToken(): Promise<ApiResponse<{ token: string }>> {
     try {
-      const response = await apiClient.post<{ access_token: string }>('/auth/refresh');
+      const response = await apiClient.post<{ token: string }>('/auth/refresh');
       
       if (response.success && response.data) {
-        apiClient.setToken(response.data.access_token);
+        apiClient.setToken(response.data.token);
       }
       
       return response;

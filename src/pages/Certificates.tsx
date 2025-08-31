@@ -213,10 +213,10 @@ export const Certificates: React.FC = () => {
       try {
         if (user.role === "member") {
           await fetchRequestsByMember(user.id)
-        } else {
+    } else {
           await fetchAllRequests()
         }
-      } catch (error) {
+    } catch (error) {
         console.error('Failed to load certificate requests:', error)
         // Don't show error toast as endpoints might not be ready
       }
@@ -264,9 +264,9 @@ export const Certificates: React.FC = () => {
     })
 
     if (success) {
-      setPurpose("")
-      setCertType("baptism")
-      setOpenNew(false)
+    setPurpose("")
+    setCertType("baptism")
+    setOpenNew(false)
       toast({ 
         title: "Request submitted", 
         description: "Your certificate request has been created." 
@@ -355,58 +355,58 @@ export const Certificates: React.FC = () => {
             Refresh
           </Button>
 
-          {canRequest && (
-            <Dialog open={openNew} onOpenChange={setOpenNew}>
-              <DialogTrigger asChild>
+        {canRequest && (
+          <Dialog open={openNew} onOpenChange={setOpenNew}>
+            <DialogTrigger asChild>
                 <Button>
                   <PlusCircle className="h-4 w-4 mr-2" />
-                  New Request
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>New Certificate Request</DialogTitle>
-                  <DialogDescription>Submit a request for your official church certificate.</DialogDescription>
-                </DialogHeader>
+                New Request
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>New Certificate Request</DialogTitle>
+                <DialogDescription>Submit a request for your official church certificate.</DialogDescription>
+              </DialogHeader>
 
                 <form onSubmit={handleCreate} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Certificate Type</Label>
+                  <Select value={certType} onValueChange={(v: CertType) => setCertType(v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="baptism">Baptism</SelectItem>
+                      <SelectItem value="recommendation">Recommendation</SelectItem>
+                      <SelectItem value="marriage">Marriage</SelectItem>
+                      <SelectItem value="membership">Membership</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                   <div className="space-y-2">
-                    <Label>Certificate Type</Label>
-                    <Select value={certType} onValueChange={(v: CertType) => setCertType(v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="baptism">Baptism</SelectItem>
-                        <SelectItem value="recommendation">Recommendation</SelectItem>
-                        <SelectItem value="marriage">Marriage</SelectItem>
-                        <SelectItem value="membership">Membership</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Purpose</Label>
-                    <Textarea
-                      placeholder="Describe the purpose for this certificate..."
-                      value={purpose}
-                      onChange={(e) => setPurpose(e.target.value)}
-                      rows={4}
-                    />
-                  </div>
+                  <Label>Purpose</Label>
+                  <Textarea
+                    placeholder="Describe the purpose for this certificate..."
+                    value={purpose}
+                    onChange={(e) => setPurpose(e.target.value)}
+                    rows={4}
+                  />
+                </div>
                   <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setOpenNew(false)}>
-                      Cancel
-                    </Button>
+                  <Button type="button" variant="outline" onClick={() => setOpenNew(false)}>
+                    Cancel
+                  </Button>
                     <Button type="submit">
                       <Send className="h-4 w-4 mr-2" />
-                      Submit Request
-                    </Button>
+                    Submit Request
+                  </Button>
                   </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
       </div>
 
       {/* Error Display */}
@@ -458,7 +458,7 @@ export const Certificates: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">In Review</CardTitle>
-            <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertCircle className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.inReview}</div>
@@ -467,7 +467,7 @@ export const Certificates: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Approved</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
+              <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.approved}</div>
@@ -493,13 +493,13 @@ export const Certificates: React.FC = () => {
         </TabsList>
 
         {/* My Requests */}
-        <TabsContent value="my">
-          <Card>
-            <CardHeader>
-              <CardTitle>My Requests</CardTitle>
-              <CardDescription>Track progress of your submissions.</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <TabsContent value="my">
+              <Card>
+                <CardHeader>
+                  <CardTitle>My Requests</CardTitle>
+                  <CardDescription>Track progress of your submissions.</CardDescription>
+                </CardHeader>
+                <CardContent>
               <RequestsTable 
                 rows={myRequests} 
                 renderActions={(req) => (
@@ -508,21 +508,21 @@ export const Certificates: React.FC = () => {
                     View
                   </Button>
                 )} 
-              />
-            </CardContent>
-          </Card>
+                    />
+                  </CardContent>
+                </Card>
         </TabsContent>
 
         {/* Pending Approvals */}
         {canApprove && (
           <TabsContent value="pending">
-            <Card>
-              <CardHeader>
+                <Card>
+                  <CardHeader>
                 <CardTitle>Pending Approvals</CardTitle>
                 <CardDescription>Requests awaiting your approval.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RequestsTable 
+                  </CardHeader>
+                  <CardContent>
+                    <RequestsTable
                   rows={pendingRequests} 
                   renderActions={(req) => (
                     <div className="flex items-center gap-2">
@@ -547,9 +547,9 @@ export const Certificates: React.FC = () => {
                       </Button>
                     </div>
                   )} 
-                />
-              </CardContent>
-            </Card>
+                    />
+                  </CardContent>
+                </Card>
           </TabsContent>
         )}
 

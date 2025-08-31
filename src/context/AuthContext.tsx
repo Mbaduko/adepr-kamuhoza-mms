@@ -4,45 +4,18 @@ import { convertApiUserToLegacy, LegacyUser, LegacyUserRole } from '@/types/auth
 
 export type UserRole = LegacyUserRole;
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  password: string;
-  role: UserRole;
-  zoneId?: string;
-  profileImage?: string;
-  phone?: string;
-  address?: string;
-  bio?: string;
-  joinDate?: string;
-}
-
-export interface AuthenticatedUser {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  zoneId?: string;
-  profileImage?: string;
-  phone?: string;
-  address?: string;
-  bio?: string;
-  joinDate?: string;
-}
-
 interface AuthState {
-  user: AuthenticatedUser | null;
+  user: LegacyUser | null;
   isAuthenticated: boolean;
   loading: boolean;
 }
 
 type AuthAction =
   | { type: 'LOGIN_START' }
-  | { type: 'LOGIN_SUCCESS'; payload: AuthenticatedUser }
+  | { type: 'LOGIN_SUCCESS'; payload: LegacyUser }
   | { type: 'LOGIN_FAILURE' }
   | { type: 'LOGOUT' }
-  | { type: 'INITIALIZE_AUTH'; payload: AuthenticatedUser | null };
+  | { type: 'INITIALIZE_AUTH'; payload: LegacyUser | null };
 
 const initialState: AuthState = {
   user: null,
@@ -98,8 +71,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
           // Verify token with server
           const response = await AuthService.getCurrentUser();
+          
           if (response.success && response.data) {
-            const legacyUser = convertApiUserToLegacy(response.data);
+            const legacyUser = convertApiUserToLegacy(response.data.user);
             dispatch({ type: 'INITIALIZE_AUTH', payload: legacyUser });
           } else {
             // Token is invalid, clear storage
