@@ -49,6 +49,38 @@ npm run dev
 
 The application will be available at `http://localhost:8080`
 
+## 🔧 Environment Setup
+
+### Required Environment Variables
+
+Create a `.env` file in the root directory by copying `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+Then update the `.env` file with your configuration:
+
+```env
+# API Configuration
+VITE_API_BASE_URL=https://church-k6ws.onrender.com
+
+# Development Configuration
+VITE_DEV_PROXY_URL=/api
+```
+
+### Environment Variables Explained
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `VITE_API_BASE_URL` | Production API base URL | Yes | None |
+| `VITE_DEV_PROXY_URL` | Development proxy path | No | `/api` |
+
+### Development vs Production
+
+- **Development**: Uses proxy (`/api`) to avoid CORS issues
+- **Production**: Uses `VITE_API_BASE_URL` directly
+
 ## 👥 Demo Login Roles
 
 The system includes four pre-configured demo accounts:

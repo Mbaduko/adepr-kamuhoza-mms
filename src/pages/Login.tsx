@@ -133,7 +133,7 @@ export const Login: React.FC = () => {
                 <p>• API is connected via proxy to avoid CORS issues</p>
                 <p>• You need valid credentials to login</p>
                 <p>• Contact the administrator to create a test account</p>
-                <p>• Current API: https://church-k6ws.onrender.com</p>
+                <p>• Current API: {import.meta.env.VITE_API_BASE_URL || 'https://church-k6ws.onrender.com'}</p>
               </div>
             </CardContent>
           </Card>

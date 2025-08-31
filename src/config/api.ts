@@ -1,17 +1,18 @@
 // API Configuration
-// You can modify this file to change the API base URL for different environments
+// Environment variables should be set in .env file
 
 export const API_CONFIG = {
   BASE_URL: import.meta.env.DEV 
     ? '/api' // Use proxy during development
-    : (import.meta.env.VITE_API_BASE_URL || 'https://church-k6ws.onrender.com'),
+    : import.meta.env.VITE_API_BASE_URL,
   TIMEOUT: 30000, // 30 seconds
   RETRY_ATTEMPTS: 3,
 } as const;
 
 // Environment check
-if (!API_CONFIG.BASE_URL) {
-  console.warn('VITE_API_BASE_URL is not set. Using default API URL.');
+if (!import.meta.env.VITE_API_BASE_URL && !import.meta.env.DEV) {
+  console.error('VITE_API_BASE_URL is not set in production environment. Please check your .env file.');
+  throw new Error('VITE_API_BASE_URL environment variable is required in production');
 }
 
 // Log the API configuration in development

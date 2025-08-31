@@ -100,9 +100,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await AuthService.login({ email, password });
       
       if (response.success && response.data) {
-        const legacyUser = convertApiUserToLegacy(response.data.user);
-        dispatch({ type: 'LOGIN_SUCCESS', payload: legacyUser });
-        return { success: true };
+        // After successful login, fetch complete user data from /auth/me
+        try {
+          const userResponse = await AuthService.getCurrentUser();
+          
+          if (userResponse.success && userResponse.data) {
+            const legacyUser = convertApiUserToLegacy(userResponse.data.user);
+            dispatch({ type: 'LOGIN_SUCCESS', payload: legacyUser });
+            return { success: true };
+          } else {
+            // Fallback to login response user data if /auth/me fails
+            const legacyUser = convertApiUserToLegacy(response.data.user);
+            dispatch({ type: 'LOGIN_SUCCESS', payload: legacyUser });
+            return { success: true };
+          }
+        } catch (userError) {
+          // Fallback to login response user data if /auth/me fails
+          const legacyUser = convertApiUserToLegacy(response.data.user);
+          dispatch({ type: 'LOGIN_SUCCESS', payload: legacyUser });
+          return { success: true };
+        }
       } else {
         dispatch({ type: 'LOGIN_FAILURE' });
         
