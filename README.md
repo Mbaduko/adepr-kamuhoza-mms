@@ -119,7 +119,7 @@ The system implements comprehensive RBAC with the following permission matrix:
 
 ### Available Certificate Types
 - **Baptism Certificate**: Official baptism records
-- **Confirmation Certificate**: Confirmation sacrament records  
+- **Recommendation Certificate**: Recommendation sacrament records  
 - **Marriage Certificate**: Church marriage records
 - **Membership Certificate**: Proof of active membership
 

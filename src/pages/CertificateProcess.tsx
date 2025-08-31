@@ -66,10 +66,10 @@ export const CertificateProcess: React.FC = () => {
       color: "bg-blue-50 border-blue-200"
     },
     {
-      type: "Confirmation Certificate",
-      description: "Official record of confirmation sacrament",
+      type: "Recommendation Certificate",
+      description: "Official record of recommendation sacrament",
       icon: Cross,
-      requirements: ["Valid confirmation record", "Member identification", "Purpose statement"],
+      requirements: ["Valid recommendation record", "Member identification", "Purpose statement"],
       color: "bg-purple-50 border-purple-200"
     },
     {

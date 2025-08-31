@@ -696,7 +696,7 @@ export const Certificates: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="baptism">Baptism</SelectItem>
-                      <SelectItem value="confirmation">Confirmation</SelectItem>
+                      <SelectItem value="recommendation">Recommendation</SelectItem>
                       <SelectItem value="marriage">Marriage</SelectItem>
                       <SelectItem value="membership">Membership</SelectItem>
                     </SelectContent>

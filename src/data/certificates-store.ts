@@ -138,7 +138,7 @@ export function summarize(requests: CertificateRequest[]) {
     rejected: requests.filter((r) => r.status === "rejected").length,
     byType: {
       baptism: requests.filter((r) => r.certificateType === "baptism").length,
-      confirmation: requests.filter((r) => r.certificateType === "confirmation").length,
+      recommendation: requests.filter((r) => r.certificateType === "recommendation").length,
       marriage: requests.filter((r) => r.certificateType === "marriage").length,
       membership: requests.filter((r) => r.certificateType === "membership").length,
     },

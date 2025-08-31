@@ -151,7 +151,7 @@ export const Landing: React.FC = () => {
                 </div>
                 <CardTitle>Digital Certificates</CardTitle>
                 <CardDescription>
-                  Request and manage baptism, confirmation, marriage, and membership certificates with secure approval workflow.
+                  Request and manage baptism, recommendation, marriage, and membership certificates with secure approval workflow.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -190,7 +190,7 @@ export const Landing: React.FC = () => {
                 </div>
                 <CardTitle>Sacramental Records</CardTitle>
                 <CardDescription>
-                  Complete tracking of baptisms, confirmations, marriages, and other important spiritual milestones.
+                  Complete tracking of baptisms, recommendations, marriages, and other important spiritual milestones.
                 </CardDescription>
               </CardHeader>
             </Card>

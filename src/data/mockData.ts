@@ -15,7 +15,7 @@ export interface Member {
   profileImage?: string;
   sacraments: {
     baptism?: { date: string; place: string };
-    confirmation?: { date: string; place: string };
+    recommendation?: { date: string; place: string };
     marriage?: { date: string; spouse: string; place: string };
   };
 }
@@ -32,7 +32,7 @@ export interface CertificateRequest {
   id: string;
   memberId: string;
   memberName: string;
-  certificateType: 'baptism' | 'confirmation' | 'marriage' | 'membership';
+  certificateType: 'baptism' | 'recommendation' | 'marriage' | 'membership';
   purpose: string;
   requestDate: string;
   status: 'pending' | 'approved' | 'rejected' | 'in-review';
@@ -59,7 +59,7 @@ export const mockMembers: Member[] = [
     accountStatus: 'active',
     sacraments: {
       baptism: { date: '1985-06-01', place: 'St. Mary Church' },
-      confirmation: { date: '2000-04-15', place: 'St. Mary Church' },
+      recommendation: { date: '2000-04-15', place: 'St. Mary Church' },
       marriage: { date: '2010-07-20', spouse: 'Jane Smith', place: 'St. Mary Church' }
     }
   },
@@ -77,7 +77,7 @@ export const mockMembers: Member[] = [
     accountStatus: 'active',
     sacraments: {
       baptism: { date: '1990-09-01', place: 'St. Peter Church' },
-      confirmation: { date: '2005-05-10', place: 'St. Peter Church' }
+      recommendation: { date: '2005-05-10', place: 'St. Peter Church' }
     }
   },
   {
@@ -94,7 +94,7 @@ export const mockMembers: Member[] = [
     accountStatus: 'active',
     sacraments: {
       baptism: { date: '1975-04-01', place: 'Holy Spirit Church' },
-      confirmation: { date: '1990-03-25', place: 'Holy Spirit Church' }
+      recommendation: { date: '1990-03-25', place: 'Holy Spirit Church' }
     }
   },
   {
@@ -127,7 +127,7 @@ export const mockMembers: Member[] = [
     accountStatus: 'active',
     sacraments: {
       baptism: { date: '1982-08-01', place: 'St. Mary Church' },
-      confirmation: { date: '1997-06-15', place: 'St. Mary Church' },
+      recommendation: { date: '1997-06-15', place: 'St. Mary Church' },
       marriage: { date: '2015-09-10', spouse: 'Maria Wilson', place: 'St. Mary Church' }
     }
   },
@@ -145,7 +145,7 @@ export const mockMembers: Member[] = [
     accountStatus: 'active',
     sacraments: {
       baptism: { date: '1995-04-15', place: 'Holy Spirit Church' },
-      confirmation: { date: '2010-05-20', place: 'Holy Spirit Church' }
+      recommendation: { date: '2010-05-20', place: 'Holy Spirit Church' }
     }
   },
   {
@@ -178,7 +178,7 @@ export const mockMembers: Member[] = [
     accountStatus: 'active',
     sacraments: {
       baptism: { date: '1978-07-01', place: 'Holy Spirit Church' },
-      confirmation: { date: '1993-05-10', place: 'Holy Spirit Church' }
+      recommendation: { date: '1993-05-10', place: 'Holy Spirit Church' }
     }
   }
 ];
@@ -231,7 +231,7 @@ export const mockCertificateRequests: CertificateRequest[] = [
     id: 'cert-2',
     memberId: '2',
     memberName: 'Sarah Johnson',
-    certificateType: 'confirmation',
+    certificateType: 'recommendation',
     purpose: 'Employment requirement',
     requestDate: '2024-01-20',
     status: 'pending',
@@ -278,7 +278,7 @@ export const mockCertificateRequests: CertificateRequest[] = [
     id: 'cert-6',
     memberId: '6',
     memberName: 'Lisa Anderson',
-    certificateType: 'confirmation',
+    certificateType: 'recommendation',
     purpose: 'Employment verification',
     requestDate: '2024-02-01',
     status: 'pending',
