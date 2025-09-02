@@ -808,7 +808,7 @@ export const Members: React.FC = () => {
                           {getZoneName(member.zoneId || "")}
                         </div>
                       </TableCell>
-                      <TableCell>
+                                             <TableCell>
                          {getStatusBadge(member.accountStatus)}
                        </TableCell>
                                              <TableCell>
@@ -908,19 +908,19 @@ export const Members: React.FC = () => {
                   <Label htmlFor="last_name" className="text-sm font-medium">
                     Last Name *
                   </Label>
-                  <Input
+               <Input
                     id="last_name"
                     value={formData.last_name}
                     onChange={(e) => handleInputChangeWithValidation("last_name", e.target.value)}
                     placeholder="Enter last name"
                     required
-                  />
-                </div>
+               />
+             </div>
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium">
                     Email *
                   </Label>
-                  <Input
+               <Input
                     id="email"
                     type="email"
                     value={formData.email}
@@ -936,12 +936,12 @@ export const Members: React.FC = () => {
                   <p className="text-xs text-muted-foreground">
                     A password will be generated and sent to this email address
                   </p>
-                </div>
+             </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone_number" className="text-sm font-medium">
                     Phone Number *
                   </Label>
-                  <Input
+               <Input
                     id="phone_number"
                     value={formatPhoneNumber(formData.phone_number)}
                     onChange={(e) => {
@@ -956,7 +956,7 @@ export const Members: React.FC = () => {
                   {touchedFields.phone_number && validationErrors.phone_number && (
                     <p className="text-sm text-red-500">{validationErrors.phone_number}</p>
                   )}
-                </div>
+             </div>
                 <div className="space-y-2">
                   <Label htmlFor="gender" className="text-sm font-medium">
                     Gender
@@ -993,21 +993,21 @@ export const Members: React.FC = () => {
                   <Select value={formData.marital_status} onValueChange={value => handleInputChangeWithValidation("marital_status", value as "SINGLE" | "MARRIED" | "DIVORCED" | "WIDOWED")}>
                     <SelectTrigger className={touchedFields.marital_status && validationErrors.marital_status ? "border-red-500" : ""}>
                       <SelectValue placeholder="Select marital status" />
-                    </SelectTrigger>
-                    <SelectContent>
+                   </SelectTrigger>
+                   <SelectContent>
                       <SelectItem value="SINGLE">Single</SelectItem>
                       <SelectItem value="MARRIED">Married</SelectItem>
                       <SelectItem value="DIVORCED">Divorced</SelectItem>
                       <SelectItem value="WIDOWED">Widowed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                   </SelectContent>
+                 </Select>
                   {touchedFields.marital_status && validationErrors.marital_status && (
                     <p className="text-sm text-red-500">{validationErrors.marital_status}</p>
                   )}
                   <p className="text-xs text-muted-foreground">
                     Note: Only "Married" status allows "Married in Church" option
                   </p>
-                </div>
+               </div>
              </div>
              </div>
 
@@ -1141,7 +1141,7 @@ export const Members: React.FC = () => {
                       <Label htmlFor="is_married_in_church" className="text-sm">
                         Yes, married in church
                       </Label>
-                    </div>
+            </div>
                     {touchedFields.is_married_in_church && validationErrors.is_married_in_church && (
                       <p className="text-sm text-red-500">{validationErrors.is_married_in_church}</p>
                     )}
@@ -1152,17 +1152,17 @@ export const Members: React.FC = () => {
                     <Label htmlFor="marriage_date" className="text-sm font-medium">
                       Marriage Date *
                     </Label>
-                    <Input
+              <Input
                       id="marriage_date"
-                      type="date"
+                type="date"
                       value={formData.marriage_date}
                       onChange={(e) => handleInputChangeWithValidation("marriage_date", e.target.value)}
                       className={touchedFields.marriage_date && validationErrors.marriage_date ? "border-red-500" : ""}
-                    />
+              />
                     {touchedFields.marriage_date && validationErrors.marriage_date && (
                       <p className="text-sm text-red-500">{validationErrors.marriage_date}</p>
                     )}
-                  </div>
+            </div>
                 )}
               </div>
               </div>

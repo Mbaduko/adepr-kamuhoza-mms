@@ -472,32 +472,32 @@ export const Zones: React.FC = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <Button 
+                            <Button
                               variant="ghost" 
-                              size="sm" 
+                              size="sm"
                               className="h-8 w-8 p-0"
                               onClick={() => handleViewZone(zone)}
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button 
+                                <Button
                               variant="ghost" 
-                              size="sm" 
+                                  size="sm"
                               className="h-8 w-8 p-0"
                               onClick={() => handleEditZone(zone)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
                               variant="ghost" 
-                              size="sm" 
+                                  size="sm"
                               className={`h-8 w-8 p-0 ${hasLeader(zone) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              onClick={() => handleAssignLeader(zone)}
+                                  onClick={() => handleAssignLeader(zone)}
                               disabled={hasLeader(zone)}
                               title={hasLeader(zone) ? "Zone already has a leader" : "Assign zone leader"}
-                            >
-                              <Crown className="h-4 w-4" />
-                            </Button>
+                                >
+                                  <Crown className="h-4 w-4" />
+                                </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -634,12 +634,12 @@ export const Zones: React.FC = () => {
                   <p className="text-sm">{formatDate(selectedZone.created_at)}</p>
                 </div>
               </div>
-              
+
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Description</Label>
                 <p className="text-sm">{selectedZone.description || "No description"}</p>
               </div>
-              
+
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Zone Leader</Label>
                 {selectedZone.leaderId ? (
@@ -651,8 +651,8 @@ export const Zones: React.FC = () => {
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">No leader assigned</p>
-                )}
-              </div>
+                  )}
+                </div>
               
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Member Count</Label>
@@ -686,28 +686,28 @@ export const Zones: React.FC = () => {
                 <Label htmlFor="edit-name" className="text-sm font-medium">
                   Zone Name *
                 </Label>
-                <Input
-                  id="edit-name"
+              <Input
+                id="edit-name"
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
                   placeholder="Enter zone name"
                   required
-                />
-              </div>
+              />
+            </div>
               
               <div className="space-y-2">
                 <Label htmlFor="edit-description" className="text-sm font-medium">
                   Description *
                 </Label>
-                <Textarea
-                  id="edit-description"
+              <Textarea
+                id="edit-description"
                   value={formData.description}
                   onChange={(e) => handleInputChange("description", e.target.value)}
                   placeholder="Describe the zone area"
-                  rows={3}
+                rows={3}
                   required
-                />
-              </div>
+              />
+            </div>
               
               <div className="space-y-2">
                 <Label htmlFor="edit-zone_leader_id" className="text-sm font-medium">
@@ -730,12 +730,12 @@ export const Zones: React.FC = () => {
             
             <DialogFooter className="flex gap-2">
               <Button type="button" variant="outline" onClick={handleCloseDialogs}>
-                Cancel
-              </Button>
+              Cancel
+            </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Updating..." : "Update Zone"}
-              </Button>
-            </DialogFooter>
+            </Button>
+          </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
@@ -771,7 +771,7 @@ export const Zones: React.FC = () => {
                             <Crown className="h-3 w-3 text-yellow-600" />
                           </div>
                           {member.name}
-                        </div>
+            </div>
                       </SelectItem>
                     ))
                   ) : (
@@ -796,7 +796,7 @@ export const Zones: React.FC = () => {
                     <strong>Current Leader:</strong> {getZoneLeader(selectedZone.id)?.name || "Unknown"}
                   </p>
                 )}
-              </div>
+            </div>
             )}
           </div>
           
