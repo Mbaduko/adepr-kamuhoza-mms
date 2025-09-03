@@ -11,17 +11,6 @@ export interface Zone {
   updated_at: string;
 }
 
-// API Response structure for GET /zones/
-// Expected response: Array of zones with the following structure:
-// {
-//   "id": "string",
-//   "name": "string", 
-//   "description": "string",
-//   "zone_leader_id": "string" (optional),
-//   "created_at": "string",
-//   "updated_at": "string"
-// }
-
 export interface ZoneApiResponse {
   id: string;
   name: string;

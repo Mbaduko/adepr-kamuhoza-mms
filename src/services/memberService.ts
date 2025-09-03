@@ -7,17 +7,18 @@ export interface Member {
   email: string;
   phone: string;
   dateOfBirth: string;
-  gender: 'male' | 'female';
+  gender: 'MALE' | 'FEMALE';
   maritalStatus: 'single' | 'married' | 'divorced' | 'widowed';
   address: string;
   zoneId: string;
   isChoirMember: boolean;
   accountStatus: 'active' | 'inactive';
   profileImage?: string;
+  choir?: string;
+  highestDegree?: string;
   sacraments: {
-    baptism?: { date: string; place: string };
-    recommendation?: { date: string; place: string };
-    marriage?: { date: string; spouse: string; place: string };
+    baptism?: { date: string};
+    marriage?: { date: string; place: string };
   };
 }
 
@@ -63,78 +64,42 @@ export interface CreateUserResponse {
 export interface ZoneMemberResponse {
   message: string;
   zones: Array<{
-    id: string;
-    name: string;
+    zone_id: string | null;
+    zone_name: string;
+    members: Array<{
+      profile_id: string;
+      first_name: string;
+      last_name: string;
+      phone_number: string;
+      gender: "MALE" | "FEMALE";
+      date_of_birth: string;
+      choir: string | null;
+      address: string | null;
+      highest_degree: string | null;
+      marital_status: "single" | "married" | "divorced" | "widowed";
+      baptism_date: string | null;
+      is_married_in_church: boolean;
+      marriage_date: string | null;
+      created_at: string;
+      photo: string | null;
+      zone_id: string | null;
+      user: {
+        auth_id: string;
+        email: string;
+        role: string;
+        account_status: 'active' | 'inactive';
+        is_verified: boolean;
+      };
+    }>;
+    member_count: number;
   }>;
-  members: Array<{
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone_number: string;
-    gender: string;
-    date_of_birth: string;
-    marital_status: string;
-    zone_id?: string;
-    role: string;
-    account_status: string;
-    created_at: string;
-    updated_at: string;
-  }>;
-  total: number;
+  total_zones: number;
+  total_members: number;
   access_level: string;
+  user_role: string;
 }
 
 export class MemberService {
-  /**
-   * Get all members (uses the zone-members endpoint)
-   */
-  static async getAllMembers(): Promise<ApiResponse<Member[]>> {
-    try {
-      const response = await apiClient.get<ZoneMemberResponse>('/users/zone-members');
-      
-      if (response.success && response.data) {
-        // Convert API response to Member interface
-        const convertedMembers: Member[] = response.data.members.map(member => ({
-          id: member.id,
-          name: `${member.first_name} ${member.last_name}`,
-          email: member.email,
-          phone: member.phone_number,
-          dateOfBirth: member.date_of_birth,
-          gender: member.gender.toLowerCase() as 'male' | 'female',
-          maritalStatus: member.marital_status.toLowerCase() as 'single' | 'married' | 'divorced' | 'widowed',
-          address: '', // Not provided in API response
-          zoneId: member.zone_id || '',
-          isChoirMember: false, // Not provided in API response
-          accountStatus: member.account_status.toLowerCase() as 'active' | 'inactive',
-          profileImage: '', // Not provided in API response
-          sacraments: {
-            baptism: undefined,
-            recommendation: undefined,
-            marriage: undefined,
-          },
-        }));
-
-        return {
-          success: true,
-          data: convertedMembers,
-        };
-      } else {
-        return {
-          success: false,
-          error: response.error,
-        };
-      }
-    } catch (error: any) {
-      return {
-        success: false,
-        error: {
-          message: error.response?.data?.message || 'Unable to fetch members. Please try again.',
-          status: error.response?.status || 0,
-        },
-      };
-    }
-  }
 
   /**
    * Get zone members using the new endpoint
@@ -143,62 +108,13 @@ export class MemberService {
     try {
       const response = await apiClient.get<ZoneMemberResponse>('/users/zone-members');
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string }, status?: number } };
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Unable to fetch zone members. Please try again.',
-          status: error.response?.status || 0,
-        },
-      };
-    }
-  }
-
-  /**
-   * Get all users (uses the zone-members endpoint but focuses on users)
-   */
-  static async getAllUsers(): Promise<ApiResponse<Member[]>> {
-    try {
-      const response = await apiClient.get<ZoneMemberResponse>('/users/zone-members');
-      
-      if (response.success && response.data) {
-        // Convert API response to Member interface
-        const convertedMembers: Member[] = response.data.members.map(member => ({
-          id: member.id,
-          name: `${member.first_name} ${member.last_name}`,
-          email: member.email,
-          phone: member.phone_number,
-          dateOfBirth: member.date_of_birth,
-          gender: member.gender.toLowerCase() as 'male' | 'female',
-          maritalStatus: member.marital_status.toLowerCase() as 'single' | 'married' | 'divorced' | 'widowed',
-          address: '', // Not provided in API response
-          zoneId: member.zone_id || '',
-          isChoirMember: false, // Not provided in API response
-          accountStatus: member.account_status.toLowerCase() as 'active' | 'inactive',
-          profileImage: '', // Not provided in API response
-          sacraments: {
-            baptism: undefined,
-            recommendation: undefined,
-            marriage: undefined,
-          },
-        }));
-
-        return {
-          success: true,
-          data: convertedMembers,
-        };
-      } else {
-        return {
-          success: false,
-          error: response.error,
-        };
-      }
-    } catch (error: any) {
-      return {
-        success: false,
-        error: {
-          message: error.response?.data?.message || 'Unable to fetch all users. Please try again.',
-          status: error.response?.status || 0,
+          message: err.response?.data?.message || 'Unable to fetch zone members. Please try again.',
+          status: err.response?.status || 0,
         },
       };
     }

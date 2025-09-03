@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { MemberService, Member, ZoneMemberResponse } from '@/services/memberService';
+import { Members } from '@/pages/Members';
 
 interface MembersState {
   members: Member[];
@@ -20,8 +21,6 @@ interface MembersActions {
   
   // Actions
   fetchAllMembers: () => Promise<void>;
-  fetchZoneMembers: () => Promise<void>;
-  fetchAllUsers: () => Promise<void>;
   fetchMembersByZone: (zoneId: string) => Promise<void>;
   fetchMemberById: (id: string) => Promise<void>;
   
@@ -49,210 +48,141 @@ export const useMembersStore = create<MembersState & MembersActions>((set, get) 
 
   fetchAllMembers: async () => {
     set({ loading: true, error: null });
-    
-    try {
-      const response = await MemberService.getAllMembers();
-      
-      if (response.success && response.data) {
-        set({ members: response.data, loading: false, isInitialized: true });
-      } else {
-        // Handle endpoint not ready gracefully
-        if (response.error?.status === 404 || response.error?.message?.includes('not found')) {
-          set({ 
-            members: [], 
-            loading: false, 
-            error: null, // Don't show error for endpoint not ready
-            isInitialized: true 
-          });
-        } else {
-          set({ 
-            error: response.error?.message || 'Failed to fetch members',
-            loading: false,
-            isInitialized: true
-          });
-        }
-      }
-    } catch (error) {
-      // Handle network errors gracefully
-      set({ 
-        members: [],
-        error: null, // Don't show network errors as they might be expected
-        loading: false,
-        isInitialized: true
-      });
-    }
-  },
-
-  fetchZoneMembers: async () => {
-    set({ loading: true, error: null });
-    
     try {
       const response = await MemberService.getZoneMembers();
-      
       if (response.success && response.data) {
-        // Convert API response to our Member interface
-        const convertedMembers: Member[] = response.data.members.map(member => ({
-          id: member.id,
-          name: `${member.first_name} ${member.last_name}`,
-          email: member.email,
-          phone: member.phone_number,
-          dateOfBirth: member.date_of_birth,
-          gender: member.gender.toLowerCase() as 'male' | 'female',
-          maritalStatus: member.marital_status.toLowerCase() as 'single' | 'married' | 'divorced' | 'widowed',
-          address: '', // Not provided in API response
-          zoneId: member.zone_id || '',
-          isChoirMember: false, // Not provided in API response
-          accountStatus: member.account_status.toLowerCase() as 'active' | 'inactive',
-          profileImage: '', // Not provided in API response
-          sacraments: {
-            baptism: undefined,
-            recommendation: undefined,
-            marriage: undefined,
-          },
-        }));
-
-        set({ 
-          members: convertedMembers,
-          zones: response.data.zones,
-          totalMembers: response.data.total,
+        const allMembers: Member[] = response.data.zones.flatMap(zone =>
+          zone.members.map(raw => ({
+            id: raw.profile_id,
+            name: `${raw.first_name} ${raw.last_name}`,
+            email: raw.user?.email ?? '',
+            phone: raw.phone_number,
+            gender: raw.gender,
+            dateOfBirth: raw.date_of_birth,
+            choir: raw.choir,
+            address: raw.address,
+            highestDegree: raw.highest_degree,
+            maritalStatus: raw.marital_status,
+            zoneId: zone.zone_id,
+            isChoirMember: !!raw.choir,
+            accountStatus: raw.user.account_status,
+            sacraments: {
+              baptism: { date: raw.baptism_date },
+              marriage: raw.marital_status === 'married'
+                ? { date: raw.marriage_date ?? '', place: raw.is_married_in_church ? 'Muhoza ADEPR' : 'Elsewhere' }
+                : undefined,
+            },
+            profileImage: raw.photo ?? undefined,
+          }))
+        );
+        set({
+          members: allMembers,
+          zones: response.data.zones.map(zone => ({ id: zone.zone_id, name: zone.zone_name })),
+          totalMembers: response.data.total_members,
           accessLevel: response.data.access_level,
-          loading: false, 
-          isInitialized: true 
+          loading: false,
+          isInitialized: true,
         });
       } else {
-        // Handle endpoint not ready gracefully
-        if (response.error?.status === 404 || response.error?.message?.includes('not found')) {
-          set({ 
-            members: [],
-            zones: [],
-            totalMembers: 0,
-            accessLevel: '',
-            loading: false, 
-            error: null,
-            isInitialized: true
-          });
-        } else {
-          set({ 
-            error: response.error?.message || 'Failed to fetch zone members',
-            loading: false,
-            isInitialized: true
-          });
-        }
+        const isNotFound = response.error?.status === 404 || response.error?.message?.includes('not found');
+        set(isNotFound
+          ? {
+              members: [],
+              zones: [],
+              totalMembers: 0,
+              accessLevel: '',
+              loading: false,
+              error: null,
+              isInitialized: true,
+            }
+          : {
+              error: response.error?.message || 'Failed to fetch members',
+              loading: false,
+              isInitialized: true,
+            }
+        );
       }
-    } catch (error) {
-      set({ 
+    } catch {
+      set({
         members: [],
         zones: [],
         totalMembers: 0,
         accessLevel: '',
         error: null,
         loading: false,
-        isInitialized: true
-      });
-    }
-  },
-
-  fetchAllUsers: async () => {
-    set({ loading: true, error: null });
-    
-    try {
-      const response = await MemberService.getAllUsers();
-      
-      if (response.success && response.data) {
-        set({ members: response.data, loading: false, isInitialized: true });
-      } else {
-        // Handle endpoint not ready gracefully
-        if (response.error?.status === 404 || response.error?.message?.includes('not found')) {
-          set({ 
-            members: [], 
-            loading: false, 
-            error: null,
-            isInitialized: true
-          });
-        } else {
-          set({ 
-            error: response.error?.message || 'Failed to fetch all users',
-            loading: false,
-            isInitialized: true
-          });
-        }
-      }
-    } catch (error) {
-      set({ 
-        members: [],
-        error: null,
-        loading: false,
-        isInitialized: true
+        isInitialized: true,
       });
     }
   },
 
   fetchMembersByZone: async (zoneId: string) => {
     set({ loading: true, error: null });
-    
     try {
       const response = await MemberService.getMembersByZone(zoneId);
-      
       if (response.success && response.data) {
-        set({ members: response.data, loading: false, isInitialized: true });
+        set({
+          members: response.data,
+          loading: false,
+          isInitialized: true,
+        });
       } else {
-        // Handle endpoint not ready gracefully
-        if (response.error?.status === 404 || response.error?.message?.includes('not found')) {
-          set({ 
-            members: [], 
-            loading: false, 
-            error: null,
-            isInitialized: true
-          });
-        } else {
-          set({ 
-            error: response.error?.message || 'Failed to fetch zone members',
-            loading: false,
-            isInitialized: true
-          });
-        }
+        const isNotFound = response.error?.status === 404 || response.error?.message?.includes('not found');
+        set(isNotFound
+          ? {
+              members: [],
+              loading: false,
+              error: null,
+              isInitialized: true,
+            }
+          : {
+              error: response.error?.message || 'Failed to fetch zone members',
+              loading: false,
+              isInitialized: true,
+            }
+        );
       }
-    } catch (error) {
-      set({ 
+    } catch {
+      set({
         members: [],
         error: null,
         loading: false,
-        isInitialized: true
+        isInitialized: true,
       });
     }
   },
 
   fetchMemberById: async (id: string) => {
     set({ loading: true, error: null });
-    
     try {
       const response = await MemberService.getMemberById(id);
-      
       if (response.success && response.data) {
-        set({ selectedMember: response.data, loading: false, isInitialized: true });
+        set({
+          selectedMember: response.data,
+          loading: false,
+          isInitialized: true,
+        });
       } else {
-        // Handle endpoint not ready gracefully
-        if (response.error?.status === 404 || response.error?.message?.includes('not found')) {
-          set({ 
-            selectedMember: null, 
-            loading: false, 
-            error: null,
-            isInitialized: true
-          });
-        } else {
-          set({ 
-            error: response.error?.message || 'Failed to fetch member details',
-            loading: false,
-            isInitialized: true
-          });
-        }
+        const isNotFound = response.error?.status === 404 || response.error?.message?.includes('not found');
+        set(isNotFound
+          ? {
+              selectedMember: null,
+              loading: false,
+              error: null,
+              isInitialized: true,
+            }
+          : {
+              error: response.error?.message || 'Failed to fetch member details',
+              loading: false,
+              isInitialized: true,
+            }
+        );
       }
-    } catch (error) {
-      set({ 
+    } catch {
+      set({
         selectedMember: null,
         error: null,
         loading: false,
-        isInitialized: true
+        isInitialized: true,
       });
     }
   },

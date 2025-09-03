@@ -65,8 +65,7 @@ export const Members: React.FC = () => {
     loading: membersLoading, 
     error: membersError,
     isInitialized: membersInitialized,
-    fetchZoneMembers,
-    fetchAllUsers
+    fetchAllMembers, // <-- Add this line to get the fetch function
   } = useMembersStore()
   
   const { 
@@ -149,7 +148,7 @@ export const Members: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Real-time validation
-  const validateField = (field: string, value: any): string => {
+  const validateField = (field: string, value: string | boolean): string => {
     switch (field) {
       case 'phone_number':
         if (!value) return '';
@@ -218,7 +217,10 @@ export const Members: React.FC = () => {
   };
 
   // Enhanced input change handler with validation
-  const handleInputChangeWithValidation = (field: keyof CreateUserData, value: any) => {
+  const handleInputChangeWithValidation = (
+    field: keyof CreateUserData,
+    value: string | boolean
+  ) => {
     // Special handling for marital status to prevent contradictory states
     if (field === 'marital_status') {
       // If changing to non-married status, automatically clear married in church data
@@ -409,7 +411,7 @@ export const Members: React.FC = () => {
   };
 
   // Form handlers
-  const handleInputChange = (field: keyof CreateUserData, value: any) => {
+  const handleInputChange = (field: keyof CreateUserData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -464,23 +466,20 @@ export const Members: React.FC = () => {
       // zone_id: formData.zone_id && formData.zone_id !== 'none' ? formData.zone_id : undefined,
     };
     
-    // Remove zone_id from submission data until backend is ready
-    const { zone_id, ...dataToSubmit } = submissionData;
-    
     // Clean up undefined values to prevent API errors
-    Object.keys(dataToSubmit).forEach(key => {
-      if (dataToSubmit[key] === undefined || dataToSubmit[key] === "") {
-        delete dataToSubmit[key];
+    Object.keys(submissionData).forEach(key => {
+      if (submissionData[key] === undefined || submissionData[key] === "") {
+        delete submissionData[key];
       }
       // Special handling for date fields - don't send empty strings
-      if (key.includes('date') && (dataToSubmit[key] === "" || dataToSubmit[key] === null)) {
-        delete dataToSubmit[key];
+      if (key.includes('date') && (submissionData[key] === "" || submissionData[key] === null)) {
+        delete submissionData[key];
       }
     });
 
     setIsSubmitting(true);
     try {
-      const response = await MemberService.createUser(dataToSubmit);
+      const response = await MemberService.createUser(submissionData);
       if (response.success) {
         toast({
           title: "Success",
@@ -513,24 +512,27 @@ export const Members: React.FC = () => {
     const loadData = async () => {
       try {
         await Promise.all([
-          fetchZoneMembers(),
+          fetchAllMembers(),
           fetchAllZones()
         ])
       } catch (error) {
-        console.error('Failed to load members data:', error)
-        // Don't show error toast as endpoints might not be ready
+      toast({
+        title: "Error",
+        description: "Failed to fetch members data.",
+        variant: "destructive"
+      })
       }
     }
 
     loadData()
-  }, [fetchZoneMembers, fetchAllZones])
+  }, [fetchAllMembers, fetchAllZones])
 
 
 
   const handleRefresh = async () => {
     try {
       await Promise.all([
-        fetchZoneMembers(),
+        fetchAllMembers(),
         fetchAllZones()
       ])
       toast({
