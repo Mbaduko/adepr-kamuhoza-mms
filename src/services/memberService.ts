@@ -102,7 +102,7 @@ export interface ZoneMemberResponse {
 export class MemberService {
 
   /**
-   * Get zone members using the new endpoint
+   * Get zone members using the endpoint
    */
   static async getZoneMembers(): Promise<ApiResponse<ZoneMemberResponse>> {
     try {
@@ -128,28 +128,30 @@ export class MemberService {
       const response = await apiClient.get<ZoneMemberResponse>('/users/zone-members');
       
       if (response.success && response.data) {
-        // Filter members by zone and convert to Member interface
-        const zoneMembers = response.data.members
-          .filter(member => member.zone_id === zoneId)
-          .map(member => ({
-            id: member.id,
-            name: `${member.first_name} ${member.last_name}`,
-            email: member.email,
-            phone: member.phone_number,
-            dateOfBirth: member.date_of_birth,
-            gender: member.gender.toLowerCase() as 'male' | 'female',
-            maritalStatus: member.marital_status.toLowerCase() as 'single' | 'married' | 'divorced' | 'widowed',
-            address: '', // Not provided in API response
-            zoneId: member.zone_id || '',
-            isChoirMember: false, // Not provided in API response
-            accountStatus: member.account_status.toLowerCase() as 'active' | 'inactive',
-            profileImage: '', // Not provided in API response
-            sacraments: {
-              baptism: undefined,
-              recommendation: undefined,
-              marriage: undefined,
-            },
-          }));
+        // Find the zone by zoneId and convert its members to Member interface
+        const zone = response.data.zones.find(z => z.zone_id === zoneId);
+        const zoneMembers = zone
+          ? zone.members.map(member => ({
+              id: member.profile_id,
+              name: `${member.first_name} ${member.last_name}`,
+              email: member.user.email,
+              phone: member.phone_number,
+              dateOfBirth: member.date_of_birth,
+              gender: member.gender,
+              maritalStatus: member.marital_status,
+              address: member.address || '',
+              zoneId: member.zone_id || '',
+              isChoirMember: !!member.choir,
+              accountStatus: member.user.account_status,
+              profileImage: member.photo || '',
+              choir: member.choir || undefined,
+              highestDegree: member.highest_degree || undefined,
+              sacraments: {
+                baptism: member.baptism_date ? { date: member.baptism_date } : undefined,
+                marriage: member.marriage_date ? { date: member.marriage_date, place: '' } : undefined,
+              },
+            }))
+          : [];
 
         return {
           success: true,
@@ -161,12 +163,13 @@ export class MemberService {
           error: response.error,
         };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string }, status?: number } };
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Unable to fetch zone members. Please try again.',
-          status: error.response?.status || 0,
+          message: err.response?.data?.message || 'Unable to fetch zone members. Please try again.',
+          status: err.response?.status || 0,
         },
       };
     }
@@ -180,27 +183,37 @@ export class MemberService {
       const response = await apiClient.get<ZoneMemberResponse>('/users/zone-members');
       
       if (response.success && response.data) {
-        // Find member by ID and convert to Member interface
-        const member = response.data.members.find(m => m.id === id);
-        
-        if (member) {
+        // Search for the member in all zones
+        let foundMember: ZoneMemberResponse['zones'][number]['members'][number] | null = null;
+        let foundZoneId: string | null = null;
+        for (const zone of response.data.zones) {
+          const member = zone.members.find(m => m.profile_id === id);
+          if (member) {
+            foundMember = member;
+            foundZoneId = zone.zone_id || '';
+            break;
+          }
+        }
+
+        if (foundMember) {
           const convertedMember: Member = {
-            id: member.id,
-            name: `${member.first_name} ${member.last_name}`,
-            email: member.email,
-            phone: member.phone_number,
-            dateOfBirth: member.date_of_birth,
-            gender: member.gender.toLowerCase() as 'male' | 'female',
-            maritalStatus: member.marital_status.toLowerCase() as 'single' | 'married' | 'divorced' | 'widowed',
-            address: '', // Not provided in API response
-            zoneId: member.zone_id || '',
-            isChoirMember: false, // Not provided in API response
-            accountStatus: member.account_status.toLowerCase() as 'active' | 'inactive',
-            profileImage: '', // Not provided in API response
+            id: foundMember.profile_id,
+            name: `${foundMember.first_name} ${foundMember.last_name}`,
+            email: foundMember.user.email,
+            phone: foundMember.phone_number,
+            dateOfBirth: foundMember.date_of_birth,
+            gender: foundMember.gender,
+            maritalStatus: foundMember.marital_status,
+            address: foundMember.address || '',
+            zoneId: foundZoneId || '',
+            isChoirMember: !!foundMember.choir,
+            accountStatus: foundMember.user.account_status,
+            profileImage: foundMember.photo || '',
+            choir: foundMember.choir || undefined,
+            highestDegree: foundMember.highest_degree || undefined,
             sacraments: {
-              baptism: undefined,
-              recommendation: undefined,
-              marriage: undefined,
+              baptism: foundMember.baptism_date ? { date: foundMember.baptism_date } : undefined,
+              marriage: foundMember.marriage_date ? { date: foundMember.marriage_date, place: '' } : undefined,
             },
           };
 
@@ -223,12 +236,13 @@ export class MemberService {
           error: response.error,
         };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string }, status?: number } };
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Unable to fetch member details. Please try again.',
-          status: error.response?.status || 0,
+          message: err.response?.data?.message || 'Unable to fetch member details. Please try again.',
+          status: err.response?.status || 0,
         },
       };
     }
@@ -240,15 +254,16 @@ export class MemberService {
   static async createUser(userData: CreateUserData): Promise<ApiResponse<CreateUserResponse>> {
     try {
       const response = await apiClient.post<CreateUserResponse>('/users/', userData);
-      return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string }, status?: number } };
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Unable to create user. Please try again.',
-          status: error.response?.status || 0,
+          message: err.response?.data?.message || 'Unable to create user. Please try again.',
+          status: err.response?.status || 0,
         },
       };
     }
+    }
   }
-}
+
