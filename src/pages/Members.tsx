@@ -152,19 +152,19 @@ export const Members: React.FC = () => {
     switch (field) {
       case 'phone_number':
         if (!value) return '';
-        if (!validatePhoneNumber(value)) {
+        if (typeof value === "string" && !validatePhoneNumber(value)) {
           return 'Phone number must be exactly 10 digits';
         }
         break;
       case 'email':
         if (!value) return '';
-        if (!validateEmail(value)) {
+        if (typeof value === "string" && !validateEmail(value)) {
           return 'Please enter a valid email address';
         }
         break;
       case 'date_of_birth':
         if (!value) return '';
-        if (!validateDateOfBirth(value)) {
+        if (typeof value === "string" && !validateDateOfBirth(value)) {
           return 'Please enter a valid date of birth (person must be between 1 and 120 years old)';
         }
         break;
@@ -178,10 +178,12 @@ export const Members: React.FC = () => {
         break;
       case 'marriage_date':
         if (value && formData.date_of_birth) {
-          const marriageDate = new Date(value);
-          const birthDate = new Date(formData.date_of_birth);
-          if (marriageDate <= birthDate) {
-            return 'Marriage date cannot be before or on the same day as date of birth';
+          if (typeof value === "string") {
+            const marriageDate = new Date(value);
+            const birthDate = new Date(formData.date_of_birth);
+            if (marriageDate <= birthDate) {
+              return 'Marriage date cannot be before or on the same day as date of birth';
+            }
           }
         }
         break;
@@ -227,7 +229,7 @@ export const Members: React.FC = () => {
       if (value !== 'MARRIED') {
         setFormData(prev => ({ 
           ...prev, 
-          [field]: value,
+          [field]: value as "MARRIED" | "SINGLE" | "DIVORCED" | "WIDOWED",
           is_married_in_church: false,
           marriage_date: ""
         }));
@@ -248,9 +250,9 @@ export const Members: React.FC = () => {
     // Cross-field validation for marital status
     if (field === 'marital_status' || field === 'is_married_in_church' || field === 'marriage_date') {
       const maritalError = validateMaritalStatusLogic(
-        field === 'marital_status' ? value : formData.marital_status,
-        field === 'is_married_in_church' ? value : formData.is_married_in_church,
-        field === 'marriage_date' ? value : formData.marriage_date
+        field === 'marital_status' ? String(value) : formData.marital_status,
+        field === 'is_married_in_church' ? Boolean(value) : formData.is_married_in_church,
+        field === 'marriage_date' ? String(value) : formData.marriage_date
       );
       
       setValidationErrors(prev => ({
