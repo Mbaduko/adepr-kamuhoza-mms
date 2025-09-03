@@ -488,7 +488,7 @@ export const Members: React.FC = () => {
         });
         handleCancel();
         // Refresh members list
-        await fetchZoneMembers();
+        await fetchAllMembers();
       } else {
         toast({
           title: "Error",
