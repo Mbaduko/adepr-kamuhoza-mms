@@ -254,6 +254,7 @@ export class MemberService {
   static async createUser(userData: CreateUserData): Promise<ApiResponse<CreateUserResponse>> {
     try {
       const response = await apiClient.post<CreateUserResponse>('/users/', userData);
+      return response;
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string }, status?: number } };
       return {
