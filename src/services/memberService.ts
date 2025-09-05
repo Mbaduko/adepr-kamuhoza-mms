@@ -264,6 +264,6 @@ export class MemberService {
         },
       };
     }
-    }
   }
+}
 

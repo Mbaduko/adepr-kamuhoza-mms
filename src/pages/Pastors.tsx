@@ -55,59 +55,45 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { usePastorsStore } from "@/data/pastors-store"
 
 export const Pastors: React.FC = () => {
   const { state } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
-  const user = state.user!
+  const duser = state.user!
 
   // Use stores
   const { 
-    members, 
-    loading: membersLoading, 
-    error: membersError,
-    isInitialized: membersInitialized,
-    fetchZoneMembers
-  } = useMembersStore()
-  
-  const { 
-    zones, 
-    loading: zonesLoading, 
-    error: zonesError,
-    isInitialized: zonesInitialized,
-    fetchAllZones
-  } = useZonesStore()
+    pastors: storePastors, 
+    loading: pastorsLoading, 
+    error: pastorsError,
+    isInitialized: pastorsInitialized,
+    fetchAllPastors
+  } = usePastorsStore()
 
-  // State
-  const [searchTerm, setSearchTerm] = React.useState("")
-  const [statusFilter, setStatusFilter] = React.useState("all")
-  const [zoneFilter, setZoneFilter] = React.useState("all")
-  const [sortBy, setSortBy] = React.useState("name")
-  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc")
-
-  // Load data on component mount
   React.useEffect(() => {
     const loadData = async () => {
       try {
         await Promise.all([
-          fetchZoneMembers(),
-          fetchAllZones()
+          fetchAllPastors && fetchAllPastors()
         ])
       } catch (error) {
-        console.error('Failed to load pastors data:', error)
-        // Don't show error toast as endpoints might not be ready
+      toast({
+        title: "Error",
+        description: "Failed to refresh data. Please try again.",
+        variant: "error"
+      })
       }
     }
 
     loadData()
-  }, [fetchZoneMembers, fetchAllZones])
+  }, [fetchAllPastors])
 
   const handleRefresh = async () => {
     try {
       await Promise.all([
-        fetchZoneMembers(),
-        fetchAllZones()
+        fetchAllPastors && fetchAllPastors()
       ])
       toast({
         title: "Success",
@@ -123,12 +109,17 @@ export const Pastors: React.FC = () => {
     }
   }
 
+  // Local UI state for filtering / sorting
+  const [searchTerm, setSearchTerm] = React.useState<string>("")
+  const [statusFilter, setStatusFilter] = React.useState<string>("all")
+  const [zoneFilter, setZoneFilter] = React.useState<string>("all")
+  const [sortBy, setSortBy] = React.useState<string>("name")
+  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc")
+
   // Filter pastors (members with pastor roles)
-  const pastors = React.useMemo(() => {
-    // For now, we'll show all members since the API doesn't have role field yet
-    // In a real implementation, this would filter by role
-    return members
-  }, [members])
+    const pastors = React.useMemo(() => {
+      return storePastors || []
+    }, [storePastors])
 
   // Filter and sort pastors
   const filteredPastors = React.useMemo(() => {
@@ -136,36 +127,46 @@ export const Pastors: React.FC = () => {
 
     if (searchTerm) {
       filtered = filtered.filter(pastor =>
-        pastor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pastor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (pastor.zoneId && getZoneName(pastor.zoneId).toLowerCase().includes(searchTerm.toLowerCase()))
+        pastor.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pastor.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pastor.email.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(pastor => pastor.accountStatus === statusFilter)
-    }
-
-    if (zoneFilter !== "all") {
-      filtered = filtered.filter(pastor => pastor.zoneId === zoneFilter)
-    }
+    // if (statusFilter !== "all") {
+    //   filtered = filtered.filter(pastor => pastor.accountStatus === statusFilter)
+    // }
 
     // Sort pastors
-    filtered.sort((a, b) => {
-      let aValue: any = a[sortBy as keyof typeof a]
-      let bValue: any = b[sortBy as keyof typeof b]
-      
-      if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase()
-        bValue = bValue.toLowerCase()
-      }
-      
-      if (sortOrder === "asc") {
-        return aValue > bValue ? 1 : -1
-      } else {
-        return aValue < bValue ? 1 : -1
-      }
-    })
+        filtered.sort((a, b) => {
+          const aVal: unknown = (a as unknown as Record<string, unknown>)[sortBy]
+          const bVal: unknown = (b as unknown as Record<string, unknown>)[sortBy]
+          
+          // String comparison
+          if (typeof aVal === 'string' && typeof bVal === 'string') {
+            const aStr = aVal.toLowerCase()
+            const bStr = bVal.toLowerCase()
+            if (sortOrder === "asc") {
+              return aStr > bStr ? 1 : aStr < bStr ? -1 : 0
+            } else {
+              return aStr < bStr ? 1 : aStr > bStr ? -1 : 0
+            }
+          }
+          
+          // Numeric comparison
+          if (typeof aVal === 'number' && typeof bVal === 'number') {
+            return sortOrder === "asc" ? (aVal - bVal) : (bVal - aVal)
+          }
+          
+          // Fallback: compare stringified values
+          const aStr = String(aVal ?? '')
+          const bStr = String(bVal ?? '')
+          if (sortOrder === "asc") {
+            return aStr > bStr ? 1 : aStr < bStr ? -1 : 0
+          } else {
+            return aStr < bStr ? 1 : aStr > bStr ? -1 : 0
+          }
+        })
 
     return filtered
   }, [pastors, searchTerm, statusFilter, zoneFilter, sortBy, sortOrder])
@@ -174,24 +175,24 @@ export const Pastors: React.FC = () => {
   const stats = React.useMemo(() => {
     return {
       total: pastors.length,
-      active: pastors.filter(p => p.accountStatus === "active").length,
-      inactive: pastors.filter(p => p.accountStatus === "inactive").length,
-      totalMembers: members.length,
-      totalZones: zones.length,
-      avgMembersPerPastor: pastors.length > 0 ? Math.round(members.length / pastors.length) : 0,
+      active: pastors.filter(p => p.account_status === "active").length,
+      inactive: pastors.filter(p => p.account_status === "inactive").length,
+      totalPastors: pastors.length,
+      // totalZones: zones.length,
+      // avgMembersPerPastor: pastors.length > 0 ? Math.round(members.length / pastors.length) : 0,
       fullTime: pastors.length, // Assuming all are full-time for now
       partTime: 0 // No part-time data in current schema
     }
-  }, [pastors, members, zones])
+  }, [pastors])
 
-  const isLoading = membersLoading || zonesLoading
-  const hasError = membersError || zonesError
-  const isInitialized = membersInitialized && zonesInitialized
+  const isLoading = pastorsLoading
+  const pastorsErrorLocal = pastorsError
+  const pastorsInitializedLocal = pastorsInitialized
+  const pastorError: string | null = null
+  const zonesErrorLocal: string | null = null
 
-  const getZoneName = (zoneId: string) => {
-    const zone = zones.find(z => z.id === zoneId)
-    return zone?.name || "Unknown Zone"
-  }
+  const hasError = Boolean(pastorsErrorLocal) || Boolean(pastorError)
+  const isInitialized = Boolean(pastorsInitializedLocal)
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -279,7 +280,6 @@ export const Pastors: React.FC = () => {
           </Button>
         </div>
       </div>
-
       {/* Error Display */}
       {hasError && (
         <Card className="border-red-200 bg-red-50">
@@ -287,7 +287,7 @@ export const Pastors: React.FC = () => {
             <div className="flex items-center gap-2 text-red-700">
               <AlertCircle className="h-4 w-4" />
               <span className="text-sm font-medium">
-                {membersError || zonesError}
+                {pastorsErrorLocal || zonesErrorLocal}
               </span>
             </div>
           </CardContent>
@@ -334,7 +334,7 @@ export const Pastors: React.FC = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalMembers}</div>
+            <div className="text-2xl font-bold">{stats.totalPastors}</div>
             <p className="text-xs text-muted-foreground">Under care</p>
           </CardContent>
         </Card>
