@@ -53,29 +53,65 @@ export class CertificateService {
    */
   static async getAllRequests(): Promise<ApiResponse<CertificateRequest[]>> {
     try {
-      // Real API returns { value: [...], Count: number }
-      const response = await apiClient.get<{ value: Array<{
-        request_id: string;
-        certificate_type: string;
-        request_date: string;
-        status: 'pending' | 'approved' | 'rejected' | 'in-review' | string;
-        progress?: string | null;
-        requester_name: string;
-      }>; Count?: number }>('/certificates/');
+      // API may return an array or { value: [...], Count }
+      const response = await apiClient.get<
+        Array<{
+          request_id: string;
+          certificate_type: string;
+          request_date: string;
+          status: 'pending' | 'approved' | 'rejected' | 'in-review' | string;
+          progress?: string | null;
+          requester_name: string;
+          requested_by?: string;
+          reason?: string;
+          owner_profile?: {
+            profile_id?: string;
+            first_name?: string;
+            last_name?: string;
+            auth?: { auth_id?: string };
+          };
+        }> | { value: Array<{
+          request_id: string;
+          certificate_type: string;
+          request_date: string;
+          status: 'pending' | 'approved' | 'rejected' | 'in-review' | string;
+          progress?: string | null;
+          requester_name: string;
+          requested_by?: string;
+          reason?: string;
+          owner_profile?: {
+            profile_id?: string;
+            first_name?: string;
+            last_name?: string;
+            auth?: { auth_id?: string };
+          };
+        }>; Count?: number }
+      >('/certificates/');
 
-      if (!response.success || !response.data) return response as unknown as ApiResponse<CertificateRequest[]>;
+      if (!response.success || response.data == null) return response as unknown as ApiResponse<CertificateRequest[]>;
 
-      const mapped: CertificateRequest[] = response.data.value.map((it) => ({
-        id: it.request_id,
-        memberId: '',
-        memberName: it.requester_name,
-        // Map API certificate types to UI types
-        certificateType: (it.certificate_type === 'confirmation' ? 'recommendation' : it.certificate_type) as CertificateRequest['certificateType'],
-        purpose: '',
-        requestDate: it.request_date,
-        status: (it.status as CertificateRequest['status']) || 'pending',
-        approvals: {},
-      }));
+      const rawList = Array.isArray(response.data)
+        ? response.data
+        : (response.data as { value?: unknown }).value ?? [];
+
+      const mapped: CertificateRequest[] = (rawList as Array<any>).map((it) => {
+        const fullName = `${it.owner_profile?.first_name ?? ''} ${it.owner_profile?.last_name ?? ''}`.trim()
+        return {
+          id: it.request_id,
+          memberId: it.owner_profile?.auth?.auth_id || it.requested_by || '',
+          memberName: fullName || it.requester_name,
+          // Normalize API certificate types (e.g., 'confirmation'/'recommandation' => 'recommendation')
+          certificateType: (
+            it.certificate_type === 'confirmation' || it.certificate_type === 'recommandation'
+              ? 'recommendation'
+              : it.certificate_type
+          ) as CertificateRequest['certificateType'],
+          purpose: it.reason || '',
+          requestDate: it.request_date,
+          status: (it.status as CertificateRequest['status']) || 'pending',
+          approvals: {},
+        }
+      });
 
       return { success: true, data: mapped };
     } catch (error) {
@@ -93,18 +129,8 @@ export class CertificateService {
    * Get requests by member ID
    */
   static async getRequestsByMemberId(memberId: string): Promise<ApiResponse<CertificateRequest[]>> {
-    try {
-      const response = await apiClient.get<CertificateRequest[]>(`/certificates?memberId=${memberId}`);
-      return response;
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Unable to fetch member certificate requests. Please check your internet connection and try again.',
-          status: 0,
-        },
-      };
-    }
+    // Deprecated server-side filtering: fetch all and let callers filter client-side
+    return this.getAllRequests();
   }
 
   /**

@@ -154,14 +154,13 @@ export const Certificates: React.FC = () => {
   React.useEffect(() => {
     const load = async () => {
       try {
-        if (user.role === "member") await fetchRequestsByMember(user.id)
-        else await fetchAllRequests()
+          await fetchAllRequests()
       } catch (e) {
         console.warn('Certificates: load failed', e)
       }
     }
     load()
-  }, [fetchAllRequests, fetchRequestsByMember, user.id, user.role])
+  }, [fetchAllRequests])
 
   const handleRefresh = async () => {
     try {
@@ -182,9 +181,9 @@ export const Certificates: React.FC = () => {
     const res = await CertificateService.requestCertificate({ certificate_type: certType, reason: purpose.trim() })
     if (res.success && res.data) {
       await handleRefresh()
-      setPurpose("")
-      setCertType("baptism")
-      setOpenNew(false)
+    setPurpose("")
+    setCertType("baptism")
+    setOpenNew(false)
       toast({ title: "Request submitted", description: res.data.message || "Your certificate request has been created.", variant: "success" })
     } else {
       toast({ title: "Error", description: res.error?.message || "Failed to create certificate request", variant: "error" })
@@ -206,7 +205,30 @@ export const Certificates: React.FC = () => {
     if (ok) toast({ title: "Request Rejected", description: "Certificate request rejected.", variant: "error" })
   }
 
-  const myRequests = React.useMemo(() => requests.filter(r => r.memberId === user.id), [requests, user.id])
+  const myRequests = React.useMemo(() => {
+    // Use auth_id for matching, fallback to name match; if none match, show all
+    const myAuthId = user.id
+    const normalizedUserName = (user.name || '').trim().toLowerCase()
+    const mine = requests.filter(r => r.memberId === myAuthId || (r.memberName || '').trim().toLowerCase() === normalizedUserName)
+    return mine.length > 0 ? mine : requests
+  }, [requests, user.id, user.name])
+
+  // TEMP DEBUG: log incoming data to diagnose empty UI
+  React.useEffect(() => {
+    if (!Array.isArray(requests)) return
+    try {
+      console.log('Certificates Debug → user/auth and first rows', {
+        userAuthId: user.id,
+        userName: user.name,
+        totalRequests: requests.length,
+        memberIds: requests.map(r => r.memberId).slice(0, 10),
+        names: requests.map(r => r.memberName).slice(0, 10),
+        sample: requests.slice(0, 3),
+      })
+    } catch (_) {
+      // ignore
+    }
+  }, [requests, user.id, user.name])
   const stats = React.useMemo(() => {
     const relevant = user.role === "member" ? myRequests : requests
     return {
@@ -217,6 +239,12 @@ export const Certificates: React.FC = () => {
       rejected: relevant.filter(r => r.status === "rejected").length,
     }
   }, [requests, myRequests, user.role])
+
+  const defaultTab = React.useMemo(() => {
+    if (user.role === "member") return "my"
+    const hasPending = requests.some(r => r.status === "pending")
+    return hasPending ? "pending" : "all"
+  }, [user.role, requests])
 
   const canRequest = user.role === "member"
   const canApprove = user.role === "zone-leader" || user.role === "pastor" || user.role === "parish-pastor"
@@ -234,49 +262,49 @@ export const Certificates: React.FC = () => {
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          {canRequest && (
-            <Dialog open={openNew} onOpenChange={setOpenNew}>
-              <DialogTrigger asChild>
+        {canRequest && (
+          <Dialog open={openNew} onOpenChange={setOpenNew}>
+            <DialogTrigger asChild>
                 <Button>
                   <PlusCircle className="h-4 w-4 mr-2" />
-                  New Request
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>New Certificate Request</DialogTitle>
-                  <DialogDescription>Submit a request for your official church certificate.</DialogDescription>
-                </DialogHeader>
+                New Request
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>New Certificate Request</DialogTitle>
+                <DialogDescription>Submit a request for your official church certificate.</DialogDescription>
+              </DialogHeader>
                 <form onSubmit={handleCreate} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Certificate Type</Label>
+                <div className="space-y-2">
+                  <Label>Certificate Type</Label>
                     <Select value={certType} onValueChange={(v: CertificateTypeApi) => setCertType(v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="baptism">Baptism</SelectItem>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="baptism">Baptism</SelectItem>
                         <SelectItem value="recommandation">Recommendation</SelectItem>
-                        <SelectItem value="marriage">Marriage</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      <SelectItem value="marriage">Marriage</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                   <div className="space-y-2">
-                    <Label>Purpose</Label>
+                  <Label>Purpose</Label>
                     <Textarea rows={4} placeholder="Describe the purpose for this certificate..." value={purpose} onChange={(e) => setPurpose(e.target.value)} />
-                  </div>
+                </div>
                   <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => setOpenNew(false)}>Cancel</Button>
                     <Button type="submit">
                       <Send className="h-4 w-4 mr-2" />
-                      Submit Request
-                    </Button>
+                    Submit Request
+                  </Button>
                   </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
       </div>
 
       {error && (
@@ -312,7 +340,7 @@ export const Certificates: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">In Review</CardTitle>
-            <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertCircle className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.inReview}</div>
@@ -321,7 +349,7 @@ export const Certificates: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Approved</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
+              <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.approved}</div>
@@ -338,20 +366,20 @@ export const Certificates: React.FC = () => {
         </Card>
       </div>
 
-      <Tabs defaultValue="my">
+      <Tabs defaultValue={defaultTab}>
         <TabsList>
           <TabsTrigger value="my">My Requests</TabsTrigger>
           {canApprove && <TabsTrigger value="pending">Pending Approvals</TabsTrigger>}
           {user.role !== "member" && <TabsTrigger value="all">All Requests</TabsTrigger>}
         </TabsList>
 
-        <TabsContent value="my">
-          <Card>
-            <CardHeader>
-              <CardTitle>My Requests</CardTitle>
-              <CardDescription>Track progress of your submissions.</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <TabsContent value="my">
+              <Card>
+                <CardHeader>
+                  <CardTitle>My Requests</CardTitle>
+                  <CardDescription>Track progress of your submissions.</CardDescription>
+                </CardHeader>
+                <CardContent>
               <RequestsTable 
                 rows={myRequests} 
                 renderActions={(req) => (
@@ -359,21 +387,21 @@ export const Certificates: React.FC = () => {
                     <Eye className="h-4 w-4 mr-1" />
                     View
                   </Button>
-                )}
-              />
-            </CardContent>
-          </Card>
+                )} 
+                    />
+                  </CardContent>
+                </Card>
         </TabsContent>
 
         {canApprove && (
           <TabsContent value="pending">
-            <Card>
-              <CardHeader>
+                <Card>
+                  <CardHeader>
                 <CardTitle>Pending Approvals</CardTitle>
                 <CardDescription>Requests awaiting your approval.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RequestsTable
+                  </CardHeader>
+                  <CardContent>
+                    <RequestsTable
                   rows={requests.filter(r => r.status === "pending")}
                   renderActions={(req) => (
                     <div className="flex items-center gap-2">
@@ -390,10 +418,10 @@ export const Certificates: React.FC = () => {
                         View
                       </Button>
                     </div>
-                  )}
-                />
-              </CardContent>
-            </Card>
+                  )} 
+                    />
+                  </CardContent>
+                </Card>
           </TabsContent>
         )}
 
@@ -412,7 +440,7 @@ export const Certificates: React.FC = () => {
                       <Eye className="h-4 w-4 mr-1" />
                       View
                     </Button>
-                  )}
+                  )} 
                 />
               </CardContent>
             </Card>

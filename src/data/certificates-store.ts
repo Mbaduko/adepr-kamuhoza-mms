@@ -77,38 +77,22 @@ export const useCertificatesStore = create<CertificatesState & CertificatesActio
     }
   },
 
-  fetchRequestsByMember: async (memberId: string) => {
+  fetchRequestsByMember: async (_memberId: string) => {
+    // Backend does not return requested_by; fetch all and let UI filter by name/id
     set({ loading: true, error: null });
-    
     try {
-      const response = await CertificateService.getRequestsByMemberId(memberId);
-      
+      const response = await CertificateService.getAllRequests();
       if (response.success && response.data) {
         set({ requests: response.data, loading: false, isInitialized: true });
       } else {
-        // Handle endpoint not ready gracefully
         if (response.error?.status === 404 || response.error?.message?.includes('not found')) {
-          set({ 
-            requests: [], 
-            loading: false, 
-            error: null,
-            isInitialized: true
-          });
+          set({ requests: [], loading: false, error: null, isInitialized: true });
         } else {
-          set({ 
-            error: response.error?.message || 'Failed to fetch member certificate requests',
-            loading: false,
-            isInitialized: true
-          });
+          set({ error: response.error?.message || 'Failed to fetch member certificate requests', loading: false, isInitialized: true });
         }
       }
     } catch (error) {
-      set({ 
-        requests: [],
-        error: null,
-        loading: false,
-        isInitialized: true
-      });
+      set({ requests: [], error: null, loading: false, isInitialized: true });
     }
   },
 
