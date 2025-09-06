@@ -24,14 +24,60 @@ export interface NewRequestInput {
   purpose: string;
 }
 
+// New API payload/response for POST /certificates/request
+export type CertificateTypeApi = 'baptism' | 'marriage' | 'recommandation';
+
+export interface RequestCertificatePayload {
+  certificate_type: CertificateTypeApi;
+  reason: string;
+}
+
+export interface RequestCertificateResponse {
+  message: string;
+  certificate: {
+    request_id: string;
+    certificate_type: CertificateTypeApi;
+    request_date: string;
+    status: 'pending' | 'approved' | 'rejected' | 'in-review' | string;
+    requested_by: string;
+    reason: string;
+    progress: string | null;
+    timeline: unknown;
+    certificate_pdf_url: string | null;
+  };
+}
+
 export class CertificateService {
   /**
    * Get all certificate requests
    */
   static async getAllRequests(): Promise<ApiResponse<CertificateRequest[]>> {
     try {
-      const response = await apiClient.get<CertificateRequest[]>('/certificates');
-      return response;
+      // Real API returns { value: [...], Count: number }
+      const response = await apiClient.get<{ value: Array<{
+        request_id: string;
+        certificate_type: string;
+        request_date: string;
+        status: 'pending' | 'approved' | 'rejected' | 'in-review' | string;
+        progress?: string | null;
+        requester_name: string;
+      }>; Count?: number }>('/certificates/');
+
+      if (!response.success || !response.data) return response as unknown as ApiResponse<CertificateRequest[]>;
+
+      const mapped: CertificateRequest[] = response.data.value.map((it) => ({
+        id: it.request_id,
+        memberId: '',
+        memberName: it.requester_name,
+        // Map API certificate types to UI types
+        certificateType: (it.certificate_type === 'confirmation' ? 'recommendation' : it.certificate_type) as CertificateRequest['certificateType'],
+        purpose: '',
+        requestDate: it.request_date,
+        status: (it.status as CertificateRequest['status']) || 'pending',
+        approvals: {},
+      }));
+
+      return { success: true, data: mapped };
     } catch (error) {
       return {
         success: false,
@@ -73,6 +119,24 @@ export class CertificateService {
         success: false,
         error: {
           message: 'Unable to create certificate request. Please check your internet connection and try again.',
+          status: 0,
+        },
+      };
+    }
+  }
+
+  /**
+   * Request a certificate using the new endpoint
+   */
+  static async requestCertificate(payload: RequestCertificatePayload): Promise<ApiResponse<RequestCertificateResponse>> {
+    try {
+      const response = await apiClient.post<RequestCertificateResponse>('/certificates/request', payload);
+      return response;
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          message: 'Unable to request certificate. Please try again.',
           status: 0,
         },
       };
