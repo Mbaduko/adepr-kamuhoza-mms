@@ -806,7 +806,11 @@ export const Zones: React.FC = () => {
                     throw new Error('No member selected');
                   }
 
-                  const response = await MemberService.updateUser(assignLeaderData.zone_leader_id, { role: "ZONE_LEADER" });
+                  const response = await MemberService.updateUserRole(assignLeaderData.zone_leader_id, {
+                    role: "ZONE_LEADER",
+                    zone_id: selectedZone.id,
+                    replace_existing: true,
+                  });
 
                   if (response.success) {
                     toast({

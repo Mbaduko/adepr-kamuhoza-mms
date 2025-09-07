@@ -79,6 +79,12 @@ export type UpdateUserPayload = Partial<{
   role: "MEMBER" | "ZONE_LEADER" | "PASTOR" | "PARISH_PASTOR";
 }>;
 
+export interface UpdateUserRolePayload {
+  role: "MEMBER" | "ZONE_LEADER" | "PASTOR" | "PARISH_PASTOR";
+  zone_id?: string;
+  replace_existing?: boolean;
+}
+
 export interface ZoneMemberResponse {
   message: string;
   zones: Array<{
@@ -298,6 +304,26 @@ export class MemberService {
         success: false,
         error: {
           message: err.response?.data?.message || 'Unable to update user. Please try again.',
+          status: err.response?.status || 0,
+        },
+      };
+    }
+  }
+
+  /**
+   * Change user role with role-based access control
+   * PUT /auth/users/{user_id}/role
+   */
+  static async updateUserRole(userId: string, payload: UpdateUserRolePayload): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.put<any>(`/auth/users/${userId}/role`, payload);
+      return response;
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string }, status?: number } };
+      return {
+        success: false,
+        error: {
+          message: err.response?.data?.message || 'Unable to change user role. Please try again.',
           status: err.response?.status || 0,
         },
       };
