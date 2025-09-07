@@ -63,7 +63,8 @@ export const Dashboard: React.FC = () => {
     const pendingRequests = requests.filter(req => req.status === "pending").length
     const approvedRequests = requests.filter(req => req.status === "approved").length
     const rejectedRequests = requests.filter(req => req.status === "rejected").length
-    const inReviewRequests = requests.filter(req => req.status === "in-review").length
+    // Treat "In Review" as all requests that are not yet approved (pending + in-review)
+    const inReviewRequests = requests.filter(req => req.status === "pending" || req.status === "in-review").length
 
     if (userRole === "member") {
       const userRequests = requests.filter(req => req.memberId === user?.id)
@@ -72,7 +73,8 @@ export const Dashboard: React.FC = () => {
         myRequests: userRequests.length,
         approvedRequests: userRequests.filter(req => req.status === "approved").length,
         rejectedRequests: userRequests.filter(req => req.status === "rejected").length,
-        inReviewRequests: userRequests.filter(req => req.status === "in-review").length,
+        // Not yet approved for the member (pending + in-review)
+        inReviewRequests: userRequests.filter(req => req.status === "pending" || req.status === "in-review").length,
       }
     }
 
