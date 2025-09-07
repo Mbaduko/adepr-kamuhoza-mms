@@ -596,6 +596,39 @@ export const Members: React.FC = () => {
     )
   }
 
+  const formatRole = (role?: string) => {
+    if (!role) return 'Member'
+    const r = role.toString().toUpperCase()
+    switch (r) {
+      case 'ZONE_LEADER':
+        return 'Zone Leader'
+      case 'PASTOR':
+        return 'Pastor'
+      case 'PARISH_PASTOR':
+        return 'Parish Pastor'
+      case 'MEMBER':
+        return 'Member'
+      default: {
+        const cleaned = role.replace(/[_-]+/g, ' ').toLowerCase()
+        return cleaned.replace(/\b\w/g, c => c.toUpperCase())
+      }
+    }
+  }
+
+  const getRoleBadge = (role?: string) => {
+    const r = (role || 'MEMBER').toString().toUpperCase()
+    const variants: Record<string, string> = {
+      MEMBER: 'bg-gray-100 text-gray-800',
+      ZONE_LEADER: 'bg-yellow-100 text-yellow-800',
+      PASTOR: 'bg-blue-100 text-blue-800',
+      PARISH_PASTOR: 'bg-indigo-100 text-indigo-800',
+    }
+    const cls = variants[r] || 'bg-slate-100 text-slate-800'
+    return (
+      <Badge className={cls}>{formatRole(role)}</Badge>
+    )
+  }
+
   const getZoneName = (zoneId: string) => {
     const zone = zones.find(z => z.id === zoneId)
     return zone?.name || "Unknown Zone"
@@ -790,7 +823,7 @@ export const Members: React.FC = () => {
                           </Avatar>
                                                      <div>
                           <p className="font-medium">{member.name}</p>
-                          <p className="text-sm text-muted-foreground">Member</p>
+                          <div className="mt-0.5">{getRoleBadge(member.role)}</div>
                            </div>
                         </div>
                       </TableCell>
