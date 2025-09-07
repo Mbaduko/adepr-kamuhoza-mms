@@ -145,6 +145,7 @@ export const Pastors: React.FC = () => {
     role: "PASTOR" as const,
     account_status: "ACTIVE" as const,
   })
+  const [isCreatingPastor, setIsCreatingPastor] = React.useState(false)
 
   // Filter pastors (members with pastor roles)
     const pastors = React.useMemo(() => {
@@ -692,18 +693,40 @@ export const Pastors: React.FC = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsAddOpen(false)} disabled={isCreatingPastor}>Cancel</Button>
             <Button onClick={async () => {
-              const payload = { ...addForm, role: 'PASTOR' as const, account_status: 'ACTIVE' as const } as any;
-              const res = await MemberService.createUser(payload);
-              if (res.success) {
-                setIsAddOpen(false);
-                await fetchAllPastors?.();
-                toast({ title: 'Pastor added', description: 'New pastor created successfully.', variant: 'success' });
-              } else {
-                toast({ title: 'Failed', description: res.error?.message || 'Unable to create pastor', variant: 'error' });
+              try {
+                setIsCreatingPastor(true)
+                const payload: any = { ...addForm, role: 'PASTOR', account_status: 'ACTIVE' }
+                // Normalize enums
+                payload.gender = String(payload.gender || 'MALE').toUpperCase()
+                payload.marital_status = String(payload.marital_status || 'SINGLE').toUpperCase()
+                // Do not send zone for pastors
+                if (!payload.zone_id) delete payload.zone_id
+                // Only send marriage_date if married in church
+                if (!payload.is_married_in_church) delete payload.marriage_date
+                // Drop empty optional fields
+                if (!payload.choir) delete payload.choir
+                if (!payload.profile_photo_url) delete payload.profile_photo_url
+                // Remove any empty-string fields to satisfy backend validation (e.g., uuid parsing)
+                Object.keys(payload).forEach((k) => { if (payload[k] === '') delete payload[k] })
+
+                const res = await MemberService.createUser(payload)
+                if (res.success) {
+                  setIsAddOpen(false)
+                  await fetchAllPastors?.()
+                  toast({ title: 'Pastor added', description: 'New pastor created successfully.', variant: 'success' })
+                } else {
+                  toast({ title: 'Failed', description: res.error?.message || 'Unable to create pastor', variant: 'error' })
+                }
+              } catch (e) {
+                toast({ title: 'Failed', description: 'Unable to create pastor', variant: 'error' })
+              } finally {
+                setIsCreatingPastor(false)
               }
-            }}>Save</Button>
+            }} disabled={isCreatingPastor}>
+              {isCreatingPastor ? (<span className="inline-flex items-center gap-2"><RefreshCw className="h-4 w-4 animate-spin" /> Creating...</span>) : 'Save'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
