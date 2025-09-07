@@ -12,6 +12,7 @@ export interface User {
   account_status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   is_verified: boolean;
   profile_id?: string;
+  zone_id?: string;
   first_name?: string;
   last_name?: string;
   phone_number?: string;
@@ -111,6 +112,7 @@ export const convertApiUserToLegacy = (apiUser: User): LegacyUser => {
     name: fullName,
     email: apiUser.email,
     role: mappedRole,
+    zoneId: apiUser.zone_id,
     profileImage: undefined,
     phone: apiUser.phone_number,
     address: apiUser.address,

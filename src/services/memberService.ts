@@ -38,7 +38,7 @@ export interface CreateUserData {
   choir?: string; // Optional - will be optional in backend
   zone_id?: string; // Optional zone assignment
   email: string;
-  role: "MEMBER" | "PASTOR";
+  role: "MEMBER" | "PASTOR" | "ZONE_LEADER";
   account_status: "ACTIVE";
 }
 

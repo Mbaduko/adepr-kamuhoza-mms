@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useZonesStore } from '@/data/zones-store';
 import { 
   User, 
   Mail, 
@@ -25,6 +26,7 @@ import {
 export const Profile: React.FC = () => {
   const { state } = useAuth();
   const { toast } = useToast();
+  const { zones, isInitialized, fetchAllZones } = useZonesStore();
   const [isEditing, setIsEditing] = React.useState(false);
   const [formData, setFormData] = React.useState({
     name: state.user?.name || '',
@@ -33,6 +35,11 @@ export const Profile: React.FC = () => {
     address: state.user?.address || '',
     bio: state.user?.bio || ''
   });
+
+  React.useEffect(() => {
+    // Load zones once to be able to show user's zone name if available
+    fetchAllZones().catch(() => void 0)
+  }, [fetchAllZones])
 
   if (!state.user) return null;
 
@@ -198,7 +205,9 @@ export const Profile: React.FC = () => {
                   <Separator className="mb-4" />
                   <div className="text-sm">
                     <span className="font-medium">Zone: </span>
-                    <span className="text-muted-foreground">Zone {state.user.zoneId}</span>
+                    <span className="text-muted-foreground">
+                      {zones.find(z => z.id === state.user.zoneId)?.name || `Zone ${state.user.zoneId}`}
+                    </span>
                   </div>
                 </div>
               )}

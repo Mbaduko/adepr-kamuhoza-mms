@@ -24,7 +24,7 @@ export const AppLayout: React.FC = () => {
         {/* Main content area with sidebar and content */}
         <div className="flex h-[calc(100vh-4rem)]">
           <AppSidebar />
-          <main className="flex-1 p-6 pt-8 bg-background overflow-y-auto">
+          <main className="flex-1 p-6 pt-20 bg-background overflow-y-auto">
             <Outlet />
           </main>
         </div>

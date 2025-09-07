@@ -108,9 +108,14 @@ export const Members: React.FC = () => {
       case 'parish-pastor':
         return [
           { value: 'MEMBER', label: 'Member' },
-          { value: 'PASTOR', label: 'Pastor' }
+          { value: 'PASTOR', label: 'Pastor' },
+          { value: 'ZONE_LEADER', label: 'Zone Leader' }
         ];
       case 'pastor':
+        return [
+          { value: 'MEMBER', label: 'Member' },
+          { value: 'ZONE_LEADER', label: 'Zone Leader' }
+        ];
       case 'zone-leader':
         return [
           { value: 'MEMBER', label: 'Member' }
@@ -191,10 +196,10 @@ export const Members: React.FC = () => {
         // Choir is now optional - no validation needed
         break;
       case 'zone_id':
-        if (formData.role === 'MEMBER' && (!value || value === 'none')) {
-          return 'Zone assignment is required for members';
+        if ((formData.role === 'MEMBER' || formData.role === 'ZONE_LEADER') && (!value || value === 'none')) {
+          return 'Zone assignment is required for members and zone leaders';
         }
-        // For zone leaders, ensure they have a zone assigned
+        // For current user who is zone leader, ensure auto-assigned zone is present
         if (user?.role === 'zone-leader' && (!value || value === 'none')) {
           return 'Zone assignment is required for zone leaders';
         }
@@ -397,13 +402,8 @@ export const Members: React.FC = () => {
     }
 
     // Zone validation for members
-    if (formData.role === 'MEMBER' && (!formData.zone_id || formData.zone_id === 'none')) {
-      errors.push("Zone assignment is required for members");
-    }
-
-    // Zone validation for zone leaders
-    if (user?.role === 'zone-leader' && (!formData.zone_id || formData.zone_id === 'none')) {
-      errors.push("Zone assignment is required for zone leaders");
+    if ((formData.role === 'MEMBER' || formData.role === 'ZONE_LEADER') && (!formData.zone_id || formData.zone_id === 'none')) {
+      errors.push("Zone assignment is required for members and zone leaders");
     }
 
     return {
@@ -1080,18 +1080,18 @@ export const Members: React.FC = () => {
             </div>
                 <div className="space-y-2">
                   <Label htmlFor="zone_id" className="text-sm font-medium">
-                    Zone Assignment {formData.role === "MEMBER" ? "(Required for Members)" : "(Optional)"}
+                    Zone Assignment {(formData.role === "MEMBER" || formData.role === "ZONE_LEADER") ? "(Required for Members & Zone Leaders)" : "(Optional)"}
                   </Label>
                   <Select 
                     value={formData.zone_id || "none"} 
                     onValueChange={value => handleInputChangeWithValidation("zone_id", value === "none" ? "" : value)} 
-                    disabled={formData.role !== "MEMBER" || user?.role === 'zone-leader'}
+                    disabled={!(formData.role === "MEMBER" || formData.role === "ZONE_LEADER") || user?.role === 'zone-leader'}
                   >
                     <SelectTrigger className={touchedFields.zone_id && validationErrors.zone_id ? "border-red-500" : ""}>
                       <SelectValue placeholder={
                         user?.role === 'zone-leader' 
                           ? "Your zone (auto-assigned)" 
-                          : formData.role === "MEMBER" 
+                          : (formData.role === "MEMBER" || formData.role === "ZONE_LEADER")
                             ? "Select a zone (required)" 
                             : "Select a zone (optional)"
                       } />
@@ -1121,13 +1121,12 @@ export const Members: React.FC = () => {
                     <p className="text-sm text-red-500">{validationErrors.zone_id}</p>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    {zonesLoading ? "Loading zones..." : 
-                      user?.role === 'zone-leader' 
-                        ? "Zone automatically set to your assigned zone" 
-                        : formData.role === "MEMBER" 
-                          ? `Zone assignment is required for members (${allZones.length} zones available)` 
-                          : "Zone assignment will be available once backend database is updated"
-                    }
+                    {zonesLoading ? "Loading zones..." :
+                      user?.role === 'zone-leader'
+                        ? "Zone automatically set to your assigned zone"
+                        : (formData.role === "MEMBER" || formData.role === "ZONE_LEADER")
+                          ? `Zone assignment is required (${allZones.length} zones available)`
+                          : "Zone assignment will be available once backend database is updated"}
                   </p>
                 </div>
                 {/* Only show "Married in Church" section for MARRIED status */}
@@ -1178,7 +1177,7 @@ export const Members: React.FC = () => {
                 <Label htmlFor="role" className="text-sm font-medium">
                   Church Role
                 </Label>
-                <Select value={formData.role} onValueChange={value => handleInputChangeWithValidation("role", value as "MEMBER" | "PASTOR")}>
+                <Select value={formData.role} onValueChange={value => handleInputChangeWithValidation("role", value as "MEMBER" | "PASTOR" | "ZONE_LEADER")}>
                 <SelectTrigger>
                     <SelectValue placeholder="Select role" />
                 </SelectTrigger>
