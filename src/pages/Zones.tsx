@@ -220,6 +220,52 @@ export const Zones: React.FC = () => {
     setOpenAssignLeader(true)
   }
 
+  // When dialog opens, only consider non-leader members; if exactly one eligible, preselect; else clear
+  React.useEffect(() => {
+    if (!openAssignLeader || !selectedZone) return;
+    const zoneMembersList = members.filter(m => m.zoneId === selectedZone.id);
+    const eligible = zoneMembersList.filter(m => {
+      const roleUpper = (m.role || "").toString().toUpperCase();
+      const isLeaderByRole = roleUpper.includes("LEADER") || roleUpper === "PASTOR" || roleUpper === "PARISH_PASTOR";
+      const isCurrentLeaderById = !!selectedZone?.leaderId && m.id === selectedZone.leaderId;
+      return !isLeaderByRole && !isCurrentLeaderById;
+    });
+
+    if (eligible.length === 1) {
+      const preselect = eligible[0].authId || eligible[0].id || "";
+      setAssignLeaderData({ zone_leader_id: preselect });
+      return;
+    }
+
+    setAssignLeaderData(prev => {
+      const keep = prev.zone_leader_id && eligible.some(m => (m.id === prev.zone_leader_id) || (m.authId === prev.zone_leader_id)) ? prev.zone_leader_id : "";
+      return { zone_leader_id: keep };
+    });
+  }, [openAssignLeader, selectedZone, members])
+
+  
+
+  const zoneMembers = React.useMemo(() => {
+    const list = selectedZone ? members.filter(m => m.zoneId === selectedZone.id) : []
+    return list
+  }, [members, selectedZone, openAssignLeader])
+
+  const eligibleLeaderCandidates = React.useMemo(() => {
+    const toUpper = (value?: string) => (value || "").toString().toUpperCase()
+    const filtered = zoneMembers.filter(m => {
+      const roleUpper = toUpper(m.role as unknown as string)
+      const isLeaderByRole = roleUpper.includes("LEADER") || roleUpper === "PASTOR" || roleUpper === "PARISH_PASTOR"
+      const isCurrentLeaderById = !!selectedZone?.leaderId && m.id === selectedZone.leaderId
+      return !isLeaderByRole && !isCurrentLeaderById
+    })
+    return filtered
+  }, [zoneMembers, selectedZone, openAssignLeader])
+
+  const eligibleLeaderCandidatesWithIds = React.useMemo(() => {
+    const list = eligibleLeaderCandidates.filter(m => !!(m.id || m.authId))
+    return list
+  }, [eligibleLeaderCandidates, openAssignLeader, selectedZone])
+
   const handleCloseDialogs = () => {
     setOpenViewZone(false)
     setOpenEditZone(false)
@@ -751,25 +797,36 @@ export const Zones: React.FC = () => {
               <Label htmlFor="assign-leader" className="text-sm font-medium">
                 Select Leader
               </Label>
-              <Select onValueChange={(value) => setAssignLeaderData({ zone_leader_id: value })} value={assignLeaderData.zone_leader_id}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a zone leader" />
+              <Select 
+                value={assignLeaderData.zone_leader_id || "none"}
+                onValueChange={(value) => {
+                  const normalized = !value || value === "none" ? "" : value
+                  setAssignLeaderData({ zone_leader_id: normalized })
+                }}
+                disabled={eligibleLeaderCandidatesWithIds.length === 0}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={
+                    eligibleLeaderCandidatesWithIds.length > 0
+                      ? "Select an eligible member"
+                      : "No eligible members"
+                  } />
                 </SelectTrigger>
                 <SelectContent>
-                  {members.filter(member => member.zoneId === selectedZone?.id).length > 0 ? (
-                    members.filter(member => member.zoneId === selectedZone?.id).map(member => (
-                      <SelectItem key={member.id} value={member.id}>
-                        <div className="flex items-center gap-2">
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100">
-                            <Crown className="h-3 w-3 text-yellow-600" />
-                          </div>
+                  <SelectItem value="none">No Leader Selected</SelectItem>
+                  {eligibleLeaderCandidatesWithIds.length > 0 ? (
+                    eligibleLeaderCandidatesWithIds.map(member => {
+                      const value = member.authId || member.id || ''
+                      if (!value) return null
+                      return (
+                        <SelectItem key={value} value={value}>
                           {member.name}
-            </div>
-                      </SelectItem>
-                    ))
+                        </SelectItem>
+                      )
+                    })
                   ) : (
                     <SelectItem value="no-members" disabled>
-                      No members in this zone
+                      No eligible members in this zone
                     </SelectItem>
                   )}
                 </SelectContent>
@@ -799,14 +856,24 @@ export const Zones: React.FC = () => {
               onClick={async () => {
                 if (!selectedZone) return;
                 
-                setIsSubmitting(true);
                 try {
-                  // Business rule: Assigning zone leader updates the selected user's role, not the zone record
+                  // Validate selection before proceeding
                   if (!assignLeaderData.zone_leader_id) {
-                    throw new Error('No member selected');
+                    toast({
+                      title: "Select a member",
+                      description: "Please choose a member to assign as zone leader.",
+                      variant: "error"
+                    });
+                    return;
                   }
 
-                  const response = await MemberService.updateUserRole(assignLeaderData.zone_leader_id, {
+                  setIsSubmitting(true);
+
+                  // Our dropdown stores member.profile_id. The role API needs auth_id.
+                  const selectedMember = zoneMembers.find(m => m.id === assignLeaderData.zone_leader_id) || members.find(m => m.authId === assignLeaderData.zone_leader_id);
+                  const userIdForApi = selectedMember?.authId ?? assignLeaderData.zone_leader_id;
+
+                  const response = await MemberService.updateUserRole(userIdForApi, {
                     role: "ZONE_LEADER",
                     zone_id: selectedZone.id,
                     replace_existing: true,
@@ -838,7 +905,7 @@ export const Zones: React.FC = () => {
                   setIsSubmitting(false);
                 }
               }}
-              disabled={isSubmitting || !assignLeaderData.zone_leader_id}
+              disabled={isSubmitting}
             >
               {isSubmitting ? "Assigning..." : "Assign Leader"}
             </Button>

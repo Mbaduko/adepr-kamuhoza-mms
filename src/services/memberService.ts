@@ -16,6 +16,8 @@ export interface Member {
   profileImage?: string;
   choir?: string;
   highestDegree?: string;
+  authId?: string;
+  role?: 'MEMBER' | 'ZONE_LEADER' | 'PASTOR' | 'PARISH_PASTOR' | string;
   sacraments: {
     baptism?: { date: string};
     marriage?: { date: string; place: string };

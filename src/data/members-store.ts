@@ -66,6 +66,8 @@ export const useMembersStore = create<MembersState & MembersActions>((set, get) 
             zoneId: zone.zone_id,
             isChoirMember: !!raw.choir,
             accountStatus: raw.user.account_status,
+            authId: raw.user?.auth_id,
+            role: raw.user?.role,
             sacraments: {
               baptism: { date: raw.baptism_date },
               marriage: raw.marital_status === 'married'
