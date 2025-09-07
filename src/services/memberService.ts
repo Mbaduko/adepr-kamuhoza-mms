@@ -61,6 +61,24 @@ export interface CreateUserResponse {
   updated_at: string;
 }
 
+export type UpdateUserPayload = Partial<{
+  first_name: string;
+  last_name: string;
+  phone_number: string;
+  gender: "MALE" | "FEMALE";
+  date_of_birth: string;
+  profile_photo_url: string;
+  address: string;
+  highest_degree: string;
+  marital_status: "single" | "married" | "divorced" | "widowed";
+  baptism_date: string;
+  is_married_in_church: boolean;
+  marriage_date: string;
+  choir: string;
+  // role is not listed in docs, but we will include for leader assignment if backend accepts it
+  role: "MEMBER" | "ZONE_LEADER" | "PASTOR" | "PARISH_PASTOR";
+}>;
+
 export interface ZoneMemberResponse {
   message: string;
   zones: Array<{
@@ -261,6 +279,25 @@ export class MemberService {
         success: false,
         error: {
           message: err.response?.data?.message || 'Unable to create user. Please try again.',
+          status: err.response?.status || 0,
+        },
+      };
+    }
+  }
+
+  /**
+   * Update user info by auth_id
+   */
+  static async updateUser(id: string, payload: UpdateUserPayload): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.put<any>(`/users/${id}`, payload);
+      return response;
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string }, status?: number } };
+      return {
+        success: false,
+        error: {
+          message: err.response?.data?.message || 'Unable to update user. Please try again.',
           status: err.response?.status || 0,
         },
       };

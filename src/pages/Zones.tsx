@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext"
 import { useZonesStore } from "@/data/zones-store"
 import { useMembersStore } from "@/data/members-store"
 import { ZoneService, CreateZoneData, Zone, UpdateZoneData } from "@/services/zoneService"
+import { MemberService } from "@/services/memberService"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -141,8 +142,11 @@ export const Zones: React.FC = () => {
       }
 
       if (openEditZone && selectedZone) {
-        // Update existing zone
-        const response = await ZoneService.updateZone(selectedZone.id, apiData as UpdateZoneData)
+        // Update existing zone (name/description only; leader is managed separately)
+        const response = await ZoneService.updateZone(selectedZone.id, {
+          name: formData.name,
+          description: formData.description,
+        } as UpdateZoneData)
 
         if (response.success) {
           toast({
@@ -272,11 +276,17 @@ export const Zones: React.FC = () => {
   }
 
   const getZoneLeader = (zoneId: string) => {
-    // Since Member interface doesn't have role, we'll use a placeholder for now
-    // In a real implementation, you'd need to add role to the Member interface
-    return members.find(member => 
-      member.zoneId === zoneId
-    )
+    // A zone leader is a member in that zone who has the 'zone-leader' role.
+    // Our Member model may not include role explicitly, so we try multiple strategies.
+    const memberWithRole = (members as any[]).find(m => m.zoneId === zoneId && (m.role === 'zone-leader' || m.role === 'ZONE_LEADER'))
+    if (memberWithRole) return memberWithRole
+
+    const zone = zones.find(z => z.id === zoneId)
+    if (zone?.leaderId) {
+      const byId = members.find(m => m.id === zone.leaderId)
+      if (byId) return byId
+    }
+    return undefined
   }
 
   if (!user) return null
@@ -491,10 +501,9 @@ export const Zones: React.FC = () => {
                                 <Button
                               variant="ghost" 
                                   size="sm"
-                              className={`h-8 w-8 p-0 ${hasLeader(zone) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              className="h-8 w-8 p-0"
                                   onClick={() => handleAssignLeader(zone)}
-                              disabled={hasLeader(zone)}
-                              title={hasLeader(zone) ? "Zone already has a leader" : "Assign zone leader"}
+                              title="Assign or change zone leader"
                                 >
                                   <Crown className="h-4 w-4" />
                                 </Button>
@@ -709,23 +718,7 @@ export const Zones: React.FC = () => {
               />
             </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="edit-zone_leader_id" className="text-sm font-medium">
-                  Zone Leader
-                </Label>
-                <Select onValueChange={(value) => handleInputChange("zone_leader_id", value)} value={formData.zone_leader_id}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a zone leader (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {members.map(member => (
-                      <SelectItem key={member.id} value={member.id}>
-                        {member.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Zone leader is assigned via the Assign Leader action, not in edit */}
             </div>
             
             <DialogFooter className="flex gap-2">
@@ -791,12 +784,10 @@ export const Zones: React.FC = () => {
                 <p className="text-sm text-muted-foreground mt-1">
                   <strong>Available Members:</strong> {members.filter(member => member.zoneId === selectedZone.id).length}
                 </p>
-                {selectedZone.leaderId && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    <strong>Current Leader:</strong> {getZoneLeader(selectedZone.id)?.name || "Unknown"}
-                  </p>
-                )}
-            </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  <strong>Current Leader:</strong> {getZoneLeader(selectedZone.id)?.name || "None"}
+                </p>
+              </div>
             )}
           </div>
           
@@ -810,33 +801,33 @@ export const Zones: React.FC = () => {
                 
                 setIsSubmitting(true);
                 try {
-                  const updateData: UpdateZoneData = {
-                    name: selectedZone.name,
-                    description: selectedZone.description,
-                    zone_leader_id: assignLeaderData.zone_leader_id || undefined
-                  };
+                  // Business rule: Assigning zone leader updates the selected user's role, not the zone record
+                  if (!assignLeaderData.zone_leader_id) {
+                    throw new Error('No member selected');
+                  }
 
-                  const response = await ZoneService.updateZone(selectedZone.id, updateData);
+                  const response = await MemberService.updateUser(assignLeaderData.zone_leader_id, { role: "ZONE_LEADER" });
 
                   if (response.success) {
                     toast({
                       title: "Success",
-                      description: "Zone leader assigned successfully!",
+                      description: "Zone leader role assigned to selected member.",
                       variant: "success"
                     });
                     handleCloseDialogs();
-                    await fetchAllZones();
+                    // Refresh members so leader rendering reflects updated role
+                    await fetchAllMembers();
                   } else {
                     toast({
                       title: "Error",
-                      description: response.error?.message || "Failed to assign zone leader. Please try again.",
+                      description: response.error?.message || "Failed to update member role. Please try again.",
                       variant: "error"
                     });
                   }
                 } catch (error) {
                   toast({
                     title: "Error",
-                    description: "Failed to assign zone leader. Please try again.",
+                    description: "Failed to assign zone leader role. Please try again.",
                     variant: "error"
                   });
                 } finally {
