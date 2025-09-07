@@ -49,7 +49,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MemberService, CreateUserData } from '@/services/memberService';
+import { MemberService, CreateUserData, UpdateUserPayload, Member } from '@/services/memberService';
 import { useState } from "react"
 
 export const Members: React.FC = () => {
@@ -83,6 +83,10 @@ export const Members: React.FC = () => {
   
   // Add New User Dialog State
   const [openNewUser, setOpenNewUser] = React.useState(false);
+  // Edit Member Dialog State
+  const [openEditUser, setOpenEditUser] = React.useState(false);
+  const [memberBeingEdited, setMemberBeingEdited] = React.useState<Member | null>(null);
+  const [editForm, setEditForm] = React.useState<UpdateUserPayload>({});
 
   // Get default role based on current user's role
   const getDefaultRole = () => {
@@ -634,6 +638,64 @@ export const Members: React.FC = () => {
     return zone?.name || "Unknown Zone"
   }
 
+  const openEditMember = (m: Member) => {
+    setMemberBeingEdited(m)
+    const nameParts = (m.name || '').trim().split(/\s+/)
+    const firstName = nameParts.shift() || ''
+    const lastName = nameParts.join(' ')
+    const normalizedGender = m.gender ? String(m.gender).toUpperCase() as 'MALE' | 'FEMALE' : undefined
+    setEditForm({
+      first_name: firstName,
+      last_name: lastName,
+      phone_number: m.phone || '',
+      gender: normalizedGender,
+      date_of_birth: m.dateOfBirth || '',
+      address: m.address || '',
+      highest_degree: m.highestDegree || '',
+      marital_status: (m.maritalStatus as any) || undefined,
+      baptism_date: m.sacraments?.baptism?.date || '',
+      marriage_date: m.sacraments?.marriage?.date || '',
+      choir: m.choir || '',
+    })
+    setOpenEditUser(true)
+  }
+
+  const handleEditInput = (field: keyof UpdateUserPayload, value: any) => {
+    setEditForm(prev => ({ ...prev, [field]: value }))
+  }
+
+  const submitEditMember = async () => {
+    if (!memberBeingEdited?.authId) {
+      toast({ title: 'Error', description: 'Missing user identifier.', variant: 'error' })
+      return
+    }
+    try {
+      setIsSubmitting(true)
+      const payload: UpdateUserPayload = { ...editForm }
+      if (payload.gender) {
+        payload.gender = String(payload.gender).toUpperCase() as 'MALE' | 'FEMALE'
+      }
+      // Clean empty strings to avoid overwriting with blanks
+      Object.keys(payload).forEach((k) => {
+        const key = k as keyof UpdateUserPayload
+        if (payload[key] === '') delete payload[key]
+      })
+      const res = await MemberService.updateUser(memberBeingEdited.authId, payload)
+      if (res.success) {
+        toast({ title: 'Updated', description: 'Member information updated.', variant: 'success' })
+        setOpenEditUser(false)
+        setMemberBeingEdited(null)
+        await fetchAllMembers()
+      } else {
+        toast({ title: 'Error', description: res.error?.message || 'Failed to update user.', variant: 'error' })
+      }
+    } catch (e) {
+      toast({ title: 'Error', description: 'Failed to update user.', variant: 'error' })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   if (!user) return null
 
   return (
@@ -866,7 +928,7 @@ export const Members: React.FC = () => {
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openEditMember(member)}>
                               <Edit className="h-4 w-4 mr-2" />
                               Edit Member
                             </DropdownMenuItem>
@@ -886,6 +948,98 @@ export const Members: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Edit Member Dialog */}
+      <Dialog open={openEditUser} onOpenChange={setOpenEditUser}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              Edit Member
+            </DialogTitle>
+            <DialogDescription>
+              Update member information. Only provided fields will be changed.
+            </DialogDescription>
+          </DialogHeader>
+
+          {memberBeingEdited && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit_first_name">First Name</Label>
+                  <Input id="edit_first_name" value={editForm.first_name || ''} onChange={e => handleEditInput('first_name', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_last_name">Last Name</Label>
+                  <Input id="edit_last_name" value={editForm.last_name || ''} onChange={e => handleEditInput('last_name', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_phone">Phone Number</Label>
+                  <Input id="edit_phone" value={editForm.phone_number || ''} onChange={e => handleEditInput('phone_number', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_gender">Gender</Label>
+                  <Select value={editForm.gender || ''} onValueChange={v => handleEditInput('gender', v as any)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MALE">Male</SelectItem>
+                      <SelectItem value="FEMALE">Female</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_dob">Date of Birth</Label>
+                  <Input id="edit_dob" type="date" value={editForm.date_of_birth || ''} onChange={e => handleEditInput('date_of_birth', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_address">Address</Label>
+                  <Input id="edit_address" value={editForm.address || ''} onChange={e => handleEditInput('address', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_degree">Highest Degree</Label>
+                  <Input id="edit_degree" value={editForm.highest_degree || ''} onChange={e => handleEditInput('highest_degree', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_marital">Marital Status</Label>
+                  <Select value={editForm.marital_status || ''} onValueChange={v => handleEditInput('marital_status', v as any)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">Single</SelectItem>
+                      <SelectItem value="married">Married</SelectItem>
+                      <SelectItem value="divorced">Divorced</SelectItem>
+                      <SelectItem value="widowed">Widowed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_baptism">Baptism Date</Label>
+                  <Input id="edit_baptism" type="date" value={editForm.baptism_date || ''} onChange={e => handleEditInput('baptism_date', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_marriage">Marriage Date</Label>
+                  <Input id="edit_marriage" type="date" value={editForm.marriage_date || ''} onChange={e => handleEditInput('marriage_date', e.target.value)} />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="edit_choir">Choir</Label>
+                  <Input id="edit_choir" value={editForm.choir || ''} onChange={e => handleEditInput('choir', e.target.value)} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2">
+            <Button type="button" variant="outline" onClick={() => setOpenEditUser(false)}>
+              Cancel
+            </Button>
+            <Button onClick={submitEditMember} disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Loading State */}
       {isLoading && (
         <Card>
