@@ -156,6 +156,46 @@ export const Members: React.FC = () => {
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Get current user's zone from members data
+  const getCurrentUserZone = () => {
+    if (user?.role === 'zone-leader') {
+      // Find the current user in the members array to get their zone
+      const currentUserMember = members.find(member => 
+        member.authId === user.id || member.email === user.email
+      );
+      return currentUserMember?.zoneId || "";
+    }
+    return "";
+  };
+
+  // Reset form when dialog opens to ensure zone leaders get their zone pre-populated
+  React.useEffect(() => {
+    if (openNewUser) {
+      setFormData({
+        first_name: "",
+        last_name: "",
+        phone_number: "",
+        gender: "MALE",
+        date_of_birth: "",
+        profile_photo_url: "",
+        address: "",
+        highest_degree: "",
+        marital_status: "SINGLE",
+        baptism_date: "",
+        is_married_in_church: false,
+        marriage_date: "",
+        choir: "", // Optional - can be empty
+        zone_id: getCurrentUserZone(),
+        email: "",
+        role: getDefaultRole(),
+        account_status: "ACTIVE",
+      });
+      setValidationErrors({});
+      setTouchedFields({});
+      setIsSubmitting(false);
+    }
+  }, [openNewUser, user?.role, members]);
+
   // Real-time validation
   const validateField = (field: string, value: string | boolean): string => {
     switch (field) {
@@ -436,7 +476,7 @@ export const Members: React.FC = () => {
       is_married_in_church: false,
       marriage_date: "",
       choir: "",
-      zone_id: user?.role === 'zone-leader' ? (user.zoneId || "") : "",
+      zone_id: getCurrentUserZone(),
       email: "",
       role: getDefaultRole(),
       account_status: "ACTIVE",
@@ -1272,12 +1312,12 @@ export const Members: React.FC = () => {
                   <Select 
                     value={formData.zone_id || "none"} 
                     onValueChange={value => handleInputChangeWithValidation("zone_id", value === "none" ? "" : value)} 
-                    disabled={!(formData.role === "MEMBER" || formData.role === "ZONE_LEADER") || user?.role === 'zone-leader'}
+                    disabled={!(formData.role === "MEMBER" || formData.role === "ZONE_LEADER")}
                   >
                     <SelectTrigger className={touchedFields.zone_id && validationErrors.zone_id ? "border-red-500" : ""}>
                       <SelectValue placeholder={
                         user?.role === 'zone-leader' 
-                          ? "Your zone (auto-assigned)" 
+                          ? "Your zone (pre-selected)" 
                           : (formData.role === "MEMBER" || formData.role === "ZONE_LEADER")
                             ? "Select a zone (required)" 
                             : "Select a zone (optional)"
@@ -1286,11 +1326,36 @@ export const Members: React.FC = () => {
                     <SelectContent>
                       <SelectItem value="none">No Zone Assignment</SelectItem>
                       {allZones.length > 0 ? (
-                        allZones.map((zone) => (
-                          <SelectItem key={zone.id} value={zone.id}>
-                            {zone.name}
-                          </SelectItem>
-                        ))
+                        (() => {
+                          // Filter zones based on user role
+                          const filteredZones = allZones.filter(zone => {
+                            // If user is zone leader, only show their zone
+                            if (user?.role === 'zone-leader') {
+                              const currentUserZone = getCurrentUserZone();
+                              return zone.id === currentUserZone;
+                            }
+                            // Otherwise show all zones
+                            return true;
+                          });
+
+                          // If no zones match for zone leader, show their zone anyway if we have the zoneId
+                          if (user?.role === 'zone-leader' && filteredZones.length === 0) {
+                            const currentUserZone = getCurrentUserZone();
+                            if (currentUserZone) {
+                              return (
+                                <SelectItem key={currentUserZone} value={currentUserZone}>
+                                  {allZones.find(z => z.id === currentUserZone)?.name || `Zone ${currentUserZone}`}
+                                </SelectItem>
+                              );
+                            }
+                          }
+
+                          return filteredZones.map((zone) => (
+                            <SelectItem key={zone.id} value={zone.id}>
+                              {zone.name}
+                            </SelectItem>
+                          ));
+                        })()
                       ) : (
                         <SelectItem value="no-zones" disabled>
                           No zones available
@@ -1301,7 +1366,9 @@ export const Members: React.FC = () => {
                   {user?.role === 'zone-leader' && formData.zone_id && (
                     <div className="flex items-center gap-2 text-sm text-green-600">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>Auto-assigned to your zone</span>
+                      <span>
+                        Auto-assigned to your zone: {allZones.find(z => z.id === formData.zone_id)?.name || `Zone ${formData.zone_id}`}
+                      </span>
                     </div>
                   )}
                   {touchedFields.zone_id && validationErrors.zone_id && (
@@ -1310,7 +1377,7 @@ export const Members: React.FC = () => {
                   <p className="text-xs text-muted-foreground">
                     {zonesLoading ? "Loading zones..." :
                       user?.role === 'zone-leader'
-                        ? "Zone automatically set to your assigned zone"
+                        ? `Zone automatically set to your assigned zone - you can only assign members to your zone (Your zone: ${getCurrentUserZone()})`
                         : (formData.role === "MEMBER" || formData.role === "ZONE_LEADER")
                           ? `Zone assignment is required (${allZones.length} zones available)`
                           : "Zone assignment will be available once backend database is updated"}
