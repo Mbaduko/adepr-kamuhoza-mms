@@ -92,6 +92,31 @@ export interface ZoneMemberResponse {
   zones: Array<{
     zone_id: string | null;
     zone_name: string;
+    zone_leader: {
+      profile_id: string;
+      first_name: string;
+      last_name: string;
+      phone_number: string;
+      gender: "MALE" | "FEMALE";
+      date_of_birth: string;
+      choir: string | null;
+      address: string | null;
+      highest_degree: string | null;
+      marital_status: "single" | "married" | "divorced" | "widowed";
+      baptism_date: string | null;
+      is_married_in_church: boolean;
+      marriage_date: string | null;
+      created_at: string;
+      photo: string | null;
+      zone_id: string | null;
+      user: {
+        auth_id: string;
+        email: string;
+        role: string;
+        account_status: 'active' | 'inactive';
+        is_verified: boolean;
+      };
+    }
     members: Array<{
       profile_id: string;
       first_name: string;
