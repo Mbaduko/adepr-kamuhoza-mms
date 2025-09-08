@@ -150,6 +150,7 @@ export const Certificates: React.FC = () => {
   const [purpose, setPurpose] = React.useState("")
   const [selectedRequest, setSelectedRequest] = React.useState<CertificateRequest | null>(null)
   const [openRequestView, setOpenRequestView] = React.useState(false)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   React.useEffect(() => {
     const load = async () => {
@@ -178,15 +179,23 @@ export const Certificates: React.FC = () => {
       toast({ title: "Purpose required", description: "Please describe the purpose for this certificate.", variant: "error" })
       return
     }
-    const res = await CertificateService.requestCertificate({ certificate_type: certType, reason: purpose.trim() })
-    if (res.success && res.data) {
-      await handleRefresh()
-    setPurpose("")
-    setCertType("baptism")
-    setOpenNew(false)
-      toast({ title: "Request submitted", description: res.data.message || "Your certificate request has been created.", variant: "success" })
-    } else {
-      toast({ title: "Error", description: res.error?.message || "Failed to create certificate request", variant: "error" })
+    
+    setIsSubmitting(true)
+    try {
+      const res = await CertificateService.requestCertificate({ certificate_type: certType, reason: purpose.trim() })
+      if (res.success && res.data) {
+        await handleRefresh()
+        setPurpose("")
+        setCertType("baptism")
+        setOpenNew(false)
+        toast({ title: "Request submitted", description: res.data.message || "Your certificate request has been created.", variant: "success" })
+      } else {
+        toast({ title: "Error", description: res.error?.message || "Failed to create certificate request", variant: "error" })
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "An unexpected error occurred. Please try again.", variant: "error" })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -278,7 +287,7 @@ export const Certificates: React.FC = () => {
                 <form onSubmit={handleCreate} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Certificate Type</Label>
-                    <Select value={certType} onValueChange={(v: CertificateTypeApi) => setCertType(v)}>
+                    <Select value={certType} onValueChange={(v: CertificateTypeApi) => setCertType(v)} disabled={isSubmitting}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -291,14 +300,22 @@ export const Certificates: React.FC = () => {
                 </div>
                   <div className="space-y-2">
                   <Label>Purpose</Label>
-                    <Textarea rows={4} placeholder="Describe the purpose for this certificate..." value={purpose} onChange={(e) => setPurpose(e.target.value)} />
+                    <Textarea 
+                      rows={4} 
+                      placeholder="Describe the purpose for this certificate..." 
+                      value={purpose} 
+                      onChange={(e) => setPurpose(e.target.value)}
+                      disabled={isSubmitting}
+                    />
                 </div>
                   <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setOpenNew(false)}>Cancel</Button>
-                    <Button type="submit">
-                      <Send className="h-4 w-4 mr-2" />
-                    Submit Request
-                  </Button>
+                    <Button type="button" variant="outline" onClick={() => setOpenNew(false)} disabled={isSubmitting}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                      <Send className={`h-4 w-4 mr-2 ${isSubmitting ? 'animate-pulse' : ''}`} />
+                      {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                    </Button>
                   </DialogFooter>
               </form>
             </DialogContent>
