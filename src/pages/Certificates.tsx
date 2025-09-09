@@ -151,6 +151,14 @@ export const Certificates: React.FC = () => {
   const [selectedRequest, setSelectedRequest] = React.useState<CertificateRequest | null>(null)
   const [openRequestView, setOpenRequestView] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  
+  // Popup states for approve/reject actions
+  const [openApproveDialog, setOpenApproveDialog] = React.useState(false)
+  const [openRejectDialog, setOpenRejectDialog] = React.useState(false)
+  const [actionRequest, setActionRequest] = React.useState<CertificateRequest | null>(null)
+  const [approveComment, setApproveComment] = React.useState("")
+  const [rejectReason, setRejectReason] = React.useState("")
+  const [isActionSubmitting, setIsActionSubmitting] = React.useState(false)
 
   React.useEffect(() => {
     const load = async () => {
@@ -212,6 +220,58 @@ export const Certificates: React.FC = () => {
   const handleRejectRequest = async (requestId: string, level: number, reason: string) => {
     const ok = await rejectRequest(requestId, level as 1 | 2 | 3, user.name, reason)
     if (ok) toast({ title: "Request Rejected", description: "Certificate request rejected.", variant: "error" })
+  }
+
+  // New handlers for opening popup dialogs
+  const handleApproveClick = (request: CertificateRequest) => {
+    setActionRequest(request)
+    setApproveComment("")
+    setOpenApproveDialog(true)
+  }
+
+  const handleRejectClick = (request: CertificateRequest) => {
+    setActionRequest(request)
+    setRejectReason("")
+    setOpenRejectDialog(true)
+  }
+
+  // Handlers for confirming actions
+  const handleConfirmApprove = async () => {
+    if (!actionRequest) return
+    
+    setIsActionSubmitting(true)
+    try {
+      const ok = await approveRequest(actionRequest.id, 1, user.name, approveComment.trim() || undefined)
+      if (ok) {
+        toast({ title: "Request Approved", description: "Certificate request approved successfully.", variant: "success" })
+        setOpenApproveDialog(false)
+        setActionRequest(null)
+        setApproveComment("")
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to approve request. Please try again.", variant: "error" })
+    } finally {
+      setIsActionSubmitting(false)
+    }
+  }
+
+  const handleConfirmReject = async () => {
+    if (!actionRequest) return
+    
+    setIsActionSubmitting(true)
+    try {
+      const ok = await rejectRequest(actionRequest.id, 1, user.name, rejectReason.trim() || "Rejected")
+      if (ok) {
+        toast({ title: "Request Rejected", description: "Certificate request rejected.", variant: "error" })
+        setOpenRejectDialog(false)
+        setActionRequest(null)
+        setRejectReason("")
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to reject request. Please try again.", variant: "error" })
+    } finally {
+      setIsActionSubmitting(false)
+    }
   }
 
   const myRequests = React.useMemo(() => {
@@ -422,11 +482,11 @@ export const Certificates: React.FC = () => {
                   rows={requests.filter(r => r.status === "pending")}
                   renderActions={(req) => (
                     <div className="flex items-center gap-2">
-                      <Button size="sm" onClick={() => handleApproveRequest(req.id, 1)}>
+                      <Button size="sm" onClick={() => handleApproveClick(req)}>
                         <CheckCircle className="h-4 w-4 mr-1" />
                         Approve
                       </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleRejectRequest(req.id, 1, "Rejected") }>
+                      <Button size="sm" variant="destructive" onClick={() => handleRejectClick(req)}>
                         <XCircle className="h-4 w-4 mr-1" />
                         Reject
                       </Button>
@@ -497,6 +557,100 @@ export const Certificates: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Approve Request Dialog */}
+      <Dialog open={openApproveDialog} onOpenChange={setOpenApproveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              Approve Certificate Request
+            </DialogTitle>
+            <DialogDescription>
+              Approve request #{actionRequest?.id} for {actionRequest?.memberName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="approve-comment">Approval Comments (Optional)</Label>
+              <Textarea
+                id="approve-comment"
+                rows={3}
+                placeholder="Add any comments about this approval..."
+                value={approveComment}
+                onChange={(e) => setApproveComment(e.target.value)}
+                disabled={isActionSubmitting}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setOpenApproveDialog(false)}
+              disabled={isActionSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleConfirmApprove}
+              disabled={isActionSubmitting}
+            >
+              <CheckCircle className={`h-4 w-4 mr-2 ${isActionSubmitting ? 'animate-pulse' : ''}`} />
+              {isActionSubmitting ? 'Approving...' : 'Approve Request'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Request Dialog */}
+      <Dialog open={openRejectDialog} onOpenChange={setOpenRejectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-red-600" />
+              Reject Certificate Request
+            </DialogTitle>
+            <DialogDescription>
+              Reject request #{actionRequest?.id} for {actionRequest?.memberName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="reject-reason">Reason for Rejection *</Label>
+              <Textarea
+                id="reject-reason"
+                rows={3}
+                placeholder="Please provide a reason for rejecting this request..."
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                disabled={isActionSubmitting}
+                required
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setOpenRejectDialog(false)}
+              disabled={isActionSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              variant="destructive"
+              onClick={handleConfirmReject}
+              disabled={isActionSubmitting || !rejectReason.trim()}
+            >
+              <XCircle className={`h-4 w-4 mr-2 ${isActionSubmitting ? 'animate-pulse' : ''}`} />
+              {isActionSubmitting ? 'Rejecting...' : 'Reject Request'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
