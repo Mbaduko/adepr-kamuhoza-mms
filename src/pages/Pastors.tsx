@@ -603,7 +603,7 @@ export const Pastors: React.FC = () => {
       </Dialog>
 
       {/* Add Pastor Dialog */}
-
+      
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -730,12 +730,13 @@ export const Pastors: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Choir *</Label>
+                <Label>Choir (Optional)</Label>
                 <Input
                   value={addForm.choir}
                   onChange={(e) =>
                     setAddForm((v) => ({ ...v, choir: e.target.value }))
                   }
+                  placeholder="Enter choir if applicable"
                 />
               </div>
               <div className="space-y-2">
@@ -815,19 +816,14 @@ export const Pastors: React.FC = () => {
                     role: "PASTOR",
                     account_status: "ACTIVE",
                   };
-                  // Normalize enums
                   payload.gender = String(payload.gender || "MALE").toUpperCase();
                   payload.marital_status = String(
                     payload.marital_status || "SINGLE"
                   ).toUpperCase();
-                  // Do not send zone for pastors
                   if (!payload.zone_id) delete payload.zone_id;
-                  // Only send marriage_date if married in church
                   if (!payload.is_married_in_church) delete payload.marriage_date;
-                  // Drop empty optional fields
                   if (!payload.choir) delete payload.choir;
                   if (!payload.profile_photo_url) delete payload.profile_photo_url;
-                  // Remove any empty-string fields
                   Object.keys(payload).forEach((k) => {
                     if (payload[k] === "") delete payload[k];
                   });
@@ -844,8 +840,7 @@ export const Pastors: React.FC = () => {
                   } else {
                     toast({
                       title: "Failed",
-                      description:
-                        res.error?.message || "Unable to create pastor",
+                      description: res.error?.message || "Unable to create pastor",
                       variant: "error",
                     });
                   }
@@ -871,7 +866,7 @@ export const Pastors: React.FC = () => {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>;
+      </Dialog>
 
 
       {/* Edit Dialog (local-only form for now) */}
