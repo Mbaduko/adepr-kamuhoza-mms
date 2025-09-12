@@ -147,6 +147,18 @@ export const Pastors: React.FC = () => {
   })
   const [isCreatingPastor, setIsCreatingPastor] = React.useState(false)
 
+
+  const DEGREE_OPTIONS = [
+    "Certificate",
+    "Diploma",
+    "Associate Degree",
+    "Bachelor's Degree",
+    "Master's Degree",
+    "Doctoral Degree",
+    "Professional Degree",
+    "Honorary Degree",
+  ];
+
   // Filter pastors (members with pastor roles)
     const pastors = React.useMemo(() => {
       return storePastors || []
@@ -591,6 +603,7 @@ export const Pastors: React.FC = () => {
       </Dialog>
 
       {/* Add Pastor Dialog */}
+
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -607,23 +620,49 @@ export const Pastors: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>First Name *</Label>
-                <Input value={addForm.first_name} onChange={e => setAddForm(v => ({ ...v, first_name: e.target.value }))} />
+                <Input
+                  value={addForm.first_name}
+                  onChange={(e) =>
+                    setAddForm((v) => ({ ...v, first_name: e.target.value }))
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label>Last Name *</Label>
-                <Input value={addForm.last_name} onChange={e => setAddForm(v => ({ ...v, last_name: e.target.value }))} />
+                <Input
+                  value={addForm.last_name}
+                  onChange={(e) =>
+                    setAddForm((v) => ({ ...v, last_name: e.target.value }))
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label>Email *</Label>
-                <Input type="email" value={addForm.email} onChange={e => setAddForm(v => ({ ...v, email: e.target.value }))} />
+                <Input
+                  type="email"
+                  value={addForm.email}
+                  onChange={(e) =>
+                    setAddForm((v) => ({ ...v, email: e.target.value }))
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label>Phone *</Label>
-                <Input value={addForm.phone_number} onChange={e => setAddForm(v => ({ ...v, phone_number: e.target.value }))} />
+                <Input
+                  value={addForm.phone_number}
+                  onChange={(e) =>
+                    setAddForm((v) => ({ ...v, phone_number: e.target.value }))
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label>Gender *</Label>
-                <Select value={addForm.gender} onValueChange={(val) => setAddForm(v => ({ ...v, gender: val as 'MALE' | 'FEMALE' }))}>
+                <Select
+                  value={addForm.gender}
+                  onValueChange={(val) =>
+                    setAddForm((v) => ({ ...v, gender: val as "MALE" | "FEMALE" }))
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Gender" />
                   </SelectTrigger>
@@ -635,7 +674,13 @@ export const Pastors: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <Label>Date of Birth *</Label>
-                <Input type="date" value={addForm.date_of_birth} onChange={e => setAddForm(v => ({ ...v, date_of_birth: e.target.value }))} />
+                <Input
+                  type="date"
+                  value={addForm.date_of_birth}
+                  onChange={(e) =>
+                    setAddForm((v) => ({ ...v, date_of_birth: e.target.value }))
+                  }
+                />
               </div>
             </div>
 
@@ -643,11 +688,32 @@ export const Pastors: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Address</Label>
-                <Input value={addForm.address} onChange={e => setAddForm(v => ({ ...v, address: e.target.value }))} />
+                <Input
+                  value={addForm.address}
+                  onChange={(e) =>
+                    setAddForm((v) => ({ ...v, address: e.target.value }))
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label>Highest Degree</Label>
-                <Input value={addForm.highest_degree} onChange={e => setAddForm(v => ({ ...v, highest_degree: e.target.value }))} />
+                <Select
+                  value={addForm.highest_degree || ""}
+                  onValueChange={(val) =>
+                    setAddForm((v) => ({ ...v, highest_degree: val }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select degree" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DEGREE_OPTIONS.map((deg) => (
+                      <SelectItem key={deg} value={deg}>
+                        {deg}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -655,15 +721,41 @@ export const Pastors: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Baptism Date *</Label>
-                <Input type="date" value={addForm.baptism_date} onChange={e => setAddForm(v => ({ ...v, baptism_date: e.target.value }))} />
+                <Input
+                  type="date"
+                  value={addForm.baptism_date}
+                  onChange={(e) =>
+                    setAddForm((v) => ({ ...v, baptism_date: e.target.value }))
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label>Choir *</Label>
-                <Input value={addForm.choir} onChange={e => setAddForm(v => ({ ...v, choir: e.target.value }))} />
+                <Input
+                  value={addForm.choir}
+                  onChange={(e) =>
+                    setAddForm((v) => ({ ...v, choir: e.target.value }))
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label>Marital Status *</Label>
-                <Select value={addForm.marital_status} onValueChange={(val) => setAddForm(v => ({ ...v, marital_status: val as 'SINGLE' | 'MARRIED' | 'DIVORCED' | 'WIDOWED' }))}>
+                <Select
+                  value={addForm.marital_status}
+                  onValueChange={(val) =>
+                    setAddForm(
+                      (v) =>
+                        ({
+                          ...v,
+                          marital_status: val as
+                            | "SINGLE"
+                            | "MARRIED"
+                            | "DIVORCED"
+                            | "WIDOWED",
+                        } as typeof v)
+                    )
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Marital Status" />
                   </SelectTrigger>
@@ -675,61 +767,112 @@ export const Pastors: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              {addForm.marital_status === 'MARRIED' && (
+              {addForm.marital_status === "MARRIED" && (
                 <>
                   <div className="space-y-2">
                     <Label>Married in Church</Label>
                     <div className="flex items-center gap-2 pt-2">
-                      <Checkbox checked={addForm.is_married_in_church} onCheckedChange={(val) => setAddForm(v => ({ ...v, is_married_in_church: Boolean(val) }))} />
+                      <Checkbox
+                        checked={addForm.is_married_in_church}
+                        onCheckedChange={(val) =>
+                          setAddForm((v) => ({
+                            ...v,
+                            is_married_in_church: Boolean(val),
+                          }))
+                        }
+                      />
                       <span className="text-sm text-muted-foreground">Yes</span>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Marriage Date</Label>
-                    <Input type="date" value={addForm.marriage_date} onChange={e => setAddForm(v => ({ ...v, marriage_date: e.target.value }))} />
+                    <Input
+                      type="date"
+                      value={addForm.marriage_date}
+                      onChange={(e) =>
+                        setAddForm((v) => ({ ...v, marriage_date: e.target.value }))
+                      }
+                    />
                   </div>
                 </>
               )}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddOpen(false)} disabled={isCreatingPastor}>Cancel</Button>
-            <Button onClick={async () => {
-              try {
-                setIsCreatingPastor(true)
-                const payload: any = { ...addForm, role: 'PASTOR', account_status: 'ACTIVE' }
-                // Normalize enums
-                payload.gender = String(payload.gender || 'MALE').toUpperCase()
-                payload.marital_status = String(payload.marital_status || 'SINGLE').toUpperCase()
-                // Do not send zone for pastors
-                if (!payload.zone_id) delete payload.zone_id
-                // Only send marriage_date if married in church
-                if (!payload.is_married_in_church) delete payload.marriage_date
-                // Drop empty optional fields
-                if (!payload.choir) delete payload.choir
-                if (!payload.profile_photo_url) delete payload.profile_photo_url
-                // Remove any empty-string fields to satisfy backend validation (e.g., uuid parsing)
-                Object.keys(payload).forEach((k) => { if (payload[k] === '') delete payload[k] })
+            <Button
+              variant="outline"
+              onClick={() => setIsAddOpen(false)}
+              disabled={isCreatingPastor}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                try {
+                  setIsCreatingPastor(true);
+                  const payload: any = {
+                    ...addForm,
+                    role: "PASTOR",
+                    account_status: "ACTIVE",
+                  };
+                  // Normalize enums
+                  payload.gender = String(payload.gender || "MALE").toUpperCase();
+                  payload.marital_status = String(
+                    payload.marital_status || "SINGLE"
+                  ).toUpperCase();
+                  // Do not send zone for pastors
+                  if (!payload.zone_id) delete payload.zone_id;
+                  // Only send marriage_date if married in church
+                  if (!payload.is_married_in_church) delete payload.marriage_date;
+                  // Drop empty optional fields
+                  if (!payload.choir) delete payload.choir;
+                  if (!payload.profile_photo_url) delete payload.profile_photo_url;
+                  // Remove any empty-string fields
+                  Object.keys(payload).forEach((k) => {
+                    if (payload[k] === "") delete payload[k];
+                  });
 
-                const res = await MemberService.createUser(payload)
-                if (res.success) {
-                  setIsAddOpen(false)
-                  await fetchAllPastors?.()
-                  toast({ title: 'Pastor added', description: 'New pastor created successfully.', variant: 'success' })
-                } else {
-                  toast({ title: 'Failed', description: res.error?.message || 'Unable to create pastor', variant: 'error' })
+                  const res = await MemberService.createUser(payload);
+                  if (res.success) {
+                    setIsAddOpen(false);
+                    await fetchAllPastors?.();
+                    toast({
+                      title: "Pastor added",
+                      description: "New pastor created successfully.",
+                      variant: "success",
+                    });
+                  } else {
+                    toast({
+                      title: "Failed",
+                      description:
+                        res.error?.message || "Unable to create pastor",
+                      variant: "error",
+                    });
+                  }
+                } catch (e) {
+                  toast({
+                    title: "Failed",
+                    description: "Unable to create pastor",
+                    variant: "error",
+                  });
+                } finally {
+                  setIsCreatingPastor(false);
                 }
-              } catch (e) {
-                toast({ title: 'Failed', description: 'Unable to create pastor', variant: 'error' })
-              } finally {
-                setIsCreatingPastor(false)
-              }
-            }} disabled={isCreatingPastor}>
-              {isCreatingPastor ? (<span className="inline-flex items-center gap-2"><RefreshCw className="h-4 w-4 animate-spin" /> Creating...</span>) : 'Save'}
+              }}
+              disabled={isCreatingPastor}
+            >
+              {isCreatingPastor ? (
+                <span className="inline-flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4 animate-spin" /> Creating...
+                </span>
+              ) : (
+                "Save"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog>;
+
 
       {/* Edit Dialog (local-only form for now) */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>

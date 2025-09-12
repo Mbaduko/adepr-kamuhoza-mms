@@ -1018,7 +1018,7 @@ export const Members: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit_gender">Gender</Label>
-                  <Select value={editForm.gender || ''} onValueChange={v => handleEditInput('gender', v as any)}>
+                  <Select value={editForm.gender || ''} onValueChange={v => handleEditInput('gender', v as string)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
@@ -1038,11 +1038,28 @@ export const Members: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit_degree">Highest Degree</Label>
-                  <Input id="edit_degree" value={editForm.highest_degree || ''} onChange={e => handleEditInput('highest_degree', e.target.value)} />
+                  <Select
+                    value={editForm.highest_degree || undefined}
+                    onValueChange={(v) => handleEditInput("highest_degree", v as string)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select degree" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Certificate">Certificate</SelectItem>
+                      <SelectItem value="Diploma">Diploma</SelectItem>
+                      <SelectItem value="Associate Degree">Associate Degree</SelectItem>
+                      <SelectItem value="Bachelor's Degree">Bachelor's Degree</SelectItem>
+                      <SelectItem value="Master's Degree">Master's Degree</SelectItem>
+                      <SelectItem value="Doctoral Degree">Doctoral Degree</SelectItem>
+                      <SelectItem value="Professional Degree">Professional Degree</SelectItem>
+                      <SelectItem value="Honorary Degree">Honorary Degree</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit_marital">Marital Status</Label>
-                  <Select value={editForm.marital_status || ''} onValueChange={v => handleEditInput('marital_status', v as any)}>
+                  <Select value={editForm.marital_status || ''} onValueChange={v => handleEditInput('marital_status', v as string)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -1262,13 +1279,28 @@ export const Members: React.FC = () => {
                   <Label htmlFor="highest_degree" className="text-sm font-medium">
                     Highest Degree
                   </Label>
-                  <Input
-                    id="highest_degree"
-                    value={formData.highest_degree}
-                    onChange={(e) => handleInputChangeWithValidation("highest_degree", e.target.value)}
-                    placeholder="e.g., Bachelor's Degree, Master's Degree"
-                  />
-             </div>
+                  <Select
+                    value={formData.highest_degree || undefined}
+                    onValueChange={(value) =>
+                      handleInputChangeWithValidation("highest_degree", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select degree" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Certificate">Certificate</SelectItem>
+                      <SelectItem value="Diploma">Diploma</SelectItem>
+                      <SelectItem value="Associate Degree">Associate Degree</SelectItem>
+                      <SelectItem value="Bachelor's Degree">Bachelor's Degree</SelectItem>
+                      <SelectItem value="Master's Degree">Master's Degree</SelectItem>
+                      <SelectItem value="Doctoral Degree">Doctoral Degree</SelectItem>
+                      <SelectItem value="Professional Degree">Professional Degree</SelectItem>
+                      <SelectItem value="Honorary Degree">Honorary Degree</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
            </div>
             </div>
 
