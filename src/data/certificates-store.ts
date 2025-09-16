@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { CertificateService, CertificateRequest, NewRequestInput } from '@/services/certificateService';
+import { memo } from 'react';
 
 interface CertificatesState {
   requests: CertificateRequest[];
@@ -19,6 +20,7 @@ interface CertificatesActions {
   fetchAllRequests: () => Promise<void>;
   fetchRequestsByMember: (memberId: string) => Promise<void>;
   createRequest: (input: NewRequestInput) => Promise<boolean>;
+  reviewRequest: (certId: string, action: 'approve' | 'reject', comment: string) => Promise<boolean>;
   // approveRequest: (id: string, level: 1 | 2 | 3, approvedBy: string, comments?: string) => Promise<boolean>;
   // rejectRequest: (id: string, level: 1 | 2 | 3, approvedBy: string, reason: string) => Promise<boolean>;
   
@@ -128,6 +130,56 @@ export const useCertificatesStore = create<CertificatesState & CertificatesActio
     } catch (error) {
       set({ 
         error: 'Certificate service is not yet available. Please try again later.',
+        loading: false 
+      });
+      return false;
+    }
+  },
+
+  reviewRequest: async (certId: string, action: 'approve' | 'reject', comment: string) => {
+    set({ loading: true, error: null });
+    
+    try {
+      const response = await CertificateService.reviewRequest(certId, action, comment);
+      
+      if (response.success && response.data) {
+        // Update the request in the list
+        const currentRequests = get().requests;
+        const updatedRequests = currentRequests.map(request => 
+          request.id === certId ? {
+            id: response.data.certificate.request_id,
+            certificateType: response.data.certificate.certificate_type,
+            purpose: response.data.certificate.reason,
+            requestDate: response.data.certificate.request_date,
+            status: response.data.certificate.status,
+            memberId: request.memberId, // Keep existing memberId as it's not returned
+            memberName: request.memberName, // Keep existing memberName as it's not returned
+            approvals: response.data.certificate.timeline
+          } : request
+        );
+        set({ 
+          requests: updatedRequests,
+          loading: false 
+        });
+        return true;
+      } else {
+        // Handle endpoint not ready gracefully
+        if (response.error?.status === 404 || response.error?.message?.includes('not found')) {
+          set({ 
+            error: 'Review service is not yet available. Please try again later.',
+            loading: false 
+          });
+        } else {
+          set({ 
+            error: response.error?.message || 'Failed to review certificate request',
+            loading: false 
+          });
+        }
+        return false;
+      }
+    } catch (error) {
+      set({ 
+        error: 'Review service is not yet available. Please try again later.',
         loading: false 
       });
       return false;

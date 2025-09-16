@@ -143,7 +143,7 @@ export const Certificates: React.FC = () => {
   const { toast } = useToast()
   const user = state.user!
 
-  const { requests, loading, error, isInitialized, fetchAllRequests, fetchRequestsByMember, createRequest, approveRequest, rejectRequest } = useCertificatesStore()
+  const { requests, loading, error, isInitialized, fetchAllRequests, fetchRequestsByMember, createRequest, reviewRequest } = useCertificatesStore()
 
   const [openNew, setOpenNew] = React.useState(false)
   const [certType, setCertType] = React.useState<CertificateTypeApi>("baptism")
@@ -237,11 +237,10 @@ export const Certificates: React.FC = () => {
 
   // Handlers for confirming actions
   const handleConfirmApprove = async () => {
-    if (!actionRequest) return
-    
+
     setIsActionSubmitting(true)
     try {
-      const ok = await approveRequest(actionRequest.id, 1, user.name, approveComment.trim() || undefined)
+      const ok = await reviewRequest(actionRequest.id, 'approve', approveComment.trim() || "Approved")
       if (ok) {
         toast({ title: "Request Approved", description: "Certificate request approved successfully.", variant: "success" })
         setOpenApproveDialog(false)
@@ -251,16 +250,17 @@ export const Certificates: React.FC = () => {
     } catch (error) {
       toast({ title: "Error", description: "Failed to approve request. Please try again.", variant: "error" })
     } finally {
-      setIsActionSubmitting(false)
+      setIsActionSubmitting(false);
+      setOpenApproveDialog(false);
+      handleRefresh()
     }
   }
 
   const handleConfirmReject = async () => {
-    if (!actionRequest) return
     
     setIsActionSubmitting(true)
     try {
-      const ok = await rejectRequest(actionRequest.id, 1, user.name, rejectReason.trim() || "Rejected")
+      const ok = await reviewRequest(actionRequest.id, 'reject', rejectReason.trim() || "No reason provided");
       if (ok) {
         toast({ title: "Request Rejected", description: "Certificate request rejected.", variant: "error" })
         setOpenRejectDialog(false)
@@ -270,7 +270,9 @@ export const Certificates: React.FC = () => {
     } catch (error) {
       toast({ title: "Error", description: "Failed to reject request. Please try again.", variant: "error" })
     } finally {
-      setIsActionSubmitting(false)
+      setIsActionSubmitting(false);
+      setOpenRejectDialog(false);
+      handleRefresh();
     }
   }
 
@@ -295,7 +297,7 @@ export const Certificates: React.FC = () => {
         sample: requests.slice(0, 3),
       })
     } catch (_) {
-      // ignore
+      console.log('Certificates Debug → user/auth and first rows')
     }
   }, [requests, user.id, user.name])
   const stats = React.useMemo(() => {
@@ -310,8 +312,22 @@ export const Certificates: React.FC = () => {
   }, [requests, myRequests, user.role])
 
   const defaultTab = React.useMemo(() => {
-    if (user.role === "member") return "my"
-    const hasPending = requests.some(r => r.status === "pending")
+    if (user.role === "member") return "my";
+    let hisStatus;
+    switch (user.role) {
+      case "zone-leader":
+        hisStatus = 'pending'
+        break;
+      case "pastor":
+        hisStatus = 'approved_l1' // assuming level 1 approval is done by zone-leader;
+        break;
+      case "parish-pastor":
+        hisStatus = 'approved_l2' // assuming level 2 approval is done by pastor;
+        break;    
+      default:
+        break;
+    }
+    const hasPending = requests.some(r => r.status === hisStatus)
     return hasPending ? "pending" : "all"
   }, [user.role, requests])
 
@@ -572,7 +588,7 @@ export const Certificates: React.FC = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="approve-comment">Approval Comments (Optional)</Label>
+              <Label htmlFor="approve-comment">Approval Comment*</Label>
               <Textarea
                 id="approve-comment"
                 rows={3}

@@ -5,16 +5,15 @@ export interface CertificateRequest {
   id: string;
   memberId: string;
   memberName: string;
-  certificateType: 'baptism' | 'recommendation' | 'marriage' | 'membership';
+  certificateType: CertificateTypeApi;
   purpose: string;
   requestDate: string;
-  status: 'pending' | 'approved' | 'rejected' | 'in-review';
+  status: string;
   approvals: {
-    level1?: { approvedBy: string; date: string; comments?: string };
-    level2?: { approvedBy: string; date: string; comments?: string };
-    level3?: { approvedBy: string; date: string; comments?: string };
+    level1?: ApproveAction,
+    level2?: ApproveAction,
+    level3?: ApproveAction
   };
-  rejectionReason?: string;
 }
 
 export interface NewRequestInput {
@@ -32,17 +31,27 @@ export interface RequestCertificatePayload {
   reason: string;
 }
 
+export interface ApproveAction{
+  action: 'approve' | 'reject',
+  comment:string,
+  by:string,
+  doneAt: Date
+}
 export interface RequestCertificateResponse {
   message: string;
   certificate: {
     request_id: string;
     certificate_type: CertificateTypeApi;
     request_date: string;
-    status: 'pending' | 'approved' | 'rejected' | 'in-review' | string;
+    status: string;
     requested_by: string;
     reason: string;
     progress: string | null;
-    timeline: unknown;
+    timeline: {
+      level1?: ApproveAction,
+      level2?: ApproveAction,
+      level3?: ApproveAction
+    };
     certificate_pdf_url: string | null;
   };
 }
@@ -169,9 +178,9 @@ export class CertificateService {
     }
   }
 
-  static async approveRequest(certId: string, action: 'approve' | 'reject', comments?: string): Promise<ApiResponse<CertificateRequest>> {
+  static async reviewRequest(certId: string, action: 'approve' | 'reject', comment: string): Promise<ApiResponse<RequestCertificateResponse>> {
     try {
-      const response = await apiClient.put<CertificateRequest>(`/certificates/${certId}/${action}`, { comments });
+      const response = await apiClient.put<CertificateRequest>(`/certificates/${certId}/review?action=${action}`, { comment });
      } catch (error) {
       return {
         success: false,
