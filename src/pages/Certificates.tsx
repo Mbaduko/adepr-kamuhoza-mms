@@ -296,7 +296,7 @@ export const Certificates: React.FC = () => {
     return {
       total: relevant.length,
       pending: relevant.filter(r => r.status === "pending").length,
-      inReview: relevant.filter(r => r.status === "in-review").length,
+      inReview: relevant.filter(r => r.status === "approved_l1" || r.status === "approved_l2").length,
       approved: relevant.filter(r => r.status === "approved").length,
       rejected: relevant.filter(r => r.status === "rejected").length,
     }
@@ -360,7 +360,7 @@ export const Certificates: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="baptism">Baptism</SelectItem>
-                        <SelectItem value="recommandation">Recommendation</SelectItem>
+                        <SelectItem value="recommendation">Recommendation</SelectItem>
                       <SelectItem value="marriage">Marriage</SelectItem>
                     </SelectContent>
                   </Select>
@@ -446,7 +446,7 @@ export const Certificates: React.FC = () => {
           {user.role !== "member" && <TabsTrigger value="all">All Requests</TabsTrigger>}
         </TabsList>
 
-          <TabsContent value="my">
+        <TabsContent value="my">
               <Card>
                 <CardHeader>
                   <CardTitle>My Requests</CardTitle>
@@ -475,24 +475,30 @@ export const Certificates: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     <RequestsTable
-                  rows={requests.filter(r => r.status === "pending")}
-                  renderActions={(req) => (
-                    <div className="flex items-center gap-2">
-                      <Button size="sm" onClick={() => handleApproveClick(req)}>
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        Approve
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleRejectClick(req)}>
-                        <XCircle className="h-4 w-4 mr-1" />
-                        Reject
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleViewRequest(req)}>
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                    </div>
-                  )} 
+                      rows={requests.filter(r => {
+                        if (user.role === "zone-leader") return r.status === "pending"
+                        if (user.role === "pastor") return r.status === "approved_l1"
+                        if (user.role === "parish-pastor") return r.status === "approved_l2"
+                        return false
+                      })}
+                      renderActions={(req) => (
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" onClick={() => handleApproveClick(req)}>
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleRejectClick(req)}>
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => handleViewRequest(req)}>
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      )}
                     />
+
                   </CardContent>
                 </Card>
           </TabsContent>

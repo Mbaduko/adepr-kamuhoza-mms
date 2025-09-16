@@ -179,7 +179,7 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
               Certificate Request Details
             </DialogTitle>
             <DialogDescription>
-              Request #{request.id} - {request.certificateType} certificate
+              {request.certificateType} certificate
             </DialogDescription>
           </DialogHeader>
 

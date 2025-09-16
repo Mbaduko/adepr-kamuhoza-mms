@@ -111,7 +111,7 @@ export class CertificateService {
           memberName: fullName || it.requester_name,
           // Normalize API certificate types (e.g., 'confirmation'/'recommandation' => 'recommendation')
           certificateType: (
-            it.certificate_type === 'confirmation' || it.certificate_type === 'recommandation'
+            it.certificate_type === 'confirmation' || it.certificate_type === 'recommendation'
               ? 'recommendation'
               : it.certificate_type
           ) as CertificateRequest['certificateType'],
