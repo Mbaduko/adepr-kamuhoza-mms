@@ -24,7 +24,7 @@ export interface NewRequestInput {
 }
 
 // New API payload/response for POST /certificates/request
-export type CertificateTypeApi = 'baptism' | 'marriage' | 'recommandation';
+export type CertificateTypeApi = 'baptism' | 'marriage' | 'recommendation';
 
 export interface RequestCertificatePayload {
   certificate_type: CertificateTypeApi;
@@ -118,7 +118,7 @@ export class CertificateService {
           purpose: it.reason || '',
           requestDate: it.request_date,
           status: (it.status as CertificateRequest['status']) || 'pending',
-          approvals: {},
+          approvals: it.timeline || {},
         }
       });
 

@@ -34,6 +34,7 @@ import {
 type ProgressStep = 0 | 1 | 2 | 3
 
 function computeProgressStep(req: CertificateRequest): ProgressStep {
+  console.log("Computing progress step for request:", req);
   if (req.status === "rejected") return 0
   if (req.status === "approved") return 3
   if (req.approvals.level2) return 2
@@ -47,8 +48,10 @@ function statusBadge(status: CertificateRequest["status"]) {
       return <Badge className="bg-green-600 text-white border-green-600">Approved</Badge>
     case "pending":
       return <Badge className="bg-amber-500 text-white border-amber-500">Pending</Badge>
-    case "in-review":
-      return <Badge className="bg-blue-600 text-white border-blue-600">In Review</Badge>
+    case "approved_l1":
+      return <Badge className="bg-amber-500 text-white border-amber-500">Approved L1</Badge>
+    case "approved_l2":
+      return <Badge className="bg-blue-600 text-white border-blue-600">Approved L2</Badge>
     case "rejected":
       return <Badge className="bg-red-600 text-white border-red-600">Rejected</Badge>
     default:
@@ -110,7 +113,7 @@ interface CertificateRequestViewProps {
   request: CertificateRequest
   open: boolean
   onOpenChange: (open: boolean) => void
-  onApprove?: (requestId: string, level: number, comments?: string) => void
+  onApprove?: (requestId: string, level: number, comment?: string) => void
   onReject?: (requestId: string, level: number, reason: string) => void
   showActions?: boolean
 }
@@ -136,8 +139,8 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
   
   // Determine what actions the current user can take
   const canApproveLevel1 = user.role === "zone-leader" && request.status === "pending"
-  const canApproveLevel2 = user.role === "pastor" && request.status === "in-review" && request.approvals.level1 && !request.approvals.level2
-  const canApproveLevel3 = user.role === "parish-pastor" && request.status === "in-review" && request.approvals.level2 && !request.approvals.level3
+  const canApproveLevel2 = user.role === "pastor" && request.status === "approved_l1" && request.approvals.level1 && !request.approvals.level2
+  const canApproveLevel3 = user.role === "parish-pastor" && request.status === "approved_l2" && request.approvals.level2 && !request.approvals.level3
   
   const canTakeAction = canApproveLevel1 || canApproveLevel2 || canApproveLevel3
   const currentLevel = canApproveLevel1 ? 1 : canApproveLevel2 ? 2 : canApproveLevel3 ? 3 : 0
@@ -255,11 +258,11 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
                       <div className="flex-1">
                         <div className="font-medium text-sm">Zone Leader Approved</div>
                         <div className="text-xs text-muted-foreground">
-                          by {request.approvals.level1.approvedBy} on {new Date(request.approvals.level1.date).toLocaleDateString()}
+                          by {request.approvals.level1.by} on {new Date(request.approvals.level1.doneAt).toLocaleDateString()}
                         </div>
-                        {request.approvals.level1.comments && (
+                        {request.approvals.level1.comment && (
                           <div className="text-xs text-muted-foreground mt-1">
-                            "{request.approvals.level1.comments}"
+                            "{request.approvals.level1.comment}"
                           </div>
                         )}
                       </div>
@@ -274,11 +277,11 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
                       <div className="flex-1">
                         <div className="font-medium text-sm">Pastor Approved</div>
                         <div className="text-xs text-muted-foreground">
-                          by {request.approvals.level2.approvedBy} on {new Date(request.approvals.level2.date).toLocaleDateString()}
+                          by {request.approvals.level2.by} on {new Date(request.approvals.level2.doneAt).toLocaleDateString()}
                         </div>
-                        {request.approvals.level2.comments && (
+                        {request.approvals.level2.comment && (
                           <div className="text-xs text-muted-foreground mt-1">
-                            "{request.approvals.level2.comments}"
+                            "{request.approvals.level2.comment}"
                           </div>
                         )}
                       </div>
@@ -293,11 +296,11 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
                       <div className="flex-1">
                         <div className="font-medium text-sm">Parish Pastor Approved</div>
                         <div className="text-xs text-muted-foreground">
-                          by {request.approvals.level3.approvedBy} on {new Date(request.approvals.level3.date).toLocaleDateString()}
+                          by {request.approvals.level3.by} on {new Date(request.approvals.level3.doneAt).toLocaleDateString()}
                         </div>
-                        {request.approvals.level3.comments && (
+                        {request.approvals.level3.comment && (
                           <div className="text-xs text-muted-foreground mt-1">
-                            "{request.approvals.level3.comments}"
+                            "{request.approvals.level3.comment}"
                           </div>
                         )}
                       </div>

@@ -1,4 +1,5 @@
 import { UserRole } from '@/context/AuthContext';
+import { ApproveAction } from '@/services/certificateService';
 
 export interface Member {
   id: string;
@@ -35,11 +36,11 @@ export interface CertificateRequest {
   certificateType: 'baptism' | 'recommendation' | 'marriage' | 'membership';
   purpose: string;
   requestDate: string;
-  status: 'pending' | 'approved' | 'rejected' | 'in-review';
+  status: string;
   approvals: {
-    level1?: { approvedBy: string; date: string; comments?: string };
-    level2?: { approvedBy: string; date: string; comments?: string };
-    level3?: { approvedBy: string; date: string; comments?: string };
+    level1?: ApproveAction
+    level2?: ApproveAction
+    level3?: ApproveAction  
   };
   rejectionReason?: string;
 }
@@ -212,104 +213,104 @@ export const mockZones: Zone[] = [
   }
 ];
 
-export const mockCertificateRequests: CertificateRequest[] = [
-  {
-    id: 'cert-1',
-    memberId: '1',
-    memberName: 'John Smith',
-    certificateType: 'baptism',
-    purpose: 'For marriage documentation',
-    requestDate: '2024-01-15',
-    status: 'approved',
-    approvals: {
-      level1: { approvedBy: 'Sarah Johnson', date: '2024-01-16', comments: 'Documents verified' },
-      level2: { approvedBy: 'Rev. Michael Brown', date: '2024-01-17', comments: 'Approved for processing' },
-      level3: { approvedBy: 'Rev. Dr. David Wilson', date: '2024-01-18', comments: 'Parish Pastor approval granted' }
-    }
-  },
-  {
-    id: 'cert-2',
-    memberId: '2',
-    memberName: 'Sarah Johnson',
-    certificateType: 'recommendation',
-    purpose: 'Employment requirement',
-    requestDate: '2024-01-20',
-    status: 'pending',
-    approvals: {}
-  },
-  {
-    id: 'cert-3',
-    memberId: '3',
-    memberName: 'Michael Brown',
-    certificateType: 'membership',
-    purpose: 'Transfer to another parish',
-    requestDate: '2024-01-25',
-    status: 'in-review',
-    approvals: {
-      level1: { approvedBy: 'Sarah Johnson', date: '2024-01-26', comments: 'Initial review complete' }
-    }
-  },
-  {
-    id: 'cert-4',
-    memberId: '4',
-    memberName: 'Emily Davis',
-    certificateType: 'baptism',
-    purpose: 'School registration',
-    requestDate: '2024-01-28',
-    status: 'in-review',
-    approvals: {
-      level1: { approvedBy: 'Sarah Johnson', date: '2024-01-29', comments: 'Documents verified' },
-      level2: { approvedBy: 'Rev. Michael Brown', date: '2024-01-30', comments: 'Approved for final review' }
-    }
-  },
-  {
-    id: 'cert-5',
-    memberId: '5',
-    memberName: 'David Wilson',
-    certificateType: 'marriage',
-    purpose: 'Legal documentation',
-    requestDate: '2024-01-30',
-    status: 'in-review',
-    approvals: {
-      level1: { approvedBy: 'Sarah Johnson', date: '2024-01-31', comments: 'Initial review complete' }
-    }
-  },
-  {
-    id: 'cert-6',
-    memberId: '6',
-    memberName: 'Lisa Anderson',
-    certificateType: 'recommendation',
-    purpose: 'Employment verification',
-    requestDate: '2024-02-01',
-    status: 'pending',
-    approvals: {}
-  },
-  {
-    id: 'cert-7',
-    memberId: '7',
-    memberName: 'Robert Taylor',
-    certificateType: 'baptism',
-    purpose: 'School enrollment',
-    requestDate: '2024-02-02',
-    status: 'in-review',
-    approvals: {
-      level1: { approvedBy: 'Sarah Johnson', date: '2024-02-03', comments: 'Documents verified' }
-    }
-  },
-  {
-    id: 'cert-8',
-    memberId: '8',
-    memberName: 'Jennifer White',
-    certificateType: 'membership',
-    purpose: 'Transfer to another parish',
-    requestDate: '2024-02-03',
-    status: 'in-review',
-    approvals: {
-      level1: { approvedBy: 'Sarah Johnson', date: '2024-02-04', comments: 'Initial review complete' },
-      level2: { approvedBy: 'Rev. Michael Brown', date: '2024-02-05', comments: 'Approved for final review' }
-    }
-  }
-];
+// export const mockCertificateRequests: CertificateRequest[] = [
+//   {
+//     id: 'cert-1',
+//     memberId: '1',
+//     memberName: 'John Smith',
+//     certificateType: 'baptism',
+//     purpose: 'For marriage documentation',
+//     requestDate: '2024-01-15',
+//     status: 'approved',
+//     approvals: {
+//       level1: { approvedBy: 'Sarah Johnson', date: '2024-01-16', comments: 'Documents verified' },
+//       level2: { approvedBy: 'Rev. Michael Brown', date: '2024-01-17', comments: 'Approved for processing' },
+//       level3: { approvedBy: 'Rev. Dr. David Wilson', date: '2024-01-18', comments: 'Parish Pastor approval granted' }
+//     }
+//   },
+//   {
+//     id: 'cert-2',
+//     memberId: '2',
+//     memberName: 'Sarah Johnson',
+//     certificateType: 'recommendation',
+//     purpose: 'Employment requirement',
+//     requestDate: '2024-01-20',
+//     status: 'pending',
+//     approvals: {}
+//   },
+//   {
+//     id: 'cert-3',
+//     memberId: '3',
+//     memberName: 'Michael Brown',
+//     certificateType: 'membership',
+//     purpose: 'Transfer to another parish',
+//     requestDate: '2024-01-25',
+//     status: 'in-review',
+//     approvals: {
+//       level1: { approvedBy: 'Sarah Johnson', date: '2024-01-26', comments: 'Initial review complete' }
+//     }
+//   },
+//   {
+//     id: 'cert-4',
+//     memberId: '4',
+//     memberName: 'Emily Davis',
+//     certificateType: 'baptism',
+//     purpose: 'School registration',
+//     requestDate: '2024-01-28',
+//     status: 'in-review',
+//     approvals: {
+//       level1: { approvedBy: 'Sarah Johnson', date: '2024-01-29', comments: 'Documents verified' },
+//       level2: { approvedBy: 'Rev. Michael Brown', date: '2024-01-30', comments: 'Approved for final review' }
+//     }
+//   },
+//   {
+//     id: 'cert-5',
+//     memberId: '5',
+//     memberName: 'David Wilson',
+//     certificateType: 'marriage',
+//     purpose: 'Legal documentation',
+//     requestDate: '2024-01-30',
+//     status: 'in-review',
+//     approvals: {
+//       level1: { approvedBy: 'Sarah Johnson', date: '2024-01-31', comments: 'Initial review complete' }
+//     }
+//   },
+//   {
+//     id: 'cert-6',
+//     memberId: '6',
+//     memberName: 'Lisa Anderson',
+//     certificateType: 'recommendation',
+//     purpose: 'Employment verification',
+//     requestDate: '2024-02-01',
+//     status: 'pending',
+//     approvals: {}
+//   },
+//   {
+//     id: 'cert-7',
+//     memberId: '7',
+//     memberName: 'Robert Taylor',
+//     certificateType: 'baptism',
+//     purpose: 'School enrollment',
+//     requestDate: '2024-02-02',
+//     status: 'in-review',
+//     approvals: {
+//       level1: { approvedBy: 'Sarah Johnson', date: '2024-02-03', comments: 'Documents verified' }
+//     }
+//   },
+//   {
+//     id: 'cert-8',
+//     memberId: '8',
+//     memberName: 'Jennifer White',
+//     certificateType: 'membership',
+//     purpose: 'Transfer to another parish',
+//     requestDate: '2024-02-03',
+//     status: 'in-review',
+//     approvals: {
+//       level1: { approvedBy: 'Sarah Johnson', date: '2024-02-04', comments: 'Initial review complete' },
+//       level2: { approvedBy: 'Rev. Michael Brown', date: '2024-02-05', comments: 'Approved for final review' }
+//     }
+//   }
+// ];
 
 export const getUserPermissions = (role: UserRole) => {
   switch (role) {

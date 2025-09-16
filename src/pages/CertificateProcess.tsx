@@ -78,13 +78,6 @@ export const CertificateProcess: React.FC = () => {
       icon: Heart,
       requirements: ["Valid marriage record", "Both spouses identification", "Purpose statement"],
       color: "bg-pink-50 border-pink-200"
-    },
-    {
-      type: "Membership Certificate",
-      description: "Proof of active church membership",
-      icon: Users,
-      requirements: ["Active membership status", "Member identification", "Purpose statement"],
-      color: "bg-green-50 border-green-200"
     }
   ];
 

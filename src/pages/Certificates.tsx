@@ -212,15 +212,6 @@ export const Certificates: React.FC = () => {
     setOpenRequestView(true)
   }
 
-  const handleApproveRequest = async (requestId: string, level: number, comments?: string) => {
-    const ok = await approveRequest(requestId, level as 1 | 2 | 3, user.name, comments)
-    if (ok) toast({ title: "Request Approved", description: "Certificate request approved successfully.", variant: "success" })
-  }
-
-  const handleRejectRequest = async (requestId: string, level: number, reason: string) => {
-    const ok = await rejectRequest(requestId, level as 1 | 2 | 3, user.name, reason)
-    if (ok) toast({ title: "Request Rejected", description: "Certificate request rejected.", variant: "error" })
-  }
 
   // New handlers for opening popup dialogs
   const handleApproveClick = (request: CertificateRequest) => {
@@ -535,8 +526,6 @@ export const Certificates: React.FC = () => {
           request={selectedRequest}
           open={openRequestView}
           onOpenChange={setOpenRequestView}
-          onApprove={handleApproveRequest}
-          onReject={handleRejectRequest}
           showActions={true}
         />
       )}
