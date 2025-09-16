@@ -169,57 +169,71 @@ export class CertificateService {
     }
   }
 
-  /**
-   * Approve certificate request
-   */
-  static async approveRequest(
-    id: string, 
-    level: 1 | 2 | 3, 
-    approvedBy: string, 
-    comments?: string
-  ): Promise<ApiResponse<CertificateRequest>> {
+  static async approveRequest(certId: string, action: 'approve' | 'reject', comments?: string): Promise<ApiResponse<CertificateRequest>> {
     try {
-      const response = await apiClient.patch<CertificateRequest>(`/certificates/${id}/approve`, {
-        level,
-        approvedBy,
-        comments,
-      });
-      return response;
-    } catch (error) {
+      const response = await apiClient.put<CertificateRequest>(`/certificates/${certId}/${action}`, { comments });
+     } catch (error) {
       return {
         success: false,
         error: {
           message: 'Unable to approve certificate request. Please check your internet connection and try again.',
-          status: 0,
-        },
+          status: 0
+        }
       };
     }
   }
 
-  /**
-   * Reject certificate request
-   */
-  static async rejectRequest(
-    id: string, 
-    level: 1 | 2 | 3, 
-    approvedBy: string, 
-    reason: string
-  ): Promise<ApiResponse<CertificateRequest>> {
-    try {
-      const response = await apiClient.patch<CertificateRequest>(`/certificates/${id}/reject`, {
-        level,
-        approvedBy,
-        reason,
-      });
-      return response;
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Unable to reject certificate request. Please check your internet connection and try again.',
-          status: 0,
-        },
-      };
-    }
-  }
+  // /**
+  //  * Approve certificate request
+  //  */
+  // static async approveRequest(
+  //   id: string, 
+  //   level: 1 | 2 | 3, 
+  //   approvedBy: string, 
+  //   comments?: string
+  // ): Promise<ApiResponse<CertificateRequest>> {
+  //   try {
+  //     const response = await apiClient.patch<CertificateRequest>(`/certificates/${id}/approve`, {
+  //       level,
+  //       approvedBy,
+  //       comments,
+  //     });
+  //     return response;
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       error: {
+  //         message: 'Unable to approve certificate request. Please check your internet connection and try again.',
+  //         status: 0,
+  //       },
+  //     };
+  //   }
+  // }
+
+  // /**
+  //  * Reject certificate request
+  //  */
+  // static async rejectRequest(
+  //   id: string, 
+  //   level: 1 | 2 | 3, 
+  //   approvedBy: string, 
+  //   reason: string
+  // ): Promise<ApiResponse<CertificateRequest>> {
+  //   try {
+  //     const response = await apiClient.patch<CertificateRequest>(`/certificates/${id}/reject`, {
+  //       level,
+  //       approvedBy,
+  //       reason,
+  //     });
+  //     return response;
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       error: {
+  //         message: 'Unable to reject certificate request. Please check your internet connection and try again.',
+  //         status: 0,
+  //       },
+  //     };
+  //   }
+  // }
 }

@@ -19,8 +19,8 @@ interface CertificatesActions {
   fetchAllRequests: () => Promise<void>;
   fetchRequestsByMember: (memberId: string) => Promise<void>;
   createRequest: (input: NewRequestInput) => Promise<boolean>;
-  approveRequest: (id: string, level: 1 | 2 | 3, approvedBy: string, comments?: string) => Promise<boolean>;
-  rejectRequest: (id: string, level: 1 | 2 | 3, approvedBy: string, reason: string) => Promise<boolean>;
+  // approveRequest: (id: string, level: 1 | 2 | 3, approvedBy: string, comments?: string) => Promise<boolean>;
+  // rejectRequest: (id: string, level: 1 | 2 | 3, approvedBy: string, reason: string) => Promise<boolean>;
   
   // Reset
   reset: () => void;
@@ -134,87 +134,87 @@ export const useCertificatesStore = create<CertificatesState & CertificatesActio
     }
   },
 
-  approveRequest: async (id: string, level: 1 | 2 | 3, approvedBy: string, comments?: string) => {
-    set({ loading: true, error: null });
+  // approveRequest: async (id: string, level: 1 | 2 | 3, approvedBy: string, comments?: string) => {
+  //   set({ loading: true, error: null });
     
-    try {
-      const response = await CertificateService.approveRequest(id, level, approvedBy, comments);
+  //   try {
+  //     const response = await CertificateService.approveRequest(id, level, approvedBy, comments);
       
-      if (response.success && response.data) {
-        // Update the request in the list
-        const currentRequests = get().requests;
-        const updatedRequests = currentRequests.map(request => 
-          request.id === id ? response.data! : request
-        );
-        set({ 
-          requests: updatedRequests,
-          loading: false 
-        });
-        return true;
-      } else {
-        // Handle endpoint not ready gracefully
-        if (response.error?.status === 404 || response.error?.message?.includes('not found')) {
-          set({ 
-            error: 'Approval service is not yet available. Please try again later.',
-            loading: false 
-          });
-        } else {
-          set({ 
-            error: response.error?.message || 'Failed to approve certificate request',
-            loading: false 
-          });
-        }
-        return false;
-      }
-    } catch (error) {
-      set({ 
-        error: 'Approval service is not yet available. Please try again later.',
-        loading: false 
-      });
-      return false;
-    }
-  },
+  //     if (response.success && response.data) {
+  //       // Update the request in the list
+  //       const currentRequests = get().requests;
+  //       const updatedRequests = currentRequests.map(request => 
+  //         request.id === id ? response.data! : request
+  //       );
+  //       set({ 
+  //         requests: updatedRequests,
+  //         loading: false 
+  //       });
+  //       return true;
+  //     } else {
+  //       // Handle endpoint not ready gracefully
+  //       if (response.error?.status === 404 || response.error?.message?.includes('not found')) {
+  //         set({ 
+  //           error: 'Approval service is not yet available. Please try again later.',
+  //           loading: false 
+  //         });
+  //       } else {
+  //         set({ 
+  //           error: response.error?.message || 'Failed to approve certificate request',
+  //           loading: false 
+  //         });
+  //       }
+  //       return false;
+  //     }
+  //   } catch (error) {
+  //     set({ 
+  //       error: 'Approval service is not yet available. Please try again later.',
+  //       loading: false 
+  //     });
+  //     return false;
+  //   }
+  // },
 
-  rejectRequest: async (id: string, level: 1 | 2 | 3, approvedBy: string, reason: string) => {
-    set({ loading: true, error: null });
+  // rejectRequest: async (id: string, level: 1 | 2 | 3, approvedBy: string, reason: string) => {
+  //   set({ loading: true, error: null });
     
-    try {
-      const response = await CertificateService.rejectRequest(id, level, approvedBy, reason);
+  //   try {
+  //     const response = await CertificateService.rejectRequest(id, level, approvedBy, reason);
       
-      if (response.success && response.data) {
-        // Update the request in the list
-        const currentRequests = get().requests;
-        const updatedRequests = currentRequests.map(request => 
-          request.id === id ? response.data! : request
-        );
-        set({ 
-          requests: updatedRequests,
-          loading: false 
-        });
-        return true;
-      } else {
-        // Handle endpoint not ready gracefully
-        if (response.error?.status === 404 || response.error?.message?.includes('not found')) {
-          set({ 
-            error: 'Rejection service is not yet available. Please try again later.',
-            loading: false 
-          });
-        } else {
-          set({ 
-            error: response.error?.message || 'Failed to reject certificate request',
-            loading: false 
-          });
-        }
-        return false;
-      }
-    } catch (error) {
-      set({ 
-        error: 'Rejection service is not yet available. Please try again later.',
-        loading: false 
-      });
-      return false;
-    }
-  },
+  //     if (response.success && response.data) {
+  //       // Update the request in the list
+  //       const currentRequests = get().requests;
+  //       const updatedRequests = currentRequests.map(request => 
+  //         request.id === id ? response.data! : request
+  //       );
+  //       set({ 
+  //         requests: updatedRequests,
+  //         loading: false 
+  //       });
+  //       return true;
+  //     } else {
+  //       // Handle endpoint not ready gracefully
+  //       if (response.error?.status === 404 || response.error?.message?.includes('not found')) {
+  //         set({ 
+  //           error: 'Rejection service is not yet available. Please try again later.',
+  //           loading: false 
+  //         });
+  //       } else {
+  //         set({ 
+  //           error: response.error?.message || 'Failed to reject certificate request',
+  //           loading: false 
+  //         });
+  //       }
+  //       return false;
+  //     }
+  //   } catch (error) {
+  //     set({ 
+  //       error: 'Rejection service is not yet available. Please try again later.',
+  //       loading: false 
+  //     });
+  //     return false;
+  //   }
+  // },
 
   reset: () => set(initialState),
 }));
