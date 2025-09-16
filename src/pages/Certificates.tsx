@@ -39,15 +39,15 @@ import {
 import { CertificateRequest, CertificateService, CertificateTypeApi } from "@/services/certificateService"
 
 function StatusBadge({ status }: { status: CertificateRequest["status"] }) {
-  const map: Record<
-    CertificateRequest["status"],
-    { label: string; className: string; icon: React.ReactNode }
-  > = {
-    pending: { label: "Pending", className: "bg-warning text-warning-foreground", icon: <Clock className="h-3 w-3" /> },
-    "in-review": { label: "In Review", className: "bg-accent text-accent-foreground", icon: <AlertCircle className="h-3 w-3" /> },
-    approved: { label: "Approved", className: "bg-success text-success-foreground", icon: <CheckCircle className="h-3 w-3" /> },
-    rejected: { label: "Rejected", className: "bg-destructive text-destructive-foreground", icon: <XCircle className="h-3 w-3" /> },
-  }
+  const map: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
+  pending: { label: "Pending", className: "bg-warning text-warning-foreground", icon: <Clock className="h-3 w-3" /> },
+  approved: { label: "Approved", className: "bg-success text-success-foreground", icon: <CheckCircle className="h-3 w-3" /> },
+  rejected: { label: "Rejected", className: "bg-destructive text-destructive-foreground", icon: <XCircle className="h-3 w-3" /> },
+  approved_l1: { label: "ApprovedL1", className: "bg-warning/70 text-success-foreground", icon: <CheckCircle className="h-3 w-3" /> },
+  approved_l2: { label: "ApprovedL2", className: "bg-success/50 text-success-foreground", icon: <CheckCircle className="h-3 w-3" /> },
+  approved_l3: { label: "Approved", className: "bg-success text-success-foreground", icon: <CheckCircle className="h-3 w-3" /> },
+}
+
   const cfg = map[status]
   return (
     <Badge className={`${cfg.className} flex items-center gap-1`}>
@@ -399,17 +399,6 @@ export const Certificates: React.FC = () => {
         )}
       </div>
       </div>
-
-      {error && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-red-700">
-              <AlertCircle className="h-4 w-4" />
-              <span className="text-sm font-medium">{error}</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
         <Card>
