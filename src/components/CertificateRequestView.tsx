@@ -137,10 +137,11 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
 
   const step = computeProgressStep(request)
   
-  // Determine what actions the current user can take
-  const canApproveLevel1 = user.role === "zone-leader" && request.status === "pending"
-  const canApproveLevel2 = user.role === "pastor" && request.status === "approved_l1" && request.approvals.level1 && !request.approvals.level2
-  const canApproveLevel3 = user.role === "parish-pastor" && request.status === "approved_l2" && request.approvals.level2 && !request.approvals.level3
+  // Determine what actions the current user can take (based on approvals timeline)
+  const isFinalized = request.status === "approved" || request.status === "rejected"
+  const canApproveLevel1 = user.role === "zone-leader" && !request.approvals.level1 && !isFinalized
+  const canApproveLevel2 = user.role === "pastor" && !!request.approvals.level1 && !request.approvals.level2 && !isFinalized
+  const canApproveLevel3 = user.role === "parish-pastor" && !!request.approvals.level2 && !request.approvals.level3 && !isFinalized
   
   const canTakeAction = canApproveLevel1 || canApproveLevel2 || canApproveLevel3
   const currentLevel = canApproveLevel1 ? 1 : canApproveLevel2 ? 2 : canApproveLevel3 ? 3 : 0

@@ -296,7 +296,7 @@ export const Certificates: React.FC = () => {
     return {
       total: relevant.length,
       pending: relevant.filter(r => r.status === "pending").length,
-      inReview: relevant.filter(r => r.status === "approved_l1" || r.status === "approved_l2").length,
+      inReview: relevant.filter(r => r.approvals?.level1 || r.approvals?.level2).length,
       approved: relevant.filter(r => r.status === "approved").length,
       rejected: relevant.filter(r => r.status === "rejected").length,
     }
@@ -304,21 +304,12 @@ export const Certificates: React.FC = () => {
 
   const defaultTab = React.useMemo(() => {
     if (user.role === "member") return "my";
-    let hisStatus;
-    switch (user.role) {
-      case "zone-leader":
-        hisStatus = 'pending'
-        break;
-      case "pastor":
-        hisStatus = 'approved_l1' // assuming level 1 approval is done by zone-leader;
-        break;
-      case "parish-pastor":
-        hisStatus = 'approved_l2' // assuming level 2 approval is done by pastor;
-        break;    
-      default:
-        break;
-    }
-    const hasPending = requests.some(r => r.status === hisStatus)
+    const hasPending = requests.some(r => {
+      if (user.role === 'zone-leader') return r.status === 'pending' && !r.approvals?.level1
+      if (user.role === 'pastor') return !!r.approvals?.level1 && !r.approvals?.level2 && r.status !== 'approved' && r.status !== 'rejected'
+      if (user.role === 'parish-pastor') return !!r.approvals?.level2 && !r.approvals?.level3 && r.status !== 'approved' && r.status !== 'rejected'
+      return false
+    })
     return hasPending ? "pending" : "all"
   }, [user.role, requests])
 
@@ -476,9 +467,9 @@ export const Certificates: React.FC = () => {
                   <CardContent>
                     <RequestsTable
                       rows={requests.filter(r => {
-                        if (user.role === "zone-leader") return r.status === "pending"
-                        if (user.role === "pastor") return r.status === "approved_l1"
-                        if (user.role === "parish-pastor") return r.status === "approved_l2"
+                        if (user.role === "zone-leader") return r.status === "pending" && !r.approvals?.level1
+                        if (user.role === "pastor") return !!r.approvals?.level1 && !r.approvals?.level2 && r.status !== 'approved' && r.status !== 'rejected'
+                        if (user.role === "parish-pastor") return !!r.approvals?.level2 && !r.approvals?.level3 && r.status !== 'approved' && r.status !== 'rejected'
                         return false
                       })}
                       renderActions={(req) => (
