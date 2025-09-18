@@ -16,6 +16,7 @@ import { Certificates } from "@/pages/Certificates"
 import { Members } from "@/pages/Members"
 import { Zones } from "@/pages/Zones"
 import { Pastors } from "@/pages/Pastors"
+import { Statistics } from "@/pages/Statistics"
 import NotFound from "./pages/NotFound"
 import { useAuth } from "@/context/AuthContext"
 
@@ -64,7 +65,7 @@ const App = () => (
                 <Route path="certificates" element={<Certificates />} />
                 <Route path="members" element={<Members />} />
                 <Route path="zones" element={<Zones />} />
-                <Route path="statistics" element={<Dashboard />} />
+                <Route path="statistics" element={<Statistics />} />
                 <Route path="pastors" element={<Pastors />} />
                 {/* Add more protected routes here */}
               </Route>
