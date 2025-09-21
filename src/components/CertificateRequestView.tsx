@@ -345,20 +345,21 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <Button 
+                      size="sm"
                       onClick={() => setApproveDialog(true)}
-                      className="bg-green-600 hover:bg-green-700"
                     >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Approve Request
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Approve
                     </Button>
                     <Button 
+                      size="sm"
                       variant="destructive"
                       onClick={() => setRejectDialog(true)}
                     >
-                      <XCircle className="h-4 w-4 mr-2" />
-                      Reject Request
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Reject
                     </Button>
                   </div>
                 </CardContent>
@@ -372,14 +373,17 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
       <Dialog open={approveDialog} onOpenChange={setApproveDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Approve Request</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              Approve Certificate Request
+            </DialogTitle>
             <DialogDescription>
-              Please provide a comment for this approval (optional but recommended).
+              Approve request #{request.id} for {request.memberName}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="approve-comment">Comment</Label>
+              <Label htmlFor="approve-comment">Approval Comment*</Label>
               <Textarea
                 id="approve-comment"
                 placeholder="Enter your approval comment..."
@@ -393,7 +397,8 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
             <Button variant="outline" onClick={() => setApproveDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleApprove} className="bg-green-600 hover:bg-green-700">
+            <Button onClick={handleApprove}>
+              <CheckCircle className="h-4 w-4 mr-2" />
               Approve Request
             </Button>
           </DialogFooter>
@@ -404,9 +409,12 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
       <Dialog open={rejectDialog} onOpenChange={setRejectDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject Request</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-red-600" />
+              Reject Certificate Request
+            </DialogTitle>
             <DialogDescription>
-              Please provide a reason for rejecting this request.
+              Reject request #{request.id} for {request.memberName}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -426,6 +434,7 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleReject}>
+              <XCircle className="h-4 w-4 mr-2" />
               Reject Request
             </Button>
           </DialogFooter>

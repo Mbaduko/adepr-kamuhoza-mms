@@ -523,6 +523,32 @@ export const Certificates: React.FC = () => {
           request={selectedRequest}
           open={openRequestView}
           onOpenChange={setOpenRequestView}
+          onApprove={async (requestId, _level, comment) => {
+            try {
+              const ok = await reviewRequest(requestId, 'approve', (comment || '').trim() || 'Approved');
+              if (ok) {
+                toast({ title: 'Request Approved', description: 'Certificate request approved successfully.', variant: 'success' })
+                setOpenRequestView(false)
+                setSelectedRequest(null)
+                handleRefresh()
+              }
+            } catch (_) {
+              toast({ title: 'Error', description: 'Failed to approve request. Please try again.', variant: 'error' })
+            }
+          }}
+          onReject={async (requestId, _level, reason) => {
+            try {
+              const ok = await reviewRequest(requestId, 'reject', (reason || '').trim() || 'No reason provided');
+              if (ok) {
+                toast({ title: 'Request Rejected', description: 'Certificate request rejected.', variant: 'error' })
+                setOpenRequestView(false)
+                setSelectedRequest(null)
+                handleRefresh()
+              }
+            } catch (_) {
+              toast({ title: 'Error', description: 'Failed to reject request. Please try again.', variant: 'error' })
+            }
+          }}
           showActions={true}
         />
       )}
