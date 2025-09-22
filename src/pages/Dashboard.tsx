@@ -60,21 +60,23 @@ export const Dashboard: React.FC = () => {
 
   // Calculate stats - moved outside conditional
   const stats = React.useMemo(() => {
-    const pendingRequests = requests.filter(req => req.status === "pending").length
-    const approvedRequests = requests.filter(req => req.status === "approved").length
-    const rejectedRequests = requests.filter(req => req.status === "rejected").length
-    // Treat "In Review" as all requests that are not yet approved (pending + in-review)
-    const inReviewRequests = requests.filter(req => req.status === "pending" || req.status === "in-review").length
+    const isFinalApproved = (r: any) => r.status === 'approved' || r.status === 'approved_final' || !!r.approvals?.level3
+    const isInReview = (r: any) => !isFinalApproved(r) && r.status !== 'rejected' && (r.status === 'in-review' || !!r.approvals?.level1 || !!r.approvals?.level2)
+
+    const pendingRequests = requests.filter(r => r.status === 'pending' && !r.approvals?.level1 && !r.approvals?.level2 && !r.approvals?.level3).length
+    const approvedRequests = requests.filter(r => isFinalApproved(r)).length
+    const rejectedRequests = requests.filter(r => r.status === 'rejected').length
+    const inReviewRequests = requests.filter(r => isInReview(r)).length
 
     if (userRole === "member") {
       const userRequests = requests.filter(req => req.memberId === user?.id)
       return {
         type: "member" as const,
         myRequests: userRequests.length,
-        approvedRequests: userRequests.filter(req => req.status === "approved").length,
+        approvedRequests: userRequests.filter(r => isFinalApproved(r)).length,
         rejectedRequests: userRequests.filter(req => req.status === "rejected").length,
         // Not yet approved for the member (pending + in-review)
-        inReviewRequests: userRequests.filter(req => req.status === "pending" || req.status === "in-review").length,
+        inReviewRequests: userRequests.filter(r => isInReview(r)).length,
       }
     }
 

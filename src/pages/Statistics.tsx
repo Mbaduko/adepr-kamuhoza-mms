@@ -87,8 +87,16 @@ export const Statistics: React.FC = () => {
   // Aggregations
   const certByStatus = React.useMemo(() => {
     const counts: Record<string, number> = {};
+    const isFinalApproved = (r: any) => r.status === 'approved' || r.status === 'approved_final' || !!r.approvals?.level3;
+    const normalizeStatus = (r: any) => {
+      if (r.status === 'rejected') return 'rejected';
+      if (isFinalApproved(r)) return 'approved';
+      if (r.status === 'pending' && !r.approvals?.level1 && !r.approvals?.level2 && !r.approvals?.level3) return 'pending';
+      return 'in-review';
+    }
     for (const r of requests) {
-      counts[r.status] = (counts[r.status] || 0) + 1;
+      const key = normalizeStatus(r);
+      counts[key] = (counts[key] || 0) + 1;
     }
     return Object.entries(counts).map(([status, count]) => ({ status, count }));
   }, [requests]);

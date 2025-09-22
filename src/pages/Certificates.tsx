@@ -301,11 +301,13 @@ export const Certificates: React.FC = () => {
   }, [requests, user.id, user.name])
   const stats = React.useMemo(() => {
     const relevant = user.role === "member" ? myRequests : requests
+    const isFinalApproved = (r: CertificateRequest) => r.status === "approved" || r.status === "approved_final" || !!r.approvals?.level3
+    const isInReview = (r: CertificateRequest) => !isFinalApproved(r) && r.status !== 'rejected' && (r.status === 'in-review' || !!r.approvals?.level1 || !!r.approvals?.level2)
     return {
       total: relevant.length,
-      pending: relevant.filter(r => r.status === "pending").length,
-      inReview: relevant.filter(r => r.approvals?.level1 || r.approvals?.level2).length,
-      approved: relevant.filter(r => r.status === "approved").length,
+      pending: relevant.filter(r => r.status === "pending" && !r.approvals?.level1 && !r.approvals?.level2 && !r.approvals?.level3).length,
+      inReview: relevant.filter(r => isInReview(r)).length,
+      approved: relevant.filter(r => isFinalApproved(r)).length,
       rejected: relevant.filter(r => r.status === "rejected").length,
     }
   }, [requests, myRequests, user.role])
