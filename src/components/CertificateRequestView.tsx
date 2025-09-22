@@ -36,7 +36,8 @@ type ProgressStep = 0 | 1 | 2 | 3
 function computeProgressStep(req: CertificateRequest): ProgressStep {
   console.log("Computing progress step for request:", req);
   if (req.status === "rejected") return 0
-  if (req.status === "approved") return 3
+  if (req.status === "approved" || req.status === "approved_final") return 3
+  if (req.approvals.level3) return 3
   if (req.approvals.level2) return 2
   if (req.approvals.level1) return 1
   return 0
@@ -45,6 +46,7 @@ function computeProgressStep(req: CertificateRequest): ProgressStep {
 function statusBadge(status: CertificateRequest["status"]) {
   switch (status) {
     case "approved":
+    case "approved_final":
       return <Badge className="bg-green-600 text-white border-green-600">Approved</Badge>
     case "pending":
       return <Badge className="bg-amber-500 text-white border-amber-500">Pending</Badge>
@@ -52,6 +54,8 @@ function statusBadge(status: CertificateRequest["status"]) {
       return <Badge className="bg-amber-500 text-white border-amber-500">Approved L1</Badge>
     case "approved_l2":
       return <Badge className="bg-blue-600 text-white border-blue-600">Approved L2</Badge>
+    case "in-review":
+      return <Badge className="bg-gray-200 text-gray-800 border-gray-300">In Review</Badge>
     case "rejected":
       return <Badge className="bg-red-600 text-white border-red-600">Rejected</Badge>
     default:
