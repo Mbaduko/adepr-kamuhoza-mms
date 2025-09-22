@@ -305,7 +305,7 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
                         <CheckCircle className="h-4 w-4 text-green-600" />
                       </div>
                       <div className="flex-1">
-                        <div className="font-medium text-sm">{request.approvals.level1.by} — Approved as Zone Leader</div>
+                        <div className="font-medium text-sm">Zone Leader {request.approvals.level1.action === 'reject' ? 'Rejected' : 'Approved'}</div>
                         <div className="text-xs text-muted-foreground">
                           on {new Date(request.approvals.level1.doneAt).toLocaleDateString()}
                         </div>
@@ -324,7 +324,7 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
                         <CheckCircle className="h-4 w-4 text-green-600" />
                       </div>
                       <div className="flex-1">
-                        <div className="font-medium text-sm">{request.approvals.level2.by} — Approved as Pastor</div>
+                        <div className="font-medium text-sm">Pastor {request.approvals.level2.action === 'reject' ? 'Rejected' : 'Approved'}</div>
                         <div className="text-xs text-muted-foreground">
                           on {new Date(request.approvals.level2.doneAt).toLocaleDateString()}
                         </div>
@@ -343,7 +343,7 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
                         <CheckCircle className="h-4 w-4 text-green-600" />
                       </div>
                       <div className="flex-1">
-                        <div className="font-medium text-sm">{request.approvals.level3.by} — Approved as Parish Pastor</div>
+                        <div className="font-medium text-sm">Parish Pastor {request.approvals.level3.action === 'reject' ? 'Rejected' : 'Approved'}</div>
                         <div className="text-xs text-muted-foreground">
                           on {new Date(request.approvals.level3.doneAt).toLocaleDateString()}
                         </div>
