@@ -37,6 +37,8 @@ import {
   Info,
 } from "lucide-react"
 import { CertificateRequest, CertificateService, CertificateTypeApi } from "@/services/certificateService"
+import { useMembersStore } from "@/data/members-store"
+import type { Member } from "@/services/memberService"
 
 function StatusBadge({ status }: { status: CertificateRequest["status"] }) {
   const map: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
@@ -65,30 +67,162 @@ function StatusBadge({ status }: { status: CertificateRequest["status"] }) {
   )
 }
 
-const downloadCertificate = (req: CertificateRequest) => {
-  const content = `
-ADEPR MUHOZA CHURCH
-OFFICIAL CERTIFICATE
+const downloadCertificate = async (req: CertificateRequest, member?: Member | null) => {
+  type JsPDFCtor = new (...args: Array<unknown>) => {
+    setFont: (family: string, style?: string) => void
+    setFontSize: (size: number) => void
+    setDrawColor: (val: number) => void
+    addImage: (imageData: string, format: 'PNG' | 'JPEG', x: number, y: number, w: number, h: number) => void
+    text: (text: string, x: number, y: number, options?: unknown) => void
+    line: (x1: number, y1: number, x2: number, y2: number) => void
+    splitTextToSize: (text: string, size: number) => string[]
+    save: (filename: string) => void
+  }
 
-Certificate Type: ${req.certificateType.toUpperCase()}
-Member Name: ${req.memberName}
-Request ID: ${req.id}
-Purpose: ${req.purpose}
-Request Date: ${new Date(req.requestDate).toLocaleDateString()}
-`.trim()
-  const blob = new Blob([content], { type: 'text/plain' })
-  const url = window.URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${req.certificateType}_certificate_${req.memberName.replace(/\s+/g, '_')}.txt`
-  document.body.appendChild(a)
-  a.click()
-  window.URL.revokeObjectURL(url)
-  document.body.removeChild(a)
+  const ensureJsPDF = async (): Promise<JsPDFCtor> => {
+    const w = window as unknown as { jspdf?: { jsPDF?: JsPDFCtor } }
+    if (w.jspdf?.jsPDF) return w.jspdf.jsPDF
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'
+      script.async = true
+      script.onload = () => resolve()
+      script.onerror = () => reject(new Error('Failed to load jsPDF'))
+      document.body.appendChild(script)
+    })
+    return w.jspdf!.jsPDF!
+  }
+
+  const toDataUrl = async (url: string) => {
+    try {
+      const res = await fetch(url)
+      const blob = await res.blob()
+      return await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.readAsDataURL(blob)
+      })
+    } catch {
+      return ''
+    }
+  }
+
+  const formatDate = (d?: Date | string) => {
+    if (!d) return ""
+    try { return new Date(d).toLocaleDateString() } catch { return String(d) }
+  }
+
+  const jsPDF = await ensureJsPDF()
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+
+  // Margins
+  const margin = 56
+  let y = margin
+
+  // Logo and Header
+  const logoData = await toDataUrl('/logo.png')
+  if (logoData) doc.addImage(logoData, 'PNG', margin, y - 8, 56, 56)
+  doc.setFont('times', 'bold')
+  doc.setFontSize(20)
+  doc.text('ADEPR MUHOZA CHURCH', 297.5, y + 6, { align: 'center' })
+  doc.setFontSize(12)
+  doc.setFont('times', 'normal')
+  doc.text('Official Church Certificate', 297.5, y + 24, { align: 'center' })
+  y += 56
+  doc.setDrawColor(180)
+  doc.line(margin, y, 595 - margin, y)
+  y += 20
+
+  // Title by type
+  doc.setFont('times', 'bold')
+  doc.setFontSize(16)
+  const title = `${String(req.certificateType).toUpperCase()} CERTIFICATE`
+  doc.setFont('times', 'bold')
+  doc.setFontSize(16)
+  doc.text(title, 297.5, y, { align: 'center' })
+  y += 22
+
+  // Member and request info
+  doc.setFontSize(12)
+  doc.setFont('times', 'normal')
+  const leftColX = margin
+  const rightColX = 320
+  const addRow = (label: string, value: string) => {
+    doc.setFont('times', 'bold'); doc.text(label, leftColX, y)
+    doc.setFont('times', 'normal'); doc.text(value || '-', rightColX, y)
+    y += 16
+  }
+
+  addRow('Member Name', req.memberName)
+  addRow('Certificate Type', String(req.certificateType))
+  addRow('Purpose', req.purpose)
+  addRow('Request Date', formatDate(req.requestDate))
+
+  // Member-specific details
+  if (member) {
+    y += 6
+    doc.setFont('times', 'bold'); doc.text('Member Details', margin, y)
+    y += 14
+    addRow('Gender', (member.gender || '').toString())
+    addRow('Date of Birth', formatDate(member.dateOfBirth))
+    addRow('Address', member.address || '')
+    if (member.choir) addRow('Choir', member.choir)
+
+    // Sacrament details by certificate type
+    if (req.certificateType === 'baptism' && member.sacraments?.baptism?.date) {
+      addRow('Baptism Date', formatDate(member.sacraments.baptism.date))
+    }
+    if (req.certificateType === 'marriage' && member.sacraments?.marriage?.date) {
+      addRow('Marriage Date', formatDate(member.sacraments.marriage.date))
+      if (member.sacraments.marriage.place) addRow('Marriage Place', member.sacraments.marriage.place)
+    }
+  }
+  y += 8
+
+  // Type-specific formal text
+  const para = (() => {
+    switch (req.certificateType) {
+      case 'baptism':
+        return 'This is to certify that the above-named member has received the sacrament of baptism and is duly recorded in the church register.'
+      case 'recommendation':
+        return 'This is to certify that the above-named member is a member in good standing and is hereby recommended by ADEPR Muhoza Church.'
+      case 'marriage':
+        return 'This is to certify that the marriage record for the above-named member has been verified and approved by the church authorities.'
+      default:
+        return 'This is to certify the above request as approved by ADEPR Muhoza Church.'
+    }
+  })()
+  const split = doc.splitTextToSize(para, 595 - margin * 2)
+  split.forEach((line: string) => { doc.text(line, margin, y); y += 16 })
+  y += 8
+
+  // Approvals Timeline
+  doc.setFont('times', 'bold')
+  doc.text('Approval Timeline', margin, y)
+  y += 14
+  doc.setFont('times', 'normal')
+  const approvals: Array<string> = []
+  if (req.approvals?.level1) approvals.push(`Zone Leader: ${req.approvals.level1.by} — ${formatDate(req.approvals.level1.doneAt)}${req.approvals.level1.comment ? ` — "${req.approvals.level1.comment}"` : ''}`)
+  if (req.approvals?.level2) approvals.push(`Pastor: ${req.approvals.level2.by} — ${formatDate(req.approvals.level2.doneAt)}${req.approvals.level2.comment ? ` — "${req.approvals.level2.comment}"` : ''}`)
+  if (req.approvals?.level3) approvals.push(`Parish Pastor: ${req.approvals.level3.by} — ${formatDate(req.approvals.level3.doneAt)}${req.approvals.level3.comment ? ` — "${req.approvals.level3.comment}"` : ''}`)
+  if (approvals.length === 0) approvals.push('No approvals recorded')
+  approvals.forEach((line) => { doc.text(line, margin, y); y += 16 })
+
+  // Footer / signature area
+  y = Math.max(y + 24, 680)
+  doc.setDrawColor(180)
+  doc.line(margin, y, 260, y)
+  doc.text('Authorized Signature', margin, y + 14)
+  doc.text(`Issued on ${new Date().toLocaleDateString()}`, 595 - margin - 150, y + 14)
+
+  // Save
+  const filename = `${req.certificateType}_certificate_${req.memberName.replace(/\s+/g, '_')}.pdf`
+  doc.save(filename)
 }
 
 const RequestsTable: React.FC<{ rows: CertificateRequest[]; renderActions: (req: CertificateRequest) => React.ReactNode }> = ({ rows, renderActions }) => {
   const { state } = useAuth()
+  const { members } = useMembersStore()
   return (
     <div className="w-full overflow-x-auto">
       <Table>
@@ -116,7 +250,7 @@ const RequestsTable: React.FC<{ rows: CertificateRequest[]; renderActions: (req:
           ) : (
             rows.map((r) => {
               const isRequester = state.user?.id === r.memberId
-              const isApproved = r.status === 'approved'
+              const isFinalApproved = r.status === 'approved' || r.status === 'approved_final' || !!r.approvals?.level3
               return (
                 <TableRow key={r.id}>
                   <TableCell className="font-mono text-xs">{r.id}</TableCell>
@@ -127,8 +261,11 @@ const RequestsTable: React.FC<{ rows: CertificateRequest[]; renderActions: (req:
                   <TableCell><StatusBadge status={r.status} /></TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {isRequester && isApproved && (
-                        <Button size="sm" variant="outline" onClick={() => downloadCertificate(r)}>
+                      {isRequester && isFinalApproved && (
+                        <Button size="sm" variant="outline" onClick={() => {
+                          const m = members.find(mm => mm.authId === r.memberId || mm.id === r.memberId) || null
+                          downloadCertificate(r, m)
+                        }}>
                           <Download className="h-3 w-3 mr-1" />
                           Download
                         </Button>
@@ -152,6 +289,7 @@ export const Certificates: React.FC = () => {
   const user = state.user!
 
   const { requests, loading, error, isInitialized, fetchAllRequests, fetchRequestsByMember, createRequest, reviewRequest } = useCertificatesStore()
+  const { members, fetchAllMembers } = useMembersStore()
 
   const [openNew, setOpenNew] = React.useState(false)
   const [certType, setCertType] = React.useState<CertificateTypeApi>("baptism")
@@ -171,13 +309,16 @@ export const Certificates: React.FC = () => {
   React.useEffect(() => {
     const load = async () => {
       try {
-          await fetchAllRequests()
+          await Promise.all([
+            fetchAllRequests(),
+            fetchAllMembers?.() || Promise.resolve()
+          ])
       } catch (e) {
         console.warn('Certificates: load failed', e)
       }
     }
     load()
-  }, [fetchAllRequests])
+  }, [fetchAllRequests, fetchAllMembers])
 
   const handleRefresh = async () => {
     try {
