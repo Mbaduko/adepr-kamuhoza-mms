@@ -1,6 +1,16 @@
 import { apiClient } from '@/lib/api';
 import { LoginRequest, LoginResponse, UserProfileResponse, ApiResponse } from '@/types/auth';
 
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
+}
+
+export interface ChangePasswordResponse {
+  message: string;
+  timestamp?: string;
+}
+
 export class AuthService {
   /**
    * Authenticate user with email and password
@@ -109,6 +119,24 @@ export class AuthService {
         success: false,
         error: {
           message: 'Token verification failed',
+          status: 0,
+        },
+      };
+    }
+  }
+
+  /**
+   * Change password for the logged-in user
+   */
+  static async changePassword(payload: ChangePasswordRequest): Promise<ApiResponse<ChangePasswordResponse>> {
+    try {
+      const response = await apiClient.post<ChangePasswordResponse>('/auth/change-password', payload);
+      return response;
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          message: 'Unable to change password. Please check your connection and try again.',
           status: 0,
         },
       };

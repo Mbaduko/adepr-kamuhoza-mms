@@ -17,6 +17,7 @@ import { Members } from "@/pages/Members"
 import { Zones } from "@/pages/Zones"
 import { Pastors } from "@/pages/Pastors"
 import { Statistics } from "@/pages/Statistics"
+import { Settings } from "@/pages/Settings"
 import NotFound from "./pages/NotFound"
 import { useAuth } from "@/context/AuthContext"
 
@@ -62,6 +63,7 @@ const App = () => (
               >
                 <Route index element={<Dashboard />} />
                 <Route path="profile" element={<Profile />} />
+                <Route path="settings" element={<Settings />} />
                 <Route path="certificates" element={<Certificates />} />
                 <Route path="members" element={<Members />} />
                 <Route path="zones" element={<Zones />} />
