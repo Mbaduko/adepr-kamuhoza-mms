@@ -678,6 +678,9 @@ export const Certificates: React.FC = () => {
             try {
               const ok = await reviewRequest(requestId, 'approve', (comment || '').trim() || 'Approved');
               if (ok) {
+                // Update the selected request view immediately using the store's updated state
+                const updated = requests.find(r => r.id === requestId)
+                if (updated) setSelectedRequest(updated)
                 toast({ title: 'Request Approved', description: 'Certificate request approved successfully.', variant: 'success' })
                 setOpenRequestView(false)
                 setSelectedRequest(null)
@@ -691,6 +694,8 @@ export const Certificates: React.FC = () => {
             try {
               const ok = await reviewRequest(requestId, 'reject', (reason || '').trim() || 'No reason provided');
               if (ok) {
+                const updated = requests.find(r => r.id === requestId)
+                if (updated) setSelectedRequest(updated)
                 toast({ title: 'Request Rejected', description: 'Certificate request rejected.', variant: 'error' })
                 setOpenRequestView(false)
                 setSelectedRequest(null)

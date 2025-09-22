@@ -117,8 +117,8 @@ interface CertificateRequestViewProps {
   request: CertificateRequest
   open: boolean
   onOpenChange: (open: boolean) => void
-  onApprove?: (requestId: string, level: number, comment?: string) => void
-  onReject?: (requestId: string, level: number, reason: string) => void
+  onApprove?: (requestId: string, level: number, comment?: string) => Promise<void> | void
+  onReject?: (requestId: string, level: number, reason: string) => Promise<void> | void
   showActions?: boolean
 }
 
@@ -138,6 +138,8 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
   const [approveDialog, setApproveDialog] = React.useState(false)
   const [rejectDialog, setRejectDialog] = React.useState(false)
   const [comment, setComment] = React.useState("")
+  const [isApproving, setIsApproving] = React.useState(false)
+  const [isRejecting, setIsRejecting] = React.useState(false)
 
   const step = computeProgressStep(request)
   
@@ -150,21 +152,30 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
   const canTakeAction = canApproveLevel1 || canApproveLevel2 || canApproveLevel3
   const currentLevel = canApproveLevel1 ? 1 : canApproveLevel2 ? 2 : canApproveLevel3 ? 3 : 0
 
-  const handleApprove = () => {
-    onApprove?.(request.id, currentLevel, comment.trim())
-    setComment("")
-    setApproveDialog(false)
+  const handleApprove = async () => {
+    try {
+      setIsApproving(true)
+      await onApprove?.(request.id, currentLevel, comment.trim())
+    } finally {
+      setIsApproving(false)
+      setComment("")
+      setApproveDialog(false)
+    }
   }
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!comment.trim()) {
       toast({ title: "Reason required", description: "Please provide a reason for rejection.", variant: "error" })
       return
     }
-    
-    onReject?.(request.id, currentLevel, comment.trim())
-    setComment("")
-    setRejectDialog(false)
+    try {
+      setIsRejecting(true)
+      await onReject?.(request.id, currentLevel, comment.trim())
+    } finally {
+      setIsRejecting(false)
+      setComment("")
+      setRejectDialog(false)
+    }
   }
 
   const getActionRequiredText = () => {
@@ -353,17 +364,19 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
                     <Button 
                       size="sm"
                       onClick={() => setApproveDialog(true)}
+                      disabled={isApproving || isRejecting}
                     >
-                      <CheckCircle className="h-4 w-4 mr-1" />
-                      Approve
+                      <CheckCircle className={`h-4 w-4 mr-1 ${isApproving ? 'animate-pulse' : ''}`} />
+                      {isApproving ? 'Processing...' : 'Approve'}
                     </Button>
                     <Button 
                       size="sm"
                       variant="destructive"
                       onClick={() => setRejectDialog(true)}
+                      disabled={isApproving || isRejecting}
                     >
-                      <XCircle className="h-4 w-4 mr-1" />
-                      Reject
+                      <XCircle className={`h-4 w-4 mr-1 ${isRejecting ? 'animate-pulse' : ''}`} />
+                      {isRejecting ? 'Processing...' : 'Reject'}
                     </Button>
                   </div>
                 </CardContent>
@@ -374,7 +387,7 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
       </Dialog>
 
       {/* Approve Dialog */}
-      <Dialog open={approveDialog} onOpenChange={setApproveDialog}>
+      <Dialog open={approveDialog} onOpenChange={(o) => !isApproving && setApproveDialog(o)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -394,23 +407,24 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 rows={3}
+                disabled={isApproving}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setApproveDialog(false)}>
+            <Button variant="outline" onClick={() => setApproveDialog(false)} disabled={isApproving}>
               Cancel
             </Button>
-            <Button onClick={handleApprove}>
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Approve Request
+            <Button onClick={handleApprove} disabled={isApproving}>
+              <CheckCircle className={`h-4 w-4 mr-2 ${isApproving ? 'animate-pulse' : ''}`} />
+              {isApproving ? 'Approving...' : 'Approve Request'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Reject Dialog */}
-      <Dialog open={rejectDialog} onOpenChange={setRejectDialog}>
+      <Dialog open={rejectDialog} onOpenChange={(o) => !isRejecting && setRejectDialog(o)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -430,16 +444,17 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 rows={3}
+                disabled={isRejecting}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRejectDialog(false)}>
+            <Button variant="outline" onClick={() => setRejectDialog(false)} disabled={isRejecting}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleReject}>
-              <XCircle className="h-4 w-4 mr-2" />
-              Reject Request
+            <Button variant="destructive" onClick={handleReject} disabled={isRejecting}>
+              <XCircle className={`h-4 w-4 mr-2 ${isRejecting ? 'animate-pulse' : ''}`} />
+              {isRejecting ? 'Rejecting...' : 'Reject Request'}
             </Button>
           </DialogFooter>
         </DialogContent>
