@@ -320,6 +320,15 @@ export const Certificates: React.FC = () => {
     load()
   }, [fetchAllRequests, fetchAllMembers])
 
+  // Keep the currently opened request view in sync with store updates
+  React.useEffect(() => {
+    if (!selectedRequest) return
+    const updated = requests.find(r => r.id === selectedRequest.id)
+    if (updated && updated !== selectedRequest) {
+      setSelectedRequest(updated)
+    }
+  }, [requests, selectedRequest])
+
   const handleRefresh = async () => {
     try {
       if (user.role === "member") await fetchRequestsByMember(user.id)
@@ -673,7 +682,14 @@ export const Certificates: React.FC = () => {
         <CertificateRequestView
           request={selectedRequest}
           open={openRequestView}
-          onOpenChange={setOpenRequestView}
+          onOpenChange={(open) => {
+            setOpenRequestView(open)
+            if (!open) {
+              setSelectedRequest(null)
+              // Ensure list reflects any updates after closing the modal
+              handleRefresh()
+            }
+          }}
           onApprove={async (requestId, _level, comment) => {
             try {
               const ok = await reviewRequest(requestId, 'approve', (comment || '').trim() || 'Approved');
@@ -682,9 +698,7 @@ export const Certificates: React.FC = () => {
                 const updated = requests.find(r => r.id === requestId)
                 if (updated) setSelectedRequest(updated)
                 toast({ title: 'Request Approved', description: 'Certificate request approved successfully.', variant: 'success' })
-                setOpenRequestView(false)
-                setSelectedRequest(null)
-                handleRefresh()
+                // Keep modal open so user sees updated status; list will refresh on close
               }
             } catch (_) {
               toast({ title: 'Error', description: 'Failed to approve request. Please try again.', variant: 'error' })
@@ -697,9 +711,7 @@ export const Certificates: React.FC = () => {
                 const updated = requests.find(r => r.id === requestId)
                 if (updated) setSelectedRequest(updated)
                 toast({ title: 'Request Rejected', description: 'Certificate request rejected.', variant: 'error' })
-                setOpenRequestView(false)
-                setSelectedRequest(null)
-                handleRefresh()
+                // Keep modal open so user sees updated status; list will refresh on close
               }
             } catch (_) {
               toast({ title: 'Error', description: 'Failed to reject request. Please try again.', variant: 'error' })
