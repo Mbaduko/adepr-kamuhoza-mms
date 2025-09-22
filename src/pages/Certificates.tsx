@@ -40,15 +40,23 @@ import { CertificateRequest, CertificateService, CertificateTypeApi } from "@/se
 
 function StatusBadge({ status }: { status: CertificateRequest["status"] }) {
   const map: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
-  pending: { label: "Pending", className: "bg-warning text-warning-foreground", icon: <Clock className="h-3 w-3" /> },
-  approved: { label: "Approved", className: "bg-success text-success-foreground", icon: <CheckCircle className="h-3 w-3" /> },
-  rejected: { label: "Rejected", className: "bg-destructive text-destructive-foreground", icon: <XCircle className="h-3 w-3" /> },
-  approved_l1: { label: "ApprovedL1", className: "bg-warning/70 text-success-foreground", icon: <CheckCircle className="h-3 w-3" /> },
-  approved_l2: { label: "ApprovedL2", className: "bg-success/50 text-success-foreground", icon: <CheckCircle className="h-3 w-3" /> },
-  approved_l3: { label: "Approved", className: "bg-success text-success-foreground", icon: <CheckCircle className="h-3 w-3" /> },
-}
+    pending: { label: "Pending", className: "bg-warning text-warning-foreground", icon: <Clock className="h-3 w-3" /> },
+    approved: { label: "Approved", className: "bg-success text-success-foreground", icon: <CheckCircle className="h-3 w-3" /> },
+    rejected: { label: "Rejected", className: "bg-destructive text-destructive-foreground", icon: <XCircle className="h-3 w-3" /> },
+    approved_l1: { label: "Approved L1", className: "bg-warning/70 text-success-foreground", icon: <CheckCircle className="h-3 w-3" /> },
+    approved_l2: { label: "Approved L2", className: "bg-success/50 text-success-foreground", icon: <CheckCircle className="h-3 w-3" /> },
+    approved_final: { label: "Approved", className: "bg-success text-success-foreground", icon: <CheckCircle className="h-3 w-3" /> },
+    "in-review": { label: "In Review", className: "bg-muted text-muted-foreground", icon: <AlertCircle className="h-3 w-3" /> },
+  }
 
-  const cfg = map[status]
+  const toTitle = (val: string) => (val || "").replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).trim()
+  const fallback = {
+    label: toTitle(typeof status === "string" ? status : "Unknown" ) || "Unknown",
+    className: "bg-muted text-muted-foreground",
+    icon: <AlertCircle className="h-3 w-3" />,
+  }
+
+  const cfg = map[String(status)] ?? fallback
   return (
     <Badge className={`${cfg.className} flex items-center gap-1`}>
       {cfg.icon}
