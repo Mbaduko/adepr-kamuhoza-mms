@@ -287,6 +287,7 @@ export const Certificates: React.FC = () => {
   const { state } = useAuth()
   const { toast } = useToast()
   const user = state.user!
+  const [initializedFromQuery, setInitializedFromQuery] = React.useState(false)
 
   const { requests, loading, error, isInitialized, fetchAllRequests, fetchRequestsByMember, createRequest, reviewRequest } = useCertificatesStore()
   const { members, fetchAllMembers } = useMembersStore()
@@ -319,6 +320,18 @@ export const Certificates: React.FC = () => {
     }
     load()
   }, [fetchAllRequests, fetchAllMembers])
+
+  // Open New Request dialog when query param new=1 is present
+  React.useEffect(() => {
+    if (initializedFromQuery) return
+    try {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('new') === '1') {
+        setOpenNew(true)
+      }
+    } catch { /* no-op */ }
+    setInitializedFromQuery(true)
+  }, [initializedFromQuery])
 
   // Keep the currently opened request view in sync with store updates
   React.useEffect(() => {
@@ -490,7 +503,19 @@ export const Certificates: React.FC = () => {
             Refresh
           </Button>
         {canRequest && (
-          <Dialog open={openNew} onOpenChange={setOpenNew}>
+          <Dialog open={openNew} onOpenChange={(v) => {
+            setOpenNew(v)
+            if (!v) {
+              // Remove the query param when closing
+              try {
+                const url = new URL(window.location.href)
+                if (url.searchParams.has('new')) {
+                  url.searchParams.delete('new')
+                  window.history.replaceState({}, '', url.toString())
+                }
+              } catch { /* no-op */ }
+            }
+          }}>
             <DialogTrigger asChild>
                 <Button>
                   <PlusCircle className="h-4 w-4 mr-2" />

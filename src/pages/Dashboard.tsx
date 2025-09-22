@@ -146,7 +146,7 @@ export const Dashboard: React.FC = () => {
         title: "Request Certificate",
         description: "Submit a new certificate request",
         icon: Award,
-        href: "/certificates",
+        href: "/dashboard/certificates?new=1",
         variant: "default",
       })
     }
@@ -156,7 +156,7 @@ export const Dashboard: React.FC = () => {
         title: "Manage Members",
         description: "View and manage members",
         icon: Users,
-        href: "/members",
+        href: "/dashboard/members",
         variant: "outline",
       })
     }
@@ -166,18 +166,18 @@ export const Dashboard: React.FC = () => {
         title: "Manage Zones",
         description: "Create and assign zones",
         icon: MapPin,
-        href: "/zones",
+        href: "/dashboard/zones",
         variant: "outline",
       })
     }
 
-      actions.push({
+    actions.push({
       title: "Certificate Requests",
       description: "View and manage certificate requests",
-        icon: FileText,
-      href: "/certificates",
-        variant: "outline",
-      })
+      icon: FileText,
+      href: "/dashboard/certificates",
+      variant: "outline",
+    })
 
     actions.push({
       title: "My Profile",
