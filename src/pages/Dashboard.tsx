@@ -63,7 +63,8 @@ export const Dashboard: React.FC = () => {
     const isFinalApproved = (r: any) => r.status === 'approved' || r.status === 'approved_final' || !!r.approvals?.level3
     const isInReview = (r: any) => !isFinalApproved(r) && r.status !== 'rejected' && (r.status === 'in-review' || !!r.approvals?.level1 || !!r.approvals?.level2)
 
-    const pendingRequests = requests.filter(r => r.status === 'pending' && !r.approvals?.level1 && !r.approvals?.level2 && !r.approvals?.level3).length
+    // Default/global counts
+    let pendingRequests = requests.filter(r => r.status === 'pending' && !r.approvals?.level1 && !r.approvals?.level2 && !r.approvals?.level3).length
     const approvedRequests = requests.filter(r => isFinalApproved(r)).length
     const rejectedRequests = requests.filter(r => r.status === 'rejected').length
     const inReviewRequests = requests.filter(r => isInReview(r)).length
@@ -78,6 +79,15 @@ export const Dashboard: React.FC = () => {
         // Not yet approved for the member (pending + in-review)
         inReviewRequests: userRequests.filter(r => isInReview(r)).length,
       }
+    }
+
+    // For approvers (zone-leader, pastor, parish-pastor), show pending as items awaiting THEIR review
+    if (userRole === 'zone-leader') {
+      pendingRequests = requests.filter(r => r.status === 'pending' && !r.approvals?.level1).length
+    } else if (userRole === 'pastor') {
+      pendingRequests = requests.filter(r => r.status !== 'rejected' && !isFinalApproved(r) && !!r.approvals?.level1 && !r.approvals?.level2).length
+    } else if (userRole === 'parish-pastor') {
+      pendingRequests = requests.filter(r => r.status !== 'rejected' && !isFinalApproved(r) && !!r.approvals?.level2 && !r.approvals?.level3).length
     }
 
     return {
