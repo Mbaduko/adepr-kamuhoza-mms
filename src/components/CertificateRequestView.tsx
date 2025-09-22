@@ -34,13 +34,28 @@ import {
 type ProgressStep = 0 | 1 | 2 | 3
 
 function computeProgressStep(req: CertificateRequest): ProgressStep {
-  console.log("Computing progress step for request:", req);
-  if (req.status === "rejected") return 0
+  // Base progress from approvals achieved
+  let step: ProgressStep = 0
+  if (req.approvals?.level1) step = 1
+  if (req.approvals?.level2) step = 2
+  if (req.approvals?.level3) step = 3
+
+  // Approved or final approved should always show full progress
   if (req.status === "approved" || req.status === "approved_final") return 3
-  if (req.approvals.level3) return 3
-  if (req.approvals.level2) return 2
-  if (req.approvals.level1) return 1
-  return 0
+
+  // For rejected requests, reflect the furthest stage reached even if the decision was negative.
+  // If rejected at pastor level, the request has at least reached pastor review.
+  if (req.status === "rejected") {
+    if (!req.approvals?.level2 && req.approvals?.level1) {
+      // Rejected by pastor (no level2 approval recorded) → show arrival to Pastor
+      step = Math.max(step, 2) as ProgressStep
+    }
+    // If rejected after level2 approval (e.g., at parish), step will already be >= 2 from approvals
+    // If rejected before any approvals, keep as submitted (0)
+    return step
+  }
+
+  return step
 }
 
 function statusBadge(status: CertificateRequest["status"]) {
@@ -213,6 +228,24 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
               </div>
               <div className="flex items-center gap-2">
                 {statusBadge(request.status)}
+                {/* Download button when final approved */}
+                {(request.status === 'approved' || request.status === 'approved_final' || !!request.approvals?.level3) && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      try {
+                        // Lazy import: reuse page helper via window hook if available, otherwise no-op
+                        const w = window as unknown as { __downloadCert?: (req: any) => void }
+                        if (w.__downloadCert) {
+                          w.__downloadCert(request)
+                        }
+                      } catch {}
+                    }}
+                  >
+                    Download
+                  </Button>
+                )}
                 {canTakeAction && (
                   <Badge className="bg-orange-100 text-orange-800 border-orange-200">
                     Action Required
@@ -272,9 +305,9 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
                         <CheckCircle className="h-4 w-4 text-green-600" />
                       </div>
                       <div className="flex-1">
-                        <div className="font-medium text-sm">Zone Leader Approved</div>
+                        <div className="font-medium text-sm">{request.approvals.level1.by} — Approved as Zone Leader</div>
                         <div className="text-xs text-muted-foreground">
-                          by {request.approvals.level1.by} on {new Date(request.approvals.level1.doneAt).toLocaleDateString()}
+                          on {new Date(request.approvals.level1.doneAt).toLocaleDateString()}
                         </div>
                         {request.approvals.level1.comment && (
                           <div className="text-xs text-muted-foreground mt-1">
@@ -291,9 +324,9 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
                         <CheckCircle className="h-4 w-4 text-green-600" />
                       </div>
                       <div className="flex-1">
-                        <div className="font-medium text-sm">Pastor Approved</div>
+                        <div className="font-medium text-sm">{request.approvals.level2.by} — Approved as Pastor</div>
                         <div className="text-xs text-muted-foreground">
-                          by {request.approvals.level2.by} on {new Date(request.approvals.level2.doneAt).toLocaleDateString()}
+                          on {new Date(request.approvals.level2.doneAt).toLocaleDateString()}
                         </div>
                         {request.approvals.level2.comment && (
                           <div className="text-xs text-muted-foreground mt-1">
@@ -310,9 +343,9 @@ export const CertificateRequestView: React.FC<CertificateRequestViewProps> = ({
                         <CheckCircle className="h-4 w-4 text-green-600" />
                       </div>
                       <div className="flex-1">
-                        <div className="font-medium text-sm">Parish Pastor Approved</div>
+                        <div className="font-medium text-sm">{request.approvals.level3.by} — Approved as Parish Pastor</div>
                         <div className="text-xs text-muted-foreground">
-                          by {request.approvals.level3.by} on {new Date(request.approvals.level3.doneAt).toLocaleDateString()}
+                          on {new Date(request.approvals.level3.doneAt).toLocaleDateString()}
                         </div>
                         {request.approvals.level3.comment && (
                           <div className="text-xs text-muted-foreground mt-1">

@@ -220,6 +220,17 @@ const downloadCertificate = async (req: CertificateRequest, member?: Member | nu
   doc.save(filename)
 }
 
+// Expose a global helper for modal view to trigger download without direct import coupling
+;(window as unknown as { __downloadCert?: (req: CertificateRequest) => void }).__downloadCert = async (req: CertificateRequest) => {
+  try {
+    const { members } = useMembersStore.getState()
+    const m = members.find(mm => mm.authId === req.memberId || mm.id === req.memberId) || null
+    await downloadCertificate(req, m)
+  } catch {
+    // no-op
+  }
+}
+
 const RequestsTable: React.FC<{ rows: CertificateRequest[]; renderActions: (req: CertificateRequest) => React.ReactNode }> = ({ rows, renderActions }) => {
   const { state } = useAuth()
   const { members } = useMembersStore()
@@ -228,8 +239,8 @@ const RequestsTable: React.FC<{ rows: CertificateRequest[]; renderActions: (req:
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID</TableHead>
             <TableHead>Member</TableHead>
+            <TableHead>Email</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Purpose</TableHead>
             <TableHead>Date</TableHead>
@@ -253,8 +264,10 @@ const RequestsTable: React.FC<{ rows: CertificateRequest[]; renderActions: (req:
               const isFinalApproved = r.status === 'approved' || r.status === 'approved_final' || !!r.approvals?.level3
               return (
                 <TableRow key={r.id}>
-                  <TableCell className="font-mono text-xs">{r.id}</TableCell>
                   <TableCell className="font-medium">{r.memberName}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {(members.find(mm => mm.authId === r.memberId || mm.id === r.memberId) || { email: '' }).email}
+                  </TableCell>
                   <TableCell className="capitalize">{r.certificateType}</TableCell>
                   <TableCell className="max-w-[320px] truncate" title={r.purpose}>{r.purpose}</TableCell>
                   <TableCell>{new Date(r.requestDate).toLocaleDateString()}</TableCell>
