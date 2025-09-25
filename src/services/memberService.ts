@@ -12,7 +12,7 @@ export interface Member {
   address: string;
   zoneId: string;
   isChoirMember: boolean;
-  accountStatus: 'ACTIVE' | 'INACTVE';
+  accountStatus: 'ACTIVE' | 'INACTIVE';
   profileImage?: string;
   choir?: string;
   highestDegree?: string;
@@ -181,7 +181,7 @@ export class MemberService {
       if (response.success && response.data) {
         // Find the zone by zoneId and convert its members to Member interface
         const zone = response.data.zones.find(z => z.zone_id === zoneId);
-        const zoneMembers = zone
+        const zoneMembers: Member[] = zone
           ? zone.members.map(member => ({
               id: member.profile_id,
               name: `${member.first_name} ${member.last_name}`,
@@ -193,7 +193,7 @@ export class MemberService {
               address: member.address || '',
               zoneId: member.zone_id || '',
               isChoirMember: !!member.choir,
-              accountStatus: member.user.account_status,
+              accountStatus: String(member.user.account_status).toUpperCase() as 'ACTIVE' | 'INACTIVE',
               profileImage: member.photo || '',
               choir: member.choir || undefined,
               highestDegree: member.highest_degree || undefined,
@@ -258,7 +258,7 @@ export class MemberService {
             address: foundMember.address || '',
             zoneId: foundZoneId || '',
             isChoirMember: !!foundMember.choir,
-            accountStatus: foundMember.user.account_status,
+            accountStatus: String(foundMember.user.account_status).toUpperCase() as 'ACTIVE' | 'INACTIVE',
             profileImage: foundMember.photo || '',
             choir: foundMember.choir || undefined,
             highestDegree: foundMember.highest_degree || undefined,
@@ -321,9 +321,9 @@ export class MemberService {
   /**
    * Update user info by auth_id
    */
-  static async updateUser(id: string, payload: UpdateUserPayload): Promise<ApiResponse<any>> {
+  static async updateUser(id: string, payload: UpdateUserPayload): Promise<ApiResponse<unknown>> {
     try {
-      const response = await apiClient.put<any>(`/users/${id}`, payload);
+      const response = await apiClient.put<unknown>(`/users/${id}`, payload);
       return response;
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string }, status?: number } };
@@ -341,9 +341,9 @@ export class MemberService {
    * Change user role with role-based access control
    * PUT /auth/users/{user_id}/role
    */
-  static async updateUserRole(userId: string, payload: UpdateUserRolePayload): Promise<ApiResponse<any>> {
+  static async updateUserRole(userId: string, payload: UpdateUserRolePayload): Promise<ApiResponse<unknown>> {
     try {
-      const response = await apiClient.put<any>(`/auth/users/${userId}/role`, payload);
+      const response = await apiClient.put<unknown>(`/auth/users/${userId}/role`, payload);
       return response;
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string }, status?: number } };

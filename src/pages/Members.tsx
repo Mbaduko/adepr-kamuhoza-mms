@@ -87,9 +87,12 @@ export const Members: React.FC = () => {
   const [openEditUser, setOpenEditUser] = React.useState(false);
   const [memberBeingEdited, setMemberBeingEdited] = React.useState<Member | null>(null);
   const [editForm, setEditForm] = React.useState<UpdateUserPayload>({});
+  // View Member Dialog State
+  const [openViewUser, setOpenViewUser] = React.useState(false);
+  const [memberBeingViewed, setMemberBeingViewed] = React.useState<Member | null>(null);
 
   // Get default role based on current user's role
-  const getDefaultRole = () => {
+  const getDefaultRole = React.useCallback(() => {
     const currentUserRole = user?.role;
     
     switch (currentUserRole) {
@@ -102,7 +105,7 @@ export const Members: React.FC = () => {
       default:
         return 'MEMBER'; // Everyone else creates members by default
     }
-  };
+  }, [user?.role]);
 
   // Get available roles based on current user's role
   const getAvailableRoles = () => {
@@ -157,7 +160,7 @@ export const Members: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get current user's zone from members data
-  const getCurrentUserZone = () => {
+  const getCurrentUserZone = React.useCallback(() => {
     if (user?.role === 'zone-leader') {
       // Find the current user in the members array to get their zone
       const currentUserMember = members.find(member => 
@@ -166,7 +169,7 @@ export const Members: React.FC = () => {
       return currentUserMember?.zoneId || "";
     }
     return "";
-  };
+  }, [members, user?.email, user?.id, user?.role]);
 
   // Reset form when dialog opens to ensure zone leaders get their zone pre-populated
   React.useEffect(() => {
@@ -194,7 +197,7 @@ export const Members: React.FC = () => {
       setTouchedFields({});
       setIsSubmitting(false);
     }
-  }, [openNewUser, user?.role, members]);
+  }, [openNewUser, user?.role, members, getCurrentUserZone, getDefaultRole]);
 
   // Real-time validation
   const validateField = (field: string, value: string | boolean): string => {
@@ -571,7 +574,7 @@ export const Members: React.FC = () => {
     }
 
     loadData()
-  }, [fetchAllMembers, fetchAllZones])
+  }, [fetchAllMembers, fetchAllZones, toast])
 
 
 
@@ -604,7 +607,6 @@ export const Members: React.FC = () => {
       const matchesZone = zoneFilter === "all" || member.zoneId === zoneFilter
       
       const matchesStatus = statusFilter === "all" || member.accountStatus === statusFilter
-      console.log(member, statusFilter)
       
       return matchesSearch && matchesZone && matchesStatus
     })
@@ -634,8 +636,9 @@ export const Members: React.FC = () => {
       inactive: "bg-gray-100 text-gray-800",
       suspended: "bg-red-100 text-red-800"
     }
+    const key = (status || '').toLowerCase() as keyof typeof variants
     return (
-      <Badge className={variants[status as keyof typeof variants] || variants.inactive}>
+      <Badge className={variants[key] || variants.inactive}>
         {status}
       </Badge>
     )
@@ -679,6 +682,11 @@ export const Members: React.FC = () => {
     return zone?.name || "Unknown Zone"
   }
 
+  const openViewMember = (m: Member) => {
+    setMemberBeingViewed(m)
+    setOpenViewUser(true)
+  }
+
   const openEditMember = (m: Member) => {
     setMemberBeingEdited(m)
     const nameParts = (m.name || '').trim().split(/\s+/)
@@ -693,7 +701,7 @@ export const Members: React.FC = () => {
       date_of_birth: m.dateOfBirth || '',
       address: m.address || '',
       highest_degree: m.highestDegree || '',
-      marital_status: (m.maritalStatus as any) || undefined,
+      marital_status: (m.maritalStatus as ('single' | 'married' | 'divorced' | 'widowed')) || undefined,
       baptism_date: m.sacraments?.baptism?.date || '',
       marriage_date: m.sacraments?.marriage?.date || '',
       choir: m.choir || '',
@@ -701,7 +709,7 @@ export const Members: React.FC = () => {
     setOpenEditUser(true)
   }
 
-  const handleEditInput = (field: keyof UpdateUserPayload, value: any) => {
+  const handleEditInput = <K extends keyof UpdateUserPayload>(field: K, value: UpdateUserPayload[K]) => {
     setEditForm(prev => ({ ...prev, [field]: value }))
   }
 
@@ -964,7 +972,7 @@ export const Members: React.FC = () => {
                           </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openViewMember(member)}>
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
@@ -987,6 +995,102 @@ export const Members: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* View Member Dialog */}
+      <Dialog open={openViewUser} onOpenChange={setOpenViewUser}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" />
+              Member Details
+            </DialogTitle>
+            <DialogDescription>
+              Read-only overview of the selected member.
+            </DialogDescription>
+          </DialogHeader>
+
+          {memberBeingViewed && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={memberBeingViewed.profileImage} />
+                  <AvatarFallback>{getInitials(memberBeingViewed.name)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-lg font-semibold leading-tight">{memberBeingViewed.name}</p>
+                  <div className="mt-1">{getRoleBadge(memberBeingViewed.role)}</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Email</Label>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    {memberBeingViewed.email || 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Phone</Label>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    {memberBeingViewed.phone || 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Zone</Label>
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    {getZoneName(memberBeingViewed.zoneId || '')}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Account Status</Label>
+                  <div className="flex items-center gap-2 text-sm">
+                    {getStatusBadge(memberBeingViewed.accountStatus)}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Date of Birth</Label>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    {memberBeingViewed.dateOfBirth ? new Date(memberBeingViewed.dateOfBirth).toLocaleDateString() : 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Choir</Label>
+                  <div className="text-sm">{memberBeingViewed.choir || 'N/A'}</div>
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <Label className="text-xs text-muted-foreground">Address</Label>
+                  <div className="text-sm">{memberBeingViewed.address || 'N/A'}</div>
+                </div>
+              </div>
+
+              {memberBeingViewed.sacraments?.baptism?.date && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Baptism Date</Label>
+                    <div className="text-sm">{new Date(memberBeingViewed.sacraments.baptism.date).toLocaleDateString()}</div>
+                  </div>
+                  {memberBeingViewed.sacraments?.marriage?.date && (
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Marriage Date</Label>
+                      <div className="text-sm">{new Date(memberBeingViewed.sacraments.marriage.date).toLocaleDateString()}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2">
+            <Button type="button" variant="outline" onClick={() => setOpenViewUser(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Member Dialog */}
       <Dialog open={openEditUser} onOpenChange={setOpenEditUser}>
@@ -1018,7 +1122,7 @@ export const Members: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit_gender">Gender</Label>
-                  <Select value={editForm.gender || ''} onValueChange={v => handleEditInput('gender', v as string)}>
+                  <Select value={editForm.gender || ''} onValueChange={(v) => handleEditInput('gender', v as ('MALE' | 'FEMALE'))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
@@ -1059,7 +1163,7 @@ export const Members: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit_marital">Marital Status</Label>
-                  <Select value={editForm.marital_status || ''} onValueChange={v => handleEditInput('marital_status', v as string)}>
+                  <Select value={editForm.marital_status || ''} onValueChange={(v) => handleEditInput('marital_status', v as ('single' | 'married' | 'divorced' | 'widowed'))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
