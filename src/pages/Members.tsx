@@ -42,6 +42,10 @@ import {
   Crown,
   Shield,
   UserCheck,
+  Music,
+  Home,
+  Droplets,
+  Heart,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -1049,94 +1053,187 @@ export const Members: React.FC = () => {
 
       {/* View Member Dialog */}
       <Dialog open={openViewUser} onOpenChange={setOpenViewUser}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5 text-primary" />
-              Member Details
+        <DialogContent className="max-w-2xl">
+          <DialogHeader className="text-center pb-6">
+            <div className="flex justify-center mb-4">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={memberBeingViewed?.profileImage} />
+                <AvatarFallback className="text-2xl bg-gradient-to-br from-green-500 to-blue-600 text-white">
+                  {memberBeingViewed ? getInitials(memberBeingViewed.name) : 'M'}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+            <DialogTitle className="text-2xl font-bold">
+              {memberBeingViewed?.name || 'Member Details'}
             </DialogTitle>
-            <DialogDescription>
-              Read-only overview of the selected member.
+            <DialogDescription className="text-base">
+              Member Information & Status
             </DialogDescription>
+            <div className="flex justify-center mt-2">
+              {memberBeingViewed && getRoleBadge(memberBeingViewed.role)}
+            </div>
           </DialogHeader>
-
+          
           {memberBeingViewed && (
             <div className="space-y-6">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={memberBeingViewed.profileImage} />
-                  <AvatarFallback>{getInitials(memberBeingViewed.name)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-lg font-semibold leading-tight">{memberBeingViewed.name}</p>
-                  <div className="mt-1">{getRoleBadge(memberBeingViewed.role)}</div>
-                </div>
+              {/* Status Badge */}
+              <div className="flex justify-center">
+                {getStatusBadge(memberBeingViewed.accountStatus)}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Email</Label>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    {memberBeingViewed.email || 'N/A'}
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Phone</Label>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    {memberBeingViewed.phone || 'N/A'}
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Zone</Label>
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    {getZoneName(memberBeingViewed.zoneId || '')}
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Account Status</Label>
-                  <div className="flex items-center gap-2 text-sm">
-                    {getStatusBadge(memberBeingViewed.accountStatus)}
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Date of Birth</Label>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    {memberBeingViewed.dateOfBirth ? new Date(memberBeingViewed.dateOfBirth).toLocaleDateString() : 'N/A'}
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Choir</Label>
-                  <div className="text-sm">{memberBeingViewed.choir || 'N/A'}</div>
-                </div>
-                <div className="space-y-1 sm:col-span-2">
-                  <Label className="text-xs text-muted-foreground">Address</Label>
-                  <div className="text-sm">{memberBeingViewed.address || 'N/A'}</div>
-                </div>
-              </div>
-
-              {memberBeingViewed.sacraments?.baptism?.date && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Baptism Date</Label>
-                    <div className="text-sm">{new Date(memberBeingViewed.sacraments.baptism.date).toLocaleDateString()}</div>
-                  </div>
-                  {memberBeingViewed.sacraments?.marriage?.date && (
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Marriage Date</Label>
-                      <div className="text-sm">{new Date(memberBeingViewed.sacraments.marriage.date).toLocaleDateString()}</div>
+              {/* Information Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Personal Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Personal Information</h3>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <User className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Full Name</p>
+                        <p className="font-medium">{memberBeingViewed.name || 'N/A'}</p>
+                      </div>
                     </div>
-                  )}
+
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <Mail className="h-4 w-4 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Email Address</p>
+                        <p className="font-medium">{memberBeingViewed.email || 'N/A'}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 rounded-lg">
+                        <Phone className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Phone Number</p>
+                        <p className="font-medium">{memberBeingViewed.phone || 'N/A'}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-orange-100 rounded-lg">
+                        <Calendar className="h-4 w-4 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Date of Birth</p>
+                        <p className="font-medium">
+                          {memberBeingViewed.dateOfBirth ? new Date(memberBeingViewed.dateOfBirth).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          }) : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Account & Location Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Account & Location</h3>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-100 rounded-lg">
+                        <Shield className="h-4 w-4 text-indigo-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Account Status</p>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(memberBeingViewed.accountStatus)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-teal-100 rounded-lg">
+                        <MapPin className="h-4 w-4 text-teal-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Zone</p>
+                        <p className="font-medium">{getZoneName(memberBeingViewed.zoneId || '')}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-pink-100 rounded-lg">
+                        <Music className="h-4 w-4 text-pink-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Choir</p>
+                        <p className="font-medium">{memberBeingViewed.choir || 'N/A'}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gray-100 rounded-lg">
+                        <Home className="h-4 w-4 text-gray-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Address</p>
+                        <p className="font-medium">{memberBeingViewed.address || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sacraments Information */}
+              {(memberBeingViewed.sacraments?.baptism?.date || memberBeingViewed.sacraments?.marriage?.date) && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Sacraments</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {memberBeingViewed.sacraments?.baptism?.date && (
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <Droplets className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Baptism Date</p>
+                          <p className="font-medium">
+                            {new Date(memberBeingViewed.sacraments.baptism.date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {memberBeingViewed.sacraments?.marriage?.date && (
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-red-100 rounded-lg">
+                          <Heart className="h-4 w-4 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Marriage Date</p>
+                          <p className="font-medium">
+                            {new Date(memberBeingViewed.sacraments.marriage.date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           )}
-
-          <DialogFooter className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpenViewUser(false)}>
+          
+          <DialogFooter className="pt-6">
+            <Button variant="outline" onClick={() => setOpenViewUser(false)} className="w-full">
               Close
             </Button>
           </DialogFooter>
