@@ -12,7 +12,7 @@ export interface Member {
   address: string;
   zoneId: string;
   isChoirMember: boolean;
-  accountStatus: 'active' | 'inactive';
+  accountStatus: 'ACTIVE' | 'INACTVE';
   profileImage?: string;
   choir?: string;
   highestDegree?: string;

@@ -604,6 +604,7 @@ export const Members: React.FC = () => {
       const matchesZone = zoneFilter === "all" || member.zoneId === zoneFilter
       
       const matchesStatus = statusFilter === "all" || member.accountStatus === statusFilter
+      console.log(member, statusFilter)
       
       return matchesSearch && matchesZone && matchesStatus
     })
@@ -613,8 +614,8 @@ export const Members: React.FC = () => {
   const stats = React.useMemo(() => {
     return {
       total: totalMembers || members.length,
-      active: members.filter(m => m.accountStatus === "active").length,
-      inactive: members.filter(m => m.accountStatus === "inactive").length,
+      active: members.filter(m => m.accountStatus === "ACTIVE").length,
+      inactive: members.filter(m => m.accountStatus === "INACTIVE").length,
       byZone: zones.length
     }
   }, [members, zones, totalMembers])
@@ -868,9 +869,8 @@ export const Members: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="INACTIVE">Inactive</SelectItem>
               </SelectContent>
             </Select>
             </div>
