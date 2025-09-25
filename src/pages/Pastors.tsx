@@ -574,7 +574,7 @@ export const Pastors: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {getStatusBadge((pastor.account_status || '').toLowerCase())}
+                          {getStatusBadge((pastor.account_status || '').toLowerCase())}
                       <Button
                         variant="outline"
                         size="sm"
@@ -649,7 +649,7 @@ export const Pastors: React.FC = () => {
               {/* Status Badge */}
               <div className="flex justify-center">
                 {getStatusBadge((selectedPastor.account_status || '').toLowerCase())}
-              </div>
+            </div>
 
               {/* Information Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

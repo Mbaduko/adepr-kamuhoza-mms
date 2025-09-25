@@ -115,108 +115,217 @@ const downloadCertificate = async (req: CertificateRequest, member?: Member | nu
   const jsPDF = await ensureJsPDF()
   const doc = new jsPDF({ unit: 'pt', format: 'a4' })
 
-  // Margins
-  const margin = 56
+  // Margins and dimensions
+  const margin = 60
+  const pageWidth = 595
+  const contentWidth = pageWidth - (margin * 2)
   let y = margin
+
+  // Clean header without borders
 
   // Logo and Header
   const logoData = await toDataUrl('/logo.png')
-  if (logoData) doc.addImage(logoData, 'PNG', margin, y - 8, 56, 56)
+  if (logoData) doc.addImage(logoData, 'PNG', margin, y - 5, 50, 50)
+  
+  // Church name and details
   doc.setFont('times', 'bold')
-  doc.setFontSize(20)
-  doc.text('ADEPR MUHOZA CHURCH', 297.5, y + 6, { align: 'center' })
-  doc.setFontSize(12)
+  doc.setFontSize(18)
+  doc.setTextColor(50, 50, 50)
+  doc.text('ADEPR MUHOZA CHURCH', pageWidth - margin - 200, y + 10, { align: 'right' })
+  
   doc.setFont('times', 'normal')
-  doc.text('Official Church Certificate', 297.5, y + 24, { align: 'center' })
-  y += 56
-  doc.setDrawColor(180)
-  doc.line(margin, y, 595 - margin, y)
+  doc.setFontSize(11)
+  doc.setTextColor(100, 100, 100)
+  doc.text('Parish of Muhoza', pageWidth - margin - 200, y + 25, { align: 'right' })
+  doc.text('Rwanda', pageWidth - margin - 200, y + 38, { align: 'right' })
+  
+  y += 60
+  
+  // Decorative line
+  doc.setDrawColor(150, 150, 150)
+  doc.setLineWidth(1)
+  doc.line(margin + 50, y, pageWidth - margin - 50, y)
   y += 20
 
-  // Title by type
+  // Certificate title with decorative styling
   doc.setFont('times', 'bold')
-  doc.setFontSize(16)
+  doc.setFontSize(22)
+  doc.setTextColor(30, 30, 30)
+  
+  // Decorative line above title
+  doc.setDrawColor(150, 150, 150)
+  doc.setLineWidth(1)
+  doc.line(margin + 50, y - 10, pageWidth - margin - 50, y - 10)
+  
   const title = `${String(req.certificateType).toUpperCase()} CERTIFICATE`
-  doc.setFont('times', 'bold')
-  doc.setFontSize(16)
-  doc.text(title, 297.5, y, { align: 'center' })
-  y += 22
+  doc.text(title, pageWidth / 2, y, { align: 'center' })
+  
+  // Decorative line below title
+  doc.line(margin + 50, y + 10, pageWidth - margin - 50, y + 10)
+  y += 40
 
-  // Member and request info
+  // Member and request info with professional styling
+  doc.setFontSize(14)
+  doc.setFont('times', 'bold')
+  doc.setTextColor(50, 50, 50)
+  doc.text('CERTIFICATE DETAILS', margin, y)
+  y += 20
+
+  // Clean info section with subtle styling
   doc.setFontSize(12)
   doc.setFont('times', 'normal')
   const leftColX = margin
-  const rightColX = 320
+  const rightColX = margin + 200
   const addRow = (label: string, value: string) => {
-    doc.setFont('times', 'bold'); doc.text(label, leftColX, y)
-    doc.setFont('times', 'normal'); doc.text(value || '-', rightColX, y)
-    y += 16
+    doc.setFont('times', 'bold'); 
+    doc.setTextColor(70, 70, 70);
+    doc.text(label + ':', leftColX, y)
+    doc.setFont('times', 'normal'); 
+    doc.setTextColor(30, 30, 30);
+    doc.text(value || '-', rightColX, y)
+    y += 20
   }
 
   addRow('Member Name', req.memberName)
   addRow('Certificate Type', String(req.certificateType))
   addRow('Purpose', req.purpose)
   addRow('Request Date', formatDate(req.requestDate))
+  y += 10
 
-  // Member-specific details
+  // Member-specific details with enhanced styling
   if (member) {
-    y += 6
-    doc.setFont('times', 'bold'); doc.text('Member Details', margin, y)
-    y += 14
-    addRow('Gender', (member.gender || '').toString())
-    addRow('Date of Birth', formatDate(member.dateOfBirth))
-    addRow('Address', member.address || '')
-    if (member.choir) addRow('Choir', member.choir)
+    y += 20
+    doc.setFontSize(14)
+    doc.setFont('times', 'bold')
+    doc.setTextColor(50, 50, 50)
+    doc.text('MEMBER INFORMATION', margin, y)
+    y += 20
+
+    // Clean member details with better spacing
+    doc.setFontSize(12)
+    const addMemberRow = (label: string, value: string) => {
+      doc.setFont('times', 'bold'); 
+      doc.setTextColor(70, 70, 70);
+      doc.text(label + ':', leftColX, y)
+      doc.setFont('times', 'normal'); 
+      doc.setTextColor(30, 30, 30);
+      doc.text(value || '-', rightColX, y)
+      y += 20
+    }
+
+    addMemberRow('Gender', (member.gender || '').toString())
+    addMemberRow('Date of Birth', formatDate(member.dateOfBirth))
+    addMemberRow('Address', member.address || '')
+    if (member.choir) addMemberRow('Choir', member.choir)
 
     // Sacrament details by certificate type
     if (req.certificateType === 'baptism' && member.sacraments?.baptism?.date) {
-      addRow('Baptism Date', formatDate(member.sacraments.baptism.date))
+      addMemberRow('Baptism Date', formatDate(member.sacraments.baptism.date))
     }
     if (req.certificateType === 'marriage' && member.sacraments?.marriage?.date) {
-      addRow('Marriage Date', formatDate(member.sacraments.marriage.date))
-      if (member.sacraments.marriage.place) addRow('Marriage Place', member.sacraments.marriage.place)
+      addMemberRow('Marriage Date', formatDate(member.sacraments.marriage.date))
+      if (member.sacraments.marriage.place) addMemberRow('Marriage Place', member.sacraments.marriage.place)
     }
+    y += 10
   }
-  y += 8
 
-  // Type-specific formal text
+  // Type-specific formal text with professional styling
+  y += 20
+  doc.setFontSize(14)
+  doc.setFont('times', 'bold')
+  doc.setTextColor(50, 50, 50)
+  doc.text('OFFICIAL STATEMENT', margin, y)
+  y += 20
+
+  // Clean statement without background
+
   const para = (() => {
     switch (req.certificateType) {
       case 'baptism':
-        return 'This is to certify that the above-named member has received the sacrament of baptism and is duly recorded in the church register.'
+        return 'This is to certify that the above-named member has received the sacrament of baptism and is duly recorded in the church register. This certificate is issued as official confirmation of their baptismal status within ADEPR Muhoza Church.'
       case 'recommendation':
-        return 'This is to certify that the above-named member is a member in good standing and is hereby recommended by ADEPR Muhoza Church.'
+        return 'This is to certify that the above-named member is a member in good standing and is hereby recommended by ADEPR Muhoza Church. This member has demonstrated faithful participation and adherence to church principles.'
       case 'marriage':
-        return 'This is to certify that the marriage record for the above-named member has been verified and approved by the church authorities.'
+        return 'This is to certify that the marriage record for the above-named member has been verified and approved by the church authorities. This certificate confirms the validity of their marriage within the church.'
       default:
-        return 'This is to certify the above request as approved by ADEPR Muhoza Church.'
+        return 'This is to certify the above request as approved by ADEPR Muhoza Church. This document serves as official confirmation of the requested certification.'
     }
   })()
-  const split = doc.splitTextToSize(para, 595 - margin * 2)
-  split.forEach((line: string) => { doc.text(line, margin, y); y += 16 })
-  y += 8
 
-  // Approvals Timeline
+  doc.setFontSize(12)
+  doc.setFont('times', 'normal')
+  doc.setTextColor(40, 40, 40)
+  const split = doc.splitTextToSize(para, contentWidth)
+  split.forEach((line: string) => { doc.text(line, margin, y); y += 16 })
+  y += 20
+
+  // Approvals Timeline with enhanced styling
+  doc.setFontSize(14)
   doc.setFont('times', 'bold')
-  doc.text('Approval Timeline', margin, y)
-  y += 14
+  doc.setTextColor(50, 50, 50)
+  doc.text('APPROVAL TIMELINE', margin, y)
+  y += 20
+
+  // Clean approvals without background
+  
+  doc.setFontSize(11)
   doc.setFont('times', 'normal')
   const approvals: Array<string> = []
-  if (req.approvals?.level1) approvals.push(`Zone Leader: Approved — ${formatDate(req.approvals.level1.doneAt)}${req.approvals.level1.comment ? ` — "${req.approvals.level1.comment}"` : ''}`)
-  if (req.approvals?.level2) approvals.push(`Pastor: Approved — ${formatDate(req.approvals.level2.doneAt)}${req.approvals.level2.comment ? ` — "${req.approvals.level2.comment}"` : ''}`)
-  if (req.approvals?.level3) approvals.push(`Parish Pastor: Approved — ${formatDate(req.approvals.level3.doneAt)}${req.approvals.level3.comment ? ` — "${req.approvals.level3.comment}"` : ''}`)
+  if (req.approvals?.level1) approvals.push(`✓ Zone Leader: Approved — ${formatDate(req.approvals.level1.doneAt)}${req.approvals.level1.comment ? ` — "${req.approvals.level1.comment}"` : ''}`)
+  if (req.approvals?.level2) approvals.push(`✓ Pastor: Approved — ${formatDate(req.approvals.level2.doneAt)}${req.approvals.level2.comment ? ` — "${req.approvals.level2.comment}"` : ''}`)
+  if (req.approvals?.level3) approvals.push(`✓ Parish Pastor: Approved — ${formatDate(req.approvals.level3.doneAt)}${req.approvals.level3.comment ? ` — "${req.approvals.level3.comment}"` : ''}`)
   if (approvals.length === 0) approvals.push('No approvals recorded')
-  approvals.forEach((line) => { doc.text(line, margin, y); y += 16 })
+  
+  approvals.forEach((line) => { 
+    doc.setTextColor(60, 60, 60);
+    doc.text(line, margin, y); 
+    y += 18 
+  })
+  y += 20
 
-  // Footer / signature area
-  y = Math.max(y + 24, 680)
-  doc.setDrawColor(180)
-  doc.line(margin, y, 260, y)
-  doc.text('Authorized Signature', margin, y + 14)
-  doc.text(`Issued on ${new Date().toLocaleDateString()}`, 595 - margin - 150, y + 14)
+  // Professional footer and signature area
+  y = Math.max(y + 30, 700)
+  
+  // Decorative line
+  doc.setDrawColor(150, 150, 150)
+  doc.setLineWidth(2)
+  doc.line(margin, y, pageWidth - margin, y)
+  
+  // Clean signature area without background
+  y += 20
+  
+  // Signature line
+  doc.setDrawColor(100, 100, 100)
+  doc.setLineWidth(1)
+  doc.line(margin + 20, y + 20, margin + 200, y + 20)
+  
+  // Authorized signature text
+  doc.setFontSize(12)
+  doc.setFont('times', 'bold')
+  doc.setTextColor(50, 50, 50)
+  doc.text('Authorized Signature', margin + 20, y + 35)
+  
+  // Issue date
+  doc.setFont('times', 'normal')
+  doc.setFontSize(11)
+  doc.setTextColor(100, 100, 100)
+  doc.text(`Issued on ${new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })}`, pageWidth - margin - 200, y + 35, { align: 'right' })
+  
+  // Church seal area
+  doc.setDrawColor(200, 200, 200)
+  doc.setLineWidth(1)
+  doc.circle(pageWidth - margin - 50, y + 20, 25)
+  doc.setFontSize(8)
+  doc.setTextColor(150, 150, 150)
+  doc.text('OFFICIAL', pageWidth - margin - 50, y + 15, { align: 'center' })
+  doc.text('SEAL', pageWidth - margin - 50, y + 25, { align: 'center' })
 
-  // Save
-  const filename = `${req.certificateType}_certificate_${req.memberName.replace(/\s+/g, '_')}.pdf`
+  // Save with professional filename
+  const filename = `${req.certificateType.toUpperCase()}_CERTIFICATE_${req.memberName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
   doc.save(filename)
 }
 
