@@ -131,12 +131,12 @@ export const Statistics: React.FC = () => {
   }, [members]);
 
   const membersByStatus = React.useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const m of members) {
-      const s = (m.accountStatus || "UNKNOWN").toUpperCase();
-      counts[s] = (counts[s] || 0) + 1;
-    }
-    return Object.entries(counts).map(([status, count]) => ({ status, count }));
+    const active = members.filter(m => (m.accountStatus || '').toString().toUpperCase() === 'ACTIVE').length;
+    const inactive = (members?.length || 0) - active;
+    return [
+      { status: 'ACTIVE', count: active },
+      { status: 'INACTIVE', count: inactive },
+    ];
   }, [members]);
 
   const zoneIdToName = React.useMemo(() => {
@@ -164,6 +164,25 @@ export const Statistics: React.FC = () => {
     }
     return Object.entries(counts).map(([status, count]) => ({ status, count }));
   }, [members]);
+
+  // Pastors aggregations
+  const pastorsByStatus = React.useMemo(() => {
+    const active = (pastors || []).filter(p => (p.account_status || '').toString().toUpperCase() === 'ACTIVE').length;
+    const inactive = (pastors?.length || 0) - active;
+    return [
+      { status: 'ACTIVE', count: active },
+      { status: 'INACTIVE', count: inactive },
+    ];
+  }, [pastors]);
+
+  const pastorsByVerification = React.useMemo(() => {
+    const verified = (pastors || []).filter(p => !!p.is_verified).length;
+    const unverified = (pastors?.length || 0) - verified;
+    return [
+      { status: 'Verified', count: verified },
+      { status: 'Unverified', count: unverified },
+    ];
+  }, [pastors]);
 
   const isParishPastor = user?.role === "parish-pastor" || user?.role === "PARISH_PASTOR";
 
@@ -373,12 +392,50 @@ export const Statistics: React.FC = () => {
           <div>
             <div className="flex items-end justify-between flex-wrap gap-2">
               <h3 className="text-xl font-semibold">Pastors</h3>
-              <Badge variant="secondary" className="text-sm">Total: {totalPastors || pastors.length}</Badge>
+              <Badge variant="secondary" className="text-sm">Total: {pastors.length}</Badge>
             </div>
             <p className="text-sm text-muted-foreground">Parish-wide overview</p>
           </div>
           <Separator />
-          {/* Additional pastors charts can go here if needed */}
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>By Status</CardTitle>
+                <CardDescription>Active vs Inactive</CardDescription>
+              </CardHeader>
+              <CardContent style={{ height: 260 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={pastorsByStatus}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="status" />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="count" name="Pastors" fill="#0ea5e9" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Verification</CardTitle>
+                <CardDescription>Email verification</CardDescription>
+              </CardHeader>
+              <CardContent style={{ height: 260 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie dataKey="count" data={pastorsByVerification} nameKey="status" outerRadius={80} label>
+                      {pastorsByVerification.map((_, idx) => (
+                        <Cell key={`cell-${idx}`} fill={idx === 0 ? '#22c55e' : '#ef4444'} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
     </div>
