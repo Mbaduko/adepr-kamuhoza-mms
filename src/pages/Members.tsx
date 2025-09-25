@@ -636,6 +636,8 @@ export const Members: React.FC = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }
 
+  const [togglingIds, setTogglingIds] = React.useState<Set<string>>(new Set())
+
   const getStatusBadge = (status: string) => {
     const variants = {
       active: "bg-green-100 text-green-800",
@@ -648,6 +650,38 @@ export const Members: React.FC = () => {
         {status}
       </Badge>
     )
+  }
+
+  const toggleMemberStatus = async (m: Member) => {
+    if (!m.authId) {
+      toast({ title: 'Error', description: 'Missing user identifier.', variant: 'error' })
+      return
+    }
+    
+    const next = m.accountStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
+    
+    try {
+      // Add to toggling set
+      setTogglingIds(prev => new Set(prev).add(m.authId!))
+      
+      const res = await MemberService.updateAccountStatus(m.authId, next)
+      
+      if (res.success) {
+        toast({ title: 'Updated', description: `Status set to ${next}.`, variant: 'success' })
+        await fetchAllMembers()
+      } else {
+        toast({ title: 'Error', description: res.error?.message || 'Failed to update status.', variant: 'error' })
+      }
+    } catch (e) {
+      toast({ title: 'Error', description: 'Failed to update status.', variant: 'error' })
+    } finally {
+      // Remove from toggling set
+      setTogglingIds(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(m.authId!)
+        return newSet
+      })
+    }
   }
 
   const formatRole = (role?: string) => {
@@ -961,9 +995,24 @@ export const Members: React.FC = () => {
                           {getZoneName(member.zoneId || "")}
                         </div>
                       </TableCell>
-                                             <TableCell>
-                         {getStatusBadge(member.accountStatus)}
-                       </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(member.accountStatus)}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2"
+                            onClick={() => toggleMemberStatus(member)}
+                            disabled={togglingIds.has(member.authId!)}
+                          >
+                            {togglingIds.has(member.authId!) ? (
+                              <span className="inline-flex items-center gap-1"><RefreshCw className="h-3 w-3 animate-spin" /> Updating...</span>
+                            ) : (
+                              member.accountStatus === 'ACTIVE' ? 'Deactivate' : 'Activate'
+                            )}
+                          </Button>
+                        </div>
+                      </TableCell>
                                              <TableCell>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />

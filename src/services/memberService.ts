@@ -356,5 +356,25 @@ export class MemberService {
       };
     }
   }
+
+  /**
+   * Update user account status to ACTIVE or INACTIVE
+   * PUT /users/{id}/account-status { status: 'ACTIVE' | 'INACTIVE' }
+   */
+  static async updateAccountStatus(userId: string, status: 'ACTIVE' | 'INACTIVE'): Promise<ApiResponse<{ message: string; user: { auth_id: string; email: string; role: string; account_status: 'ACTIVE' | 'INACTIVE'; is_verified: boolean } }>> {
+    try {
+      const response = await apiClient.put<{ message: string; user: { auth_id: string; email: string; role: string; account_status: 'ACTIVE' | 'INACTIVE'; is_verified: boolean } }>(`/users/${userId}/account-status`, { status });
+      return response;
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string }, status?: number } };
+      return {
+        success: false,
+        error: {
+          message: err.response?.data?.message || 'Unable to update account status. Please try again.',
+          status: err.response?.status || 0,
+        },
+      };
+    }
+  }
 }
 

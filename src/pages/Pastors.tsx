@@ -288,6 +288,35 @@ export const Pastors: React.FC = () => {
     )
   }
 
+  const [togglingIds, setTogglingIds] = React.useState<Set<string>>(new Set())
+
+  const togglePastorStatus = async (p: PastorData) => {
+    const next = (p.account_status || '').toString().toUpperCase() === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
+    
+    try {
+      // Add to toggling set
+      setTogglingIds(prev => new Set(prev).add(p.profile_id))
+      
+      const res = await MemberService.updateAccountStatus(p.auth_id, next as 'ACTIVE' | 'INACTIVE')
+      
+      if (res.success) {
+        toast({ title: 'Updated', description: `Status set to ${next}.`, variant: 'success' })
+        await fetchAllPastors?.()
+      } else {
+        toast({ title: 'Error', description: res.error?.message || 'Failed to update status.', variant: 'error' })
+      }
+    } catch (e) {
+      toast({ title: 'Error', description: 'Failed to update status.', variant: 'error' })
+    } finally {
+      // Remove from toggling set
+      setTogglingIds(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(p.profile_id)
+        return newSet
+      })
+    }
+  }
+
   const getRoleBadge = (role: string) => {
     const variants = {
       pastor: "bg-blue-100 text-blue-800",
@@ -613,7 +642,22 @@ export const Pastors: React.FC = () => {
                           {getRoleBadge("pastor")}
                   </TableCell>
                   <TableCell>
-                          {getStatusBadge((pastor.account_status || '').toLowerCase())}
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge((pastor.account_status || '').toLowerCase())}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2"
+                        onClick={() => togglePastorStatus(pastor)}
+                        disabled={togglingIds.has(pastor.profile_id)}
+                      >
+                        {togglingIds.has(pastor.profile_id) ? (
+                          <span className="inline-flex items-center gap-1"><RefreshCw className="h-3 w-3 animate-spin" /> Updating...</span>
+                        ) : (
+                          ((pastor.account_status || '').toString().toUpperCase() === 'ACTIVE') ? 'Deactivate' : 'Activate'
+                        )}
+                      </Button>
+                    </div>
                   </TableCell>
                   <TableCell>
                         <div className="flex items-center gap-2">
