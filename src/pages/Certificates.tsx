@@ -202,9 +202,9 @@ const downloadCertificate = async (req: CertificateRequest, member?: Member | nu
   y += 14
   doc.setFont('times', 'normal')
   const approvals: Array<string> = []
-  if (req.approvals?.level1) approvals.push(`Zone Leader: ${req.approvals.level1.by} — ${formatDate(req.approvals.level1.doneAt)}${req.approvals.level1.comment ? ` — "${req.approvals.level1.comment}"` : ''}`)
-  if (req.approvals?.level2) approvals.push(`Pastor: ${req.approvals.level2.by} — ${formatDate(req.approvals.level2.doneAt)}${req.approvals.level2.comment ? ` — "${req.approvals.level2.comment}"` : ''}`)
-  if (req.approvals?.level3) approvals.push(`Parish Pastor: ${req.approvals.level3.by} — ${formatDate(req.approvals.level3.doneAt)}${req.approvals.level3.comment ? ` — "${req.approvals.level3.comment}"` : ''}`)
+  if (req.approvals?.level1) approvals.push(`Zone Leader: Approved — ${formatDate(req.approvals.level1.doneAt)}${req.approvals.level1.comment ? ` — "${req.approvals.level1.comment}"` : ''}`)
+  if (req.approvals?.level2) approvals.push(`Pastor: Approved — ${formatDate(req.approvals.level2.doneAt)}${req.approvals.level2.comment ? ` — "${req.approvals.level2.comment}"` : ''}`)
+  if (req.approvals?.level3) approvals.push(`Parish Pastor: Approved — ${formatDate(req.approvals.level3.doneAt)}${req.approvals.level3.comment ? ` — "${req.approvals.level3.comment}"` : ''}`)
   if (approvals.length === 0) approvals.push('No approvals recorded')
   approvals.forEach((line) => { doc.text(line, margin, y); y += 16 })
 
