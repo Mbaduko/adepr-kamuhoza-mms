@@ -606,7 +606,12 @@ export const Members: React.FC = () => {
       
       const matchesZone = zoneFilter === "all" || member.zoneId === zoneFilter
       
-      const matchesStatus = statusFilter === "all" || member.accountStatus === statusFilter
+      const matchesStatus =
+        statusFilter === "all"
+          ? true
+          : statusFilter === "ACTIVE"
+            ? member.accountStatus === "ACTIVE"
+            : member.accountStatus !== "ACTIVE"
       
       return matchesSearch && matchesZone && matchesStatus
     })
@@ -614,10 +619,11 @@ export const Members: React.FC = () => {
 
   // Calculate stats
   const stats = React.useMemo(() => {
+    const activeCount = members.filter(m => m.accountStatus === "ACTIVE").length
     return {
-      total: totalMembers || members.length,
-      active: members.filter(m => m.accountStatus === "ACTIVE").length,
-      inactive: members.filter(m => m.accountStatus === "INACTIVE").length,
+      total: members.length || totalMembers,
+      active: activeCount,
+      inactive: members.length - activeCount,
       byZone: zones.length
     }
   }, [members, zones, totalMembers])
