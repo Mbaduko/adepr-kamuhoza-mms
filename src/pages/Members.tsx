@@ -986,10 +986,6 @@ export const Members: React.FC = () => {
                               <Edit className="h-4 w-4 mr-2" />
                               Edit Member
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete Member
-                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -1174,10 +1170,10 @@ export const Members: React.FC = () => {
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="single">Single</SelectItem>
-                      <SelectItem value="married">Married</SelectItem>
-                      <SelectItem value="divorced">Divorced</SelectItem>
-                      <SelectItem value="widowed">Widowed</SelectItem>
+                      <SelectItem value="SINGLE">Single</SelectItem>
+                      <SelectItem value="MARRIED">Married</SelectItem>
+                      <SelectItem value="DIVORCED">Divorced</SelectItem>
+                      <SelectItem value="WIDOWED">Widowed</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
