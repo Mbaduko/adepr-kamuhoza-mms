@@ -57,7 +57,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { usePastorsStore } from "@/data/pastors-store"
 import { PastorService, PastorData } from '@/services/pastorService';
-import { MemberService } from '@/services/memberService';
+import { MemberService, UpdateUserPayload } from '@/services/memberService';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 
@@ -146,6 +146,7 @@ export const Pastors: React.FC = () => {
     account_status: "ACTIVE" as const,
   })
   const [isCreatingPastor, setIsCreatingPastor] = React.useState(false)
+  const [isUpdatingPastor, setIsUpdatingPastor] = React.useState(false)
 
 
   const DEGREE_OPTIONS = [
@@ -869,7 +870,7 @@ export const Pastors: React.FC = () => {
       </Dialog>
 
 
-      {/* Edit Dialog (local-only form for now) */}
+      {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent>
           <DialogHeader>
@@ -898,7 +899,43 @@ export const Pastors: React.FC = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-            <Button onClick={() => { /* TODO integrate update endpoint */ setIsEditOpen(false); toast({ title: 'Saved', description: 'Changes applied locally.', variant: 'success' }) }}>Save</Button>
+            <Button
+              onClick={async () => {
+                if (!selectedPastor?.auth_id) {
+                  toast({ title: 'Error', description: 'Missing user identifier.', variant: 'error' })
+                  return
+                }
+                try {
+                  setIsUpdatingPastor(true)
+                  const payload: UpdateUserPayload = {}
+                  if (editForm.first_name && editForm.first_name.trim() !== '') payload.first_name = editForm.first_name.trim()
+                  if (editForm.last_name && editForm.last_name.trim() !== '') payload.last_name = editForm.last_name.trim()
+                  if (editForm.phone_number && editForm.phone_number.trim() !== '') payload.phone_number = editForm.phone_number.trim()
+                  // We don't update email via this endpoint per current payload type
+
+                  const res = await MemberService.updateUser(selectedPastor.auth_id, payload)
+                  if (res.success) {
+                    toast({ title: 'Updated', description: 'Pastor information updated.', variant: 'success' })
+                    setIsEditOpen(false)
+                    setSelectedPastor(null)
+                    await fetchAllPastors?.()
+                  } else {
+                    toast({ title: 'Error', description: res.error?.message || 'Failed to update pastor.', variant: 'error' })
+                  }
+                } catch (e) {
+                  toast({ title: 'Error', description: 'Failed to update pastor.', variant: 'error' })
+                } finally {
+                  setIsUpdatingPastor(false)
+                }
+              }}
+              disabled={isUpdatingPastor}
+            >
+              {isUpdatingPastor ? (
+                <span className="inline-flex items-center gap-2"><RefreshCw className="h-4 w-4 animate-spin" /> Saving...</span>
+              ) : (
+                'Save'
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
