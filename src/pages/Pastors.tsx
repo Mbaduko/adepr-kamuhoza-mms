@@ -92,7 +92,7 @@ export const Pastors: React.FC = () => {
     }
 
     loadData()
-  }, [fetchAllPastors])
+  }, [fetchAllPastors, toast])
 
   const handleRefresh = async () => {
     try {
@@ -150,6 +150,7 @@ export const Pastors: React.FC = () => {
 
 
   const DEGREE_OPTIONS = [
+    "No Degree",
     "Certificate",
     "Diploma",
     "Associate Degree",
@@ -808,7 +809,7 @@ export const Pastors: React.FC = () => {
               onClick={async () => {
                 try {
                   setIsCreatingPastor(true);
-                  const payload: any = {
+                  const payload: Record<string, unknown> = {
                     ...addForm,
                     role: "PASTOR",
                     account_status: "ACTIVE",
@@ -825,7 +826,7 @@ export const Pastors: React.FC = () => {
                     if (payload[k] === "") delete payload[k];
                   });
 
-                  const res = await MemberService.createUser(payload);
+                  const res = await MemberService.createUser(payload as unknown as Parameters<typeof MemberService.createUser>[0]);
                   if (res.success) {
                     setIsAddOpen(false);
                     await fetchAllPastors?.();

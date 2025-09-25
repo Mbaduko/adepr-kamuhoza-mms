@@ -1152,6 +1152,7 @@ export const Members: React.FC = () => {
                       <SelectValue placeholder="Select degree" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="No Degree">No Degree</SelectItem>
                       <SelectItem value="Certificate">Certificate</SelectItem>
                       <SelectItem value="Diploma">Diploma</SelectItem>
                       <SelectItem value="Associate Degree">Associate Degree</SelectItem>
@@ -1395,6 +1396,7 @@ export const Members: React.FC = () => {
                       <SelectValue placeholder="Select degree" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="No Degree">No Degree</SelectItem>
                       <SelectItem value="Certificate">Certificate</SelectItem>
                       <SelectItem value="Diploma">Diploma</SelectItem>
                       <SelectItem value="Associate Degree">Associate Degree</SelectItem>
