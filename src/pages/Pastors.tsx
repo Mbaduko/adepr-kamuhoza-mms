@@ -48,6 +48,8 @@ import {
   SortDesc,
   Info,
   UserPlus,
+  User,
+  Music,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -625,23 +627,142 @@ export const Pastors: React.FC = () => {
 
       {/* View Details Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Pastor Details</DialogTitle>
-            <DialogDescription>Basic information</DialogDescription>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader className="text-center pb-6">
+            <div className="flex justify-center mb-4">
+              <Avatar className="h-20 w-20">
+                <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                  {selectedPastor ? `${(selectedPastor.first_name || '').charAt(0)}${(selectedPastor.last_name || '').charAt(0)}` : 'P'}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+            <DialogTitle className="text-2xl font-bold">
+              {selectedPastor ? `${selectedPastor.first_name || ''} ${selectedPastor.last_name || ''}`.trim() : 'Pastor Details'}
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              Pastor Information & Status
+            </DialogDescription>
           </DialogHeader>
+          
           {selectedPastor && (
-            <div className="space-y-2 text-sm">
-              <div><span className="font-medium">Name:</span> {(selectedPastor.first_name || '') + ' ' + (selectedPastor.last_name || '')}</div>
-              <div><span className="font-medium">Email:</span> {selectedPastor.email}</div>
-              <div><span className="font-medium">Phone:</span> {selectedPastor.phone_number || 'N/A'}</div>
-              <div><span className="font-medium">Status:</span> {(selectedPastor.account_status || '').toLowerCase()}</div>
-              <div><span className="font-medium">Verified:</span> {selectedPastor.is_verified ? 'Yes' : 'No'}</div>
-              <div><span className="font-medium">Created:</span> {selectedPastor.created_at ? new Date(selectedPastor.created_at).toLocaleString() : 'N/A'}</div>
+            <div className="space-y-6">
+              {/* Status Badge */}
+              <div className="flex justify-center">
+                {getStatusBadge((selectedPastor.account_status || '').toLowerCase())}
+              </div>
+
+              {/* Information Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Personal Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Personal Information</h3>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <User className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Full Name</p>
+                        <p className="font-medium">{`${selectedPastor.first_name || ''} ${selectedPastor.last_name || ''}`.trim() || 'N/A'}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <Mail className="h-4 w-4 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Email Address</p>
+                        <p className="font-medium">{selectedPastor.email || 'N/A'}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 rounded-lg">
+                        <Phone className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Phone Number</p>
+                        <p className="font-medium">{selectedPastor.phone_number || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Account Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Account Information</h3>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-orange-100 rounded-lg">
+                        <Shield className="h-4 w-4 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Account Status</p>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge((selectedPastor.account_status || '').toLowerCase())}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-100 rounded-lg">
+                        <CheckCircle className="h-4 w-4 text-indigo-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Email Verification</p>
+                        <div className="flex items-center gap-2">
+                          {selectedPastor.is_verified ? (
+                            <Badge className="bg-green-100 text-green-800">Verified</Badge>
+                          ) : (
+                            <Badge className="bg-red-100 text-red-800">Unverified</Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gray-100 rounded-lg">
+                        <Calendar className="h-4 w-4 text-gray-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Member Since</p>
+                        <p className="font-medium">
+                          {selectedPastor.created_at ? new Date(selectedPastor.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          }) : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Information */}
+              {selectedPastor.choir && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-yellow-100 rounded-lg">
+                      <Music className="h-4 w-4 text-yellow-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Choir Member</p>
+                      <p className="font-medium">{selectedPastor.choir}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsViewOpen(false)}>Close</Button>
+          
+          <DialogFooter className="pt-6">
+            <Button variant="outline" onClick={() => setIsViewOpen(false)} className="w-full">
+              Close
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
