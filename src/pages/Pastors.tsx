@@ -563,10 +563,6 @@ export const Pastors: React.FC = () => {
                               <Edit className="h-4 w-4 mr-2" />
                               Edit Pastor
                             </DropdownMenuItem>
-                              <DropdownMenuItem className="text-red-600" onClick={() => { setSelectedPastor(pastor); setIsRemoveOpen(true); }}>
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Remove Pastor
-                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                   </TableCell>
