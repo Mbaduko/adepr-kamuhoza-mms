@@ -60,19 +60,6 @@ import { PastorService, PastorData } from '@/services/pastorService';
 import { MemberService, UpdateUserPayload } from '@/services/memberService';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts"
 
 export const Pastors: React.FC = () => {
   const { state } = useAuth()
@@ -243,24 +230,6 @@ export const Pastors: React.FC = () => {
     }
   }, [pastors])
 
-  // Charts data
-  const pastorsByStatus = React.useMemo(() => {
-    const active = pastors.filter(p => (p.account_status || '').toString().toUpperCase() === 'ACTIVE').length
-    const inactive = pastors.length - active
-    return [
-      { status: 'ACTIVE', count: active },
-      { status: 'INACTIVE', count: inactive },
-    ]
-  }, [pastors])
-
-  const pastorsByVerification = React.useMemo(() => {
-    const verified = pastors.filter(p => !!p.is_verified).length
-    const unverified = pastors.length - verified
-    return [
-      { status: 'Verified', count: verified },
-      { status: 'Unverified', count: unverified },
-    ]
-  }, [pastors])
 
   const isLoading = pastorsLoading
   const pastorsErrorLocal = pastorsError
@@ -295,7 +264,7 @@ export const Pastors: React.FC = () => {
     
     try {
       // Add to toggling set
-      setTogglingIds(prev => new Set(prev).add(p.profile_id))
+      setTogglingIds(prev => new Set(prev).add(p.auth_id))
       
       const res = await MemberService.updateAccountStatus(p.auth_id, next as 'ACTIVE' | 'INACTIVE')
       
@@ -311,7 +280,7 @@ export const Pastors: React.FC = () => {
       // Remove from toggling set
       setTogglingIds(prev => {
         const newSet = new Set(prev)
-        newSet.delete(p.profile_id)
+        newSet.delete(p.auth_id)
         return newSet
       })
     }
@@ -528,46 +497,6 @@ export const Pastors: React.FC = () => {
           </CardContent>
         </Card>
 
-      {/* Charts */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Pastors by Status</CardTitle>
-            <CardDescription>Active vs Inactive</CardDescription>
-          </CardHeader>
-          <CardContent style={{ height: 260 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={pastorsByStatus}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="status" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="count" name="Pastors" fill="#0ea5e9" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Verification</CardTitle>
-            <CardDescription>Email verification status</CardDescription>
-          </CardHeader>
-          <CardContent style={{ height: 260 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie dataKey="count" data={pastorsByVerification} nameKey="status" outerRadius={80} label>
-                  {pastorsByVerification.map((_, idx) => (
-                    <Cell key={`cell-${idx}`} fill={idx === 0 ? '#22c55e' : '#ef4444'} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Pastors Table */}
       <Card>
@@ -649,9 +578,9 @@ export const Pastors: React.FC = () => {
                         size="sm"
                         className="h-7 px-2"
                         onClick={() => togglePastorStatus(pastor)}
-                        disabled={togglingIds.has(pastor.profile_id)}
+                        disabled={togglingIds.has(pastor.auth_id)}
                       >
-                        {togglingIds.has(pastor.profile_id) ? (
+                        {togglingIds.has(pastor.auth_id) ? (
                           <span className="inline-flex items-center gap-1"><RefreshCw className="h-3 w-3 animate-spin" /> Updating...</span>
                         ) : (
                           ((pastor.account_status || '').toString().toUpperCase() === 'ACTIVE') ? 'Deactivate' : 'Activate'
