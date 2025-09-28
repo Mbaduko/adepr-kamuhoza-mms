@@ -491,7 +491,6 @@ export const Zones: React.FC = () => {
                             </div>
                             <div>
                               <p className="font-medium">{zone.name}</p>
-                              <p className="text-sm text-muted-foreground">Created: {formatDate(zone.created_at)}</p>
                             </div>
                           </div>
                         </TableCell>
@@ -683,10 +682,6 @@ export const Zones: React.FC = () => {
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Zone Name</Label>
                   <p className="text-sm font-medium">{selectedZone.name}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Created Date</Label>
-                  <p className="text-sm">{formatDate(selectedZone.created_at)}</p>
                 </div>
               </div>
 
