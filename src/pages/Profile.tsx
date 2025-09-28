@@ -105,38 +105,6 @@ export const Profile: React.FC = () => {
             Manage your personal information and account settings
           </p>
         </div>
-        <div className="flex gap-2">
-          {isEditing ? (
-            <>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleCancel}
-                className="flex items-center gap-2"
-              >
-                <X className="h-4 w-4" />
-                Cancel
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={handleSave}
-                className="flex items-center gap-2"
-              >
-                <Save className="h-4 w-4" />
-                Save Changes
-              </Button>
-            </>
-          ) : (
-            <Button 
-              size="sm" 
-              onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2"
-            >
-              <Edit3 className="h-4 w-4" />
-              Edit Profile
-            </Button>
-          )}
-        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
