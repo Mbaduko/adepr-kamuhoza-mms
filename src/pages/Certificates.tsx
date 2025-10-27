@@ -370,7 +370,7 @@ const RequestsTable: React.FC<{ rows: CertificateRequest[]; renderActions: (req:
           ) : (
             rows.map((r) => {
               const isRequester = state.user?.id === r.memberId
-              const isFinalApproved = r.approvals?.level3.action === 'approve'
+              const isFinalApproved = r.approvals?.level3?.action === 'approve'
               return (
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{r.memberName}</TableCell>

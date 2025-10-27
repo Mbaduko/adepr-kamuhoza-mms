@@ -346,11 +346,6 @@ export const Pastors: React.FC = () => {
             Refresh
             </Button>
 
-          <Button variant="outline" size="sm" className="gap-2">
-            <Download className="h-4 w-4" />
-            Export
-          </Button>
-
           <Button className="gap-2" onClick={() => setIsAddOpen(true)}>
             <PlusCircle className="h-4 w-4" />
             Add Pastor
